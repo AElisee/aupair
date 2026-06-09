@@ -24,7 +24,7 @@ export async function middleware(request: NextRequest) {
   // Décode le JWT NextAuth sans requête DB (compatible Edge runtime)
   const token = await getToken({
     req: request,
-    secret: process.env.NEXTAUTH_SECRET,
+    secret: process.env.AUTH_SECRET,
   });
 
   // ── Non authentifié → redirection vers /connexion ──────────────────────────

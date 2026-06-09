@@ -1,154 +1,100 @@
-# CLAUDE.md — AuPair A.EU
+# CLAUDE.md
 
-## Vision
-Première plateforme mondiale dédiée aux au pairs africains. Mise en relation de jeunes africains avec des familles d'accueil en Europe et en Amérique.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Stack technique
-- **Framework** : Next.js 16 (App Router) — TypeScript strict
-- **UI** : Tailwind CSS + composants custom (`@/components/ui/`)
-- **ORM** : Prisma 7 + adapter `@prisma/adapter-pg`
-- **Base de données** : PostgreSQL (Supabase en prod)
-- **Auth** : NextAuth.js v5 (Google + Facebook OAuth + credentials)
-- **Messagerie** : Supabase Realtime (à intégrer)
-- **Paiement** : Stripe (CB/PayPal) + CinetPay (Mobile Money) (à intégrer)
-- **Emails** : Resend (à intégrer)
-- **Hébergement** : Vercel
+## Project
 
-## Points d'attention Prisma 7
-- Le `schema.prisma` N'a PAS de `url` dans le datasource (nouveau dans v7)
-- L'URL est dans `prisma.config.ts` (datasource.url)
-- Import du client : `@/generated/prisma/client` (pas `@prisma/client`)
-- Utiliser `PrismaPg` adapter : `new PrismaPg({ connectionString: process.env.DATABASE_URL })`
-- Après tout changement de schéma : `npx prisma generate` puis `npx prisma db push`
+AuPair A.EU — Première plateforme mondiale dédiée aux au pairs africains. Mise en relation de jeunes africains avec des familles d'accueil en Europe et en Amérique.
 
-## Charte graphique
-- **Couleur principale** : `#E87722` (orange)
-- **Couleur secondaire** : `#1A1A2E` (bleu nuit)
-- **Fond** : `#FFFFFF` / `#F5F5F5`
-- **Accent** : `#FFF3E0` (orange très clair)
-- **Police** : Inter (Google Fonts)
-- **Icônes** : Lucide React
+## Stack
 
-## Types d'utilisateurs
-- `AU_PAIR` — Abonnement 32€/30 jours requis pour la messagerie
-- `FAMILLE` — Inscription gratuite, accès illimité
-- `AGENCE`
-- `ADMIN`
+- **Framework**: Next.js 16.1.6 (App Router) + React 19, TypeScript strict
+- **UI**: Tailwind CSS 4 + Radix UI primitives + Lucide React icons
+- **ORM**: Prisma 7 + `@prisma/adapter-pg`
+- **Database**: PostgreSQL (Supabase in prod)
+- **Auth**: NextAuth.js v5 (beta) — Google + Facebook OAuth + credentials, JWT strategy
+- **Hosting**: Vercel
 
-## Règle critique Next.js App Router
-- Les pages qui passent des composants React (ex: icônes Lucide) à des Client Components via props **doivent** avoir `"use client"`
-- Les pages avec `"use client"` **ne peuvent pas** exporter `metadata`
-- Séparés si besoin : créer un wrapper Server Component pour les metadata
+Not yet integrated: Supabase Realtime (messaging), Stripe + CinetPay (payments), Resend (emails), Supabase Storage (photo uploads).
 
----
+## Commands
 
-## ÉTAT DU PROJET — 09/03/2026
-
-### ✅ Implémenté et testé (22/22 pages)
-
-#### Pages publiques
-- `/` — Page d'accueil (Hero, Stats, Comment ça marche, Pays, Témoignages, Blog, CTA)
-- `/devenir-au-pair` — Guide au pair avec avantages, conditions, stepper
-- `/accueillir-un-au-pair` — Guide famille avec arguments, tâches, témoignage
-- `/tarifs` — Cards 32€ au pair / 0€ famille, 3 modes paiement
-- `/faq` — Accordéon par catégories (au pair, famille, paiement, sécurité)
-- `/contact` — Formulaire + infos contact
-- `/trouver-au-pair` — Annuaire avec filtres (pays, langue)
-- `/trouver-famille` — Annuaire avec filtres (pays)
-- `/blog` — Liste articles avec filtres catégories
-- `/blog/[slug]` — Article individuel dynamique
-- `/mentions-legales` — Infos légales SIRET, hébergeur, RGPD
-- `/securite` — 6 standards de sécurité
-- `/sitemap.xml` — Sitemap XML automatique (26 URLs)
-- `/robots.txt` — Robots.txt (bloque /admin, /dashboard, /api)
-
-#### Authentification
-- `/connexion` — Email/password + Google + Facebook (UI)
-- `/inscription` — Stepper 4 étapes (choix rôle → infos → profil → confirmation)
-
-#### Dashboard au pair (`/dashboard/au-pair/...`)
-- `/dashboard/au-pair` — KPIs, statut abonnement, familles suggérées
-- `/dashboard/au-pair/profil` — Formulaire édition profil complet
-- `/dashboard/au-pair/messages` — Chat UI avec conversations
-- `/dashboard/au-pair/abonnement` — Jauge jours + 3 modes paiement
-
-#### Dashboard famille (`/dashboard/famille/...`)
-- `/dashboard/famille` — KPIs, au pairs suggérés
-
-#### Back-office admin (`/admin/...`)
-- `/admin` — KPIs temps réel, alertes modération, dernières inscriptions
-- `/admin/utilisateurs` — Tableau filtrable avec actions (valider, masquer, supprimer)
-- `/admin/moderation` — File de validation avec profils en attente
-- `/admin/paiements` — Tableau paiements, KPIs financiers, export CSV
-
-### 🚧 À implémenter (Phase suivante)
-
-1. **Connexion BDD réelle** — Configurer `DATABASE_URL` Supabase et migrer
-2. **NextAuth routes API** — `/api/auth/[...nextauth]/route.ts`
-3. **API routes** — `/api/profils`, `/api/messages`, `/api/abonnement`
-4. **Stripe + CinetPay** — Intégration paiement réel
-5. **Resend emails** — Emails transactionnels (bienvenue, confirmation, rappels)
-6. **Supabase Realtime** — Messagerie temps réel
-7. **Upload photos** — Supabase Storage pour profils
-8. **Dashboard famille complet** — Profil, messages, recherche
-9. **Pages légales** — CGU, CGV, confidentialité, cookies (à compléter)
-10. **Tests E2E** — Suite Playwright complète
-
----
-
-## Structure des fichiers clés
-```
-src/
-├── app/
-│   ├── (pages publiques)/     → /devenir-au-pair, /tarifs, /faq, /contact...
-│   ├── trouver-au-pair/       → Annuaire au pairs
-│   ├── trouver-famille/       → Annuaire familles
-│   ├── connexion/             → Login
-│   ├── inscription/           → Register (stepper)
-│   ├── dashboard/
-│   │   ├── au-pair/           → Tableau de bord, profil, messages, abonnement
-│   │   └── famille/           → Tableau de bord famille
-│   ├── admin/                 → Back-office (users, moderation, paiements)
-│   ├── blog/                  → Liste + [slug]
-│   ├── sitemap.ts             → Sitemap XML auto
-│   ├── robots.ts              → Robots.txt
-│   └── layout.tsx             → Layout racine (Navbar + Footer)
-├── components/
-│   ├── ui/                    → Button, Badge, Card
-│   ├── layout/
-│   │   ├── Navbar.tsx         → Navbar sticky avec sélecteur FR/EN
-│   │   ├── Footer.tsx         → Footer 4 colonnes
-│   │   ├── DashboardLayout.tsx → Layout sidebar dashboard
-│   │   └── AdminLayout.tsx    → Layout sidebar admin
-│   └── home/                  → HeroSection, StatsSection, HowItWorks...
-├── lib/
-│   ├── prisma.ts              → Client Prisma (avec PrismaPg adapter)
-│   ├── auth.ts                → NextAuth config
-│   ├── utils.ts               → cn(), formatDate(), calculateAge()...
-│   └── constants.ts           → Pays, langues, prix
-├── generated/prisma/          → Client Prisma généré (ne pas éditer)
-└── types/
-    └── next-auth.d.ts         → Extension types NextAuth (role, id)
-```
-
-## Commandes utiles
 ```bash
-# Développement
-npm run dev
-
-# Base de données
-npx prisma generate          # Régénérer le client après changement schéma
-npx prisma db push           # Appliquer le schéma à la BDD
-npx prisma studio            # Interface graphique BDD
-
-# Build & tests
-npm run build                # Build production
-npx playwright test          # Tests E2E
-
-# Tests manuels Playwright (depuis le skill)
-cd ~/.claude/plugins/cache/playwright-skill/playwright-skill/4.1.0/skills/playwright-skill
-node run.js /tmp/mon-test.js
+npm run dev          # Start dev server
+npm run build        # Production build
+npm run lint         # ESLint
+npx prisma generate  # Regenerate client after schema changes
+npx prisma db push   # Apply schema to database (no migration file)
+npx prisma studio    # GUI for database
+npx playwright test  # E2E tests
 ```
 
-## Variables d'environnement requises
-Voir `.env.local` — à compléter avec les vraies clés pour la prod.
+`postinstall` runs `prisma generate` automatically on `npm install`.
+
+## Critical: Prisma 7 differences from v5/v6
+
+- `schema.prisma` has **no `url`** in the datasource block — the URL lives in `prisma.config.ts`
+- Import the client from `@/generated/prisma/client`, **not** `@prisma/client`
+- The `PrismaPg` adapter must be passed on instantiation: see `src/lib/prisma.ts` for the singleton pattern
+- Client output directory: `src/generated/prisma/` (set in schema generator block)
+
+## Critical: Next.js App Router `"use client"` + metadata
+
+- Pages that pass React components (e.g. Lucide icons) to Client Components via props **must** declare `"use client"`
+- Pages with `"use client"` **cannot** export `metadata` — split into a Server Component wrapper for metadata + a Client Component for the interactive page
+
+## Authentication architecture
+
+`src/lib/auth.ts` exports `{ handlers, auth, signIn, signOut }` from NextAuth.
+
+The session JWT is extended with `id` and `role` fields. Type augmentations are in `src/types/next-auth.d.ts`.
+
+Existing API routes:
+- `POST /api/auth/register` — creates User + AuPairProfile or FamilyProfile in a single nested Prisma write. Profile fields not collected at registration are filled later in the dashboard.
+- `/api/auth/[...nextauth]` — NextAuth handler
+
+Auth pages: `signIn` → `/connexion`, `error` → `/connexion`.
+
+## User roles and business rules
+
+| Role | Access |
+|---|---|
+| `AU_PAIR` | Requires 32€/30-day subscription to use messaging |
+| `FAMILLE` | Free, unlimited access |
+| `AGENCE` | — |
+| `ADMIN` | Back-office at `/admin` |
+
+Profile status lifecycle: `PENDING → ACTIVE → HIDDEN / SUSPENDED / DELETED`
+
+## Design system
+
+- Primary: `#E87722` (orange), Secondary: `#1A1A2E` (dark blue)
+- Accent background: `#FFF3E0`, Page backgrounds: `#FFFFFF` / `#F5F5F5`
+- Font: Inter (Google Fonts)
+- UI primitives: `src/components/ui/` (Button, Badge, Card)
+
+## Layout system
+
+- `PublicLayoutWrapper` (`src/components/layout/PublicLayoutWrapper.tsx`) — wraps the root layout; conditionally renders `Navbar` + `Footer`
+- `DashboardLayout` — sidebar layout for `/dashboard/*`
+- `AdminLayout` — sidebar layout for `/admin/*`
+
+## Key constants
+
+`src/lib/constants.ts` — origin countries, host countries, languages list, subscription price (`SUBSCRIPTION_PRICE_EUR = 32`, `SUBSCRIPTION_PRICE_XOF = 20800`, `SUBSCRIPTION_DAYS = 30`), education levels, duration options.
+
+## Environment variables
+
+All required keys are in `.env.local`. Required:
+
+```
+DATABASE_URL
+NEXTAUTH_URL / NEXTAUTH_SECRET
+GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET
+FACEBOOK_CLIENT_ID / FACEBOOK_CLIENT_SECRET
+STRIPE_SECRET_KEY / NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY / STRIPE_WEBHOOK_SECRET
+CINETPAY_API_KEY / CINETPAY_SITE_ID
+RESEND_API_KEY / RESEND_FROM_EMAIL
+NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY
+NEXT_PUBLIC_APP_URL
+```

@@ -54,9 +54,19 @@ export async function POST(request: Request) {
 
   const normalizedEmail = email.trim().toLowerCase();
 
-  const existing = await prisma.user.findUnique({
-    where: { email: normalizedEmail },
-  });
+  let existing;
+  try {
+    existing = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
+  } catch (err) {
+    console.error("[register] DB connection error:", err);
+    return NextResponse.json(
+      { error: "Impossible de contacter la base de données." },
+      { status: 503 }
+    );
+  }
+
   if (existing) {
     return NextResponse.json(
       { error: "Un compte existe déjà avec cet email." },
@@ -82,13 +92,12 @@ export async function POST(request: Request) {
                   status: "PENDING",
                   firstName,
                   lastName,
-                  // Champs requis non collectés au stepper → valeurs à compléter
-                  // ensuite dans l'éditeur de profil (/dashboard/au-pair/profil)
                   dateOfBirth: new Date("2000-01-01"),
                   gender: "",
                   nationality: body.country ?? "",
                   countryOfOrigin: body.country ?? "",
                   languages: body.languages ?? [],
+                  targetCountries: [],
                   educationLevel: body.educationLevel || null,
                   childcareExperience: body.experience || null,
                 },
@@ -100,15 +109,18 @@ export async function POST(request: Request) {
                   status: "PENDING",
                   country: "",
                   city: body.city ?? "",
-                  // maritalStatus requis (enum) → défaut, à compléter ensuite
                   maritalStatus: "MARRIED",
                   numberOfKids: parseKids(body.numberOfKids),
+                  parentsAges: [],
+                  kidsAges: [],
+                  preferredLanguages: [],
                 },
               },
             }),
       },
     });
-  } catch {
+  } catch (err) {
+    console.error("[register] Prisma error:", err);
     return NextResponse.json(
       { error: "Erreur lors de la création du compte." },
       { status: 500 }

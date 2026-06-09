@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Globe, CheckCircle, ArrowRight, ArrowLeft, User, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { COUNTRIES_ORIGIN, EDUCATION_LEVELS } from "@/lib/constants";
+import { COUNTRIES_ORIGIN, EDUCATION_LEVELS, LANGUAGES } from "@/lib/constants";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
@@ -22,14 +22,60 @@ function InscriptionContent() {
     city: "", numberOfKids: "",
   });
   const [done, setDone] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const steps = role === "au-pair"
     ? ["Mon rôle", "Infos personnelles", "Mon profil", "Confirmation"]
     : ["Mon rôle", "Infos famille", "Mes besoins", "Confirmation"];
 
-  const handleSubmit = () => {
-    // TODO: appel API d'inscription
-    setDone(true);
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          role,
+          firstName: form.firstName,
+          lastName: form.lastName,
+          email: form.email,
+          password: form.password,
+          country: form.country,
+          languages: form.languages,
+          educationLevel: form.educationLevel,
+          experience: form.experience,
+          city: form.city,
+          numberOfKids: form.numberOfKids,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setSubmitError(data.error ?? "Une erreur est survenue.");
+        return;
+      }
+
+      const { signIn } = await import("next-auth/react");
+      const signInResult = await signIn("credentials", {
+        email: form.email,
+        password: form.password,
+        redirect: false,
+      });
+
+      if (signInResult?.error) {
+        setSubmitError("Compte créé, mais connexion automatique échouée. Connectez-vous via la page de connexion.");
+      }
+
+      setDone(true);
+    } catch {
+      setSubmitError("Une erreur réseau est survenue. Veuillez réessayer.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (done) {
@@ -159,6 +205,31 @@ function InscriptionContent() {
                   </select>
                 </div>
                 <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Langues parlées *</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {LANGUAGES.map(lang => (
+                      <label key={lang} className={`flex items-center gap-2 border rounded-xl px-3 py-2 cursor-pointer text-sm transition-all ${
+                        form.languages.includes(lang)
+                          ? "border-[#E87722] bg-[#FFF3E0] text-[#E87722] font-semibold"
+                          : "border-gray-200 text-gray-700 hover:border-[#E87722]"
+                      }`}>
+                        <input
+                          type="checkbox"
+                          className="sr-only"
+                          checked={form.languages.includes(lang)}
+                          onChange={e => setForm({
+                            ...form,
+                            languages: e.target.checked
+                              ? [...form.languages, lang]
+                              : form.languages.filter(l => l !== lang),
+                          })}
+                        />
+                        {lang}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Niveau d'études</label>
                   <select value={form.educationLevel} onChange={e => setForm({ ...form, educationLevel: e.target.value })}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
@@ -217,6 +288,11 @@ function InscriptionContent() {
                 <p><span className="font-semibold text-gray-600">Email :</span> {form.email}</p>
                 <p><span className="font-semibold text-gray-600">Rôle :</span> {role === "au-pair" ? "Au pair" : "Famille d'accueil"}</p>
               </div>
+              {submitError && (
+                <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+                  {submitError}
+                </div>
+              )}
               <p className="text-xs text-gray-400 mb-4">
                 En créant un compte, vous acceptez nos{" "}
                 <Link href="/cgu" className="text-[#E87722] underline">CGU</Link> et notre{" "}
@@ -236,8 +312,9 @@ function InscriptionContent() {
                   Continuer <ArrowRight className="w-4 h-4" />
                 </Button>
               ) : (
-                <Button onClick={handleSubmit}>
-                  Créer mon compte <CheckCircle className="w-4 h-4" />
+                <Button onClick={handleSubmit} disabled={submitting}>
+                  {submitting ? "Création en cours..." : "Créer mon compte"}{" "}
+                  {!submitting && <CheckCircle className="w-4 h-4" />}
                 </Button>
               )}
             </div>
