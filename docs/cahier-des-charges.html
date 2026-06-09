@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Cahier des charges — AuPair A.EU</title>
+<style>
+  :root {
+    --orange: #E87722;
+    --navy: #1A1A2E;
+    --accent: #FFF3E0;
+    --grey: #6b7280;
+    --light: #f5f5f5;
+    --border: #e5e7eb;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1f2937;
+    line-height: 1.55;
+    font-size: 13px;
+    margin: 0;
+  }
+  /* ---- Page de garde ---- */
+  .cover {
+    height: 1040px;
+    background: linear-gradient(135deg, var(--navy) 0%, #0f3460 100%);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 80px;
+    page-break-after: always;
+  }
+  .cover .logo {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 60px;
+  }
+  .cover .logo .dot {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--orange);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+  }
+  .cover .logo span { font-size: 30px; font-weight: 800; }
+  .cover .logo span em { color: var(--orange); font-style: normal; }
+  .cover h1 { font-size: 52px; font-weight: 800; margin: 0 0 16px; line-height: 1.1; }
+  .cover .subtitle { font-size: 20px; color: #cbd5e1; max-width: 620px; margin-bottom: 50px; }
+  .cover .meta { border-top: 1px solid rgba(255,255,255,.2); padding-top: 24px; font-size: 14px; color: #cbd5e1; }
+  .cover .meta strong { color: #fff; }
+  .cover .tag {
+    display: inline-block; background: var(--orange); color: #fff;
+    padding: 6px 16px; border-radius: 999px; font-size: 13px; font-weight: 700;
+    margin-bottom: 30px; letter-spacing: .5px;
+  }
+
+  /* ---- Contenu ---- */
+  .content { padding: 50px 60px; }
+  h2 {
+    font-size: 24px; color: var(--navy); font-weight: 800;
+    border-bottom: 3px solid var(--orange); padding-bottom: 8px;
+    margin: 44px 0 18px; page-break-after: avoid;
+  }
+  h2:first-child { margin-top: 0; }
+  h3 { font-size: 17px; color: var(--navy); font-weight: 700; margin: 26px 0 10px; page-break-after: avoid; }
+  h4 { font-size: 14px; color: var(--orange); font-weight: 700; margin: 18px 0 6px; }
+  p { margin: 8px 0; }
+  ul, ol { margin: 8px 0; padding-left: 22px; }
+  li { margin: 4px 0; }
+  code {
+    background: var(--light); border: 1px solid var(--border); border-radius: 4px;
+    padding: 1px 5px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 11.5px;
+    color: #b91c1c;
+  }
+  pre {
+    background: var(--navy); color: #e2e8f0; border-radius: 8px; padding: 14px 16px;
+    font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 11px; line-height: 1.5;
+    overflow-x: auto; margin: 12px 0;
+  }
+  pre code { background: none; border: none; color: inherit; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 12px; }
+  th, td { border: 1px solid var(--border); padding: 7px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--navy); color: #fff; font-weight: 600; }
+  tr:nth-child(even) td { background: #fafafa; }
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+  .b-done { background: #dcfce7; color: #166534; }
+  .b-partial { background: #fef9c3; color: #854d0e; }
+  .b-todo { background: #fee2e2; color: #991b1b; }
+  .callout {
+    background: var(--accent); border-left: 4px solid var(--orange);
+    padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0;
+  }
+  .callout.warn { background: #fef2f2; border-left-color: #ef4444; }
+  .callout.info { background: #eff6ff; border-left-color: #3b82f6; }
+  .callout strong { color: var(--navy); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .card { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .card h4 { margin-top: 0; }
+  .toc { background: var(--light); border-radius: 10px; padding: 20px 28px; }
+  .toc ol { columns: 2; column-gap: 40px; }
+  .toc a { color: var(--navy); text-decoration: none; }
+  .phase-head {
+    background: var(--navy); color: #fff; border-radius: 8px 8px 0 0;
+    padding: 10px 16px; font-weight: 700; font-size: 15px; margin-top: 24px;
+  }
+  .phase-body { border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; padding: 14px 18px; }
+  .page-break { page-break-before: always; }
+  .muted { color: var(--grey); font-size: 12px; }
+  .kpi-row { display: flex; gap: 14px; margin: 16px 0; }
+  .kpi { flex: 1; background: var(--light); border-radius: 10px; padding: 16px; text-align: center; }
+  .kpi .num { font-size: 30px; font-weight: 800; color: var(--orange); }
+  .kpi .lbl { font-size: 11px; color: var(--grey); text-transform: uppercase; letter-spacing: .5px; }
+  footer { text-align: center; color: var(--grey); font-size: 11px; padding: 30px 0 10px; border-top: 1px solid var(--border); margin-top: 40px; }
+</style>
+</head>
+<body>
+
+<!-- ============ PAGE DE GARDE ============ -->
+<div class="cover">
+  <div class="logo">
+    <div class="dot">🌍</div>
+    <span>AuPair<em>A.EU</em></span>
+  </div>
+  <div class="tag">CAHIER DES CHARGES &amp; DOCUMENT DE REPRISE</div>
+  <h1>Plateforme AuPair A.EU</h1>
+  <div class="subtitle">Première plateforme mondiale dédiée aux au pairs africains — mise en relation avec des familles d'accueil en Europe et en Amérique.</div>
+  <div class="meta">
+    <p><strong>Objet du document :</strong> présentation complète du projet, état d'avancement et feuille de route de finalisation, destiné à un développeur reprenant le projet.</p>
+    <p><strong>Version :</strong> 1.0 &nbsp;•&nbsp; <strong>Date :</strong> 9 juin 2026 &nbsp;•&nbsp; <strong>Stack :</strong> Next.js 16 / TypeScript / Prisma 7 / PostgreSQL</p>
+  </div>
+</div>
+
+<div class="content">
+
+<!-- ============ SOMMAIRE ============ -->
+<h2>Sommaire</h2>
+<div class="toc">
+<ol>
+  <li><a href="#presentation">Présentation du projet</a></li>
+  <li><a href="#stack">Stack technique</a></li>
+  <li><a href="#charte">Charte graphique</a></li>
+  <li><a href="#users">Types d'utilisateurs &amp; modèle économique</a></li>
+  <li><a href="#architecture">Architecture &amp; arborescence</a></li>
+  <li><a href="#data">Modèle de données (Prisma)</a></li>
+  <li><a href="#etat">État d'avancement réel</a></li>
+  <li><a href="#fait">Ce qui est implémenté</a></li>
+  <li><a href="#reste">Ce qui reste à faire</a></li>
+  <li><a href="#roadmap">Feuille de route de finalisation</a></li>
+  <li><a href="#setup">Installation &amp; démarrage</a></li>
+  <li><a href="#pieges">Points d'attention techniques</a></li>
+  <li><a href="#recette">Critères de recette</a></li>
+</ol>
+</div>
+
+<!-- ============ 1. PRESENTATION ============ -->
+<h2 id="presentation">1. Présentation du projet</h2>
+<p><strong>AuPair A.EU</strong> est une plateforme web de mise en relation entre de jeunes Africains souhaitant devenir au pair et des familles d'accueil situées en Europe et en Amérique du Nord. Elle se positionne comme la première plateforme mondiale spécialisée sur ce segment.</p>
+
+<h3>Proposition de valeur</h3>
+<ul>
+  <li><strong>Pour les au pairs :</strong> accès à un annuaire de familles vérifiées, création d'un profil détaillé, messagerie directe, accompagnement vers une expérience à l'étranger.</li>
+  <li><strong>Pour les familles :</strong> recherche d'au pairs qualifiés, profils vérifiés, inscription gratuite et illimitée.</li>
+</ul>
+
+<h3>Modèle économique</h3>
+<p>Abonnement <strong>32 € / 30 jours</strong> côté au pair pour débloquer la messagerie. Inscription <strong>gratuite</strong> côté famille. Paiement prévu par carte bancaire / PayPal (Stripe) et Mobile Money (CinetPay) pour le marché africain.</p>
+
+<h3>Objectif de la mission de reprise</h3>
+<div class="callout">
+  <p>Le projet dispose aujourd'hui d'un <strong>front-end complet et abouti</strong> (toutes les pages, l'UI, la charte) mais le <strong>back-end est très largement à construire</strong>. La mission consiste à transformer ce prototype d'interface en une <strong>application réellement fonctionnelle</strong> : authentification, base de données réelle, API, messagerie, paiement, emails.</p>
+</div>
+
+<!-- ============ 2. STACK ============ -->
+<h2 id="stack">2. Stack technique</h2>
+<table>
+  <tr><th>Domaine</th><th>Technologie</th><th>Notes</th></tr>
+  <tr><td>Framework</td><td>Next.js 16 (App Router)</td><td>TypeScript strict, React 19</td></tr>
+  <tr><td>UI</td><td>Tailwind CSS 4 + composants custom</td><td><code>@/components/ui/</code>, Radix UI, Lucide React</td></tr>
+  <tr><td>ORM</td><td>Prisma 7 + adapter <code>@prisma/adapter-pg</code></td><td>Client généré dans <code>src/generated/prisma</code></td></tr>
+  <tr><td>Base de données</td><td>PostgreSQL</td><td>Supabase en production</td></tr>
+  <tr><td>Authentification</td><td>NextAuth.js v5 (beta)</td><td>Google + Facebook OAuth + Credentials</td></tr>
+  <tr><td>Messagerie</td><td>Supabase Realtime <span class="muted">(prévu)</span></td><td>Polling REST en première étape</td></tr>
+  <tr><td>Paiement</td><td>Stripe + CinetPay <span class="muted">(prévu)</span></td><td>CB/PayPal + Mobile Money</td></tr>
+  <tr><td>Emails</td><td>Resend <span class="muted">(prévu)</span></td><td>Emails transactionnels</td></tr>
+  <tr><td>Stockage fichiers</td><td>Supabase Storage <span class="muted">(prévu)</span></td><td>Photos de profil, documents</td></tr>
+  <tr><td>Hébergement</td><td>Vercel</td><td>Build avec <code>prisma generate</code> en postinstall</td></tr>
+  <tr><td>Internationalisation</td><td>next-intl</td><td>FR / EN (sélecteur présent dans la navbar)</td></tr>
+  <tr><td>Tests E2E</td><td>Playwright</td><td>Installé, suite à écrire</td></tr>
+</table>
+
+<!-- ============ 3. CHARTE ============ -->
+<h2 id="charte">3. Charte graphique</h2>
+<div class="grid2">
+  <div class="card">
+    <h4>Couleurs</h4>
+    <ul style="list-style:none;padding-left:0">
+      <li><span class="badge" style="background:#E87722;color:#fff">#E87722</span> &nbsp;Principale (orange)</li>
+      <li><span class="badge" style="background:#1A1A2E;color:#fff">#1A1A2E</span> &nbsp;Secondaire (bleu nuit)</li>
+      <li><span class="badge" style="background:#FFF3E0;color:#854d0e">#FFF3E0</span> &nbsp;Accent (orange clair)</li>
+      <li><span class="badge" style="background:#F5F5F5;color:#374151">#F5F5F5</span> &nbsp;Fond gris</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>Typographie &amp; icônes</h4>
+    <ul>
+      <li><strong>Police :</strong> Inter (Google Fonts)</li>
+      <li><strong>Icônes :</strong> Lucide React</li>
+      <li><strong>Style :</strong> arrondis (<code>rounded-xl/2xl</code>), ombres douces, beaucoup d'espace</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============ 4. UTILISATEURS ============ -->
+<h2 id="users">4. Types d'utilisateurs &amp; modèle économique</h2>
+<table>
+  <tr><th>Rôle</th><th>Accès</th><th>Conditions</th></tr>
+  <tr><td><code>AU_PAIR</code></td><td>Profil, recherche de familles, messagerie</td><td><strong>Abonnement 32 €/30 j requis</strong> pour la messagerie</td></tr>
+  <tr><td><code>FAMILLE</code></td><td>Profil, recherche d'au pairs, messagerie</td><td>Inscription gratuite, accès illimité</td></tr>
+  <tr><td><code>AGENCE</code></td><td>(prévu)</td><td>Non développé à ce stade</td></tr>
+  <tr><td><code>ADMIN</code></td><td>Back-office complet</td><td>Modération, gestion utilisateurs, paiements</td></tr>
+</table>
+
+<!-- ============ 5. ARCHITECTURE ============ -->
+<h2 id="architecture" class="page-break">5. Architecture &amp; arborescence</h2>
+<pre><code>src/
+├── app/
+│   ├── (pages publiques)/      → /devenir-au-pair, /tarifs, /faq, /contact…
+│   ├── trouver-au-pair/        → Annuaire au pairs
+│   ├── trouver-famille/        → Annuaire familles
+│   ├── connexion/              → Login (Credentials + Google + Facebook)
+│   ├── inscription/            → Register (stepper 4 étapes)
+│   ├── dashboard/
+│   │   ├── au-pair/            → Tableau de bord, profil, messages, abonnement
+│   │   └── famille/            → Tableau de bord (sous-pages à compléter)
+│   ├── admin/                  → Back-office (users, modération, paiements)
+│   ├── api/                    → Routes API (à construire en majorité)
+│   │   └── auth/[...nextauth]  → Handler NextAuth + /register (amorcés)
+│   ├── blog/                   → Liste + [slug]
+│   ├── sitemap.ts / robots.ts  → SEO
+│   └── layout.tsx              → Layout racine (Navbar + Footer)
+├── components/
+│   ├── ui/                     → Button, Badge, Card (design system)
+│   ├── layout/                 → Navbar, Footer, DashboardLayout, AdminLayout
+│   └── home/                   → HeroSection, StatsSection, HowItWorks…
+├── lib/
+│   ├── prisma.ts               → Client Prisma (adapter PrismaPg) ✓
+│   ├── auth.ts                 → Config NextAuth v5 ✓
+│   ├── safe-redirect.ts        → Validation anti open-redirect (OWASP) ✓
+│   ├── utils.ts                → cn(), formatDate(), calculateAge()…
+│   └── constants.ts            → Pays, langues, prix
+├── generated/prisma/           → Client Prisma généré (NE PAS éditer)
+├── middleware.ts               → Protection /dashboard et /admin ✓
+└── types/next-auth.d.ts        → Extension types (role, id) ✓</code></pre>
+
+<!-- ============ 6. DONNEES ============ -->
+<h2 id="data">6. Modèle de données (Prisma)</h2>
+<p>Le schéma <code>prisma/schema.prisma</code> est <strong>complet et prêt à l'emploi</strong> (14 modèles + 9 enums). Particularité Prisma 7 : le <code>datasource</code> ne contient pas d'<code>url</code> — celle-ci est définie dans <code>prisma.config.ts</code> via <code>process.env.DATABASE_URL</code>.</p>
+
+<h4>Modèles principaux</h4>
+<table>
+  <tr><th>Modèle</th><th>Rôle</th></tr>
+  <tr><td><code>User</code></td><td>Compte (email, password hashé, role, isVerified, isActive) + relations</td></tr>
+  <tr><td><code>Account</code> / <code>Session</code> / <code>VerificationToken</code></td><td>Tables NextAuth (OAuth, sessions)</td></tr>
+  <tr><td><code>AuPairProfile</code></td><td>Profil au pair complet (identité, langues, expérience, disponibilités, photos, statut de modération)</td></tr>
+  <tr><td><code>FamilyProfile</code></td><td>Profil famille (localisation, enfants, tâches, rémunération, préférences)</td></tr>
+  <tr><td><code>Subscription</code></td><td>Abonnements (montant, devise, moyen de paiement, dates, statut)</td></tr>
+  <tr><td><code>Message</code></td><td>Messagerie (sender/receiver, contenu, statut, flag modération)</td></tr>
+  <tr><td><code>Favorite</code> / <code>Report</code> / <code>Block</code></td><td>Favoris, signalements, blocages entre utilisateurs</td></tr>
+  <tr><td><code>BlogPost</code> / <code>FaqItem</code> / <code>Testimonial</code></td><td>Contenus éditoriaux (bilingues FR/EN)</td></tr>
+  <tr><td><code>Notification</code></td><td>Notifications utilisateur</td></tr>
+  <tr><td><code>Ticket</code> / <code>TicketMessage</code></td><td>Support client</td></tr>
+</table>
+
+<h4>Enums clés</h4>
+<p><code>UserRole</code> (AU_PAIR, FAMILLE, AGENCE, ADMIN) · <code>ProfileStatus</code> (PENDING, ACTIVE, HIDDEN, SUSPENDED, DELETED) · <code>SubscriptionStatus</code> (ACTIVE, EXPIRED, CANCELLED, REFUNDED) · <code>PaymentMethod</code> (MOBILE_MONEY, CARD, PAYPAL) · <code>Currency</code> (EUR, XOF, USD) · <code>MessageStatus</code> · <code>MaritalStatus</code> · <code>TicketStatus</code> · <code>TicketPriority</code>.</p>
+
+<div class="callout info">
+<strong>Important :</strong> le schéma est prêt, mais <strong>aucune migration n'a encore été appliquée</strong> à une base réelle, et <strong>aucune page de l'application n'utilise Prisma</strong> à ce jour (toutes les données sont codées en dur dans les composants).
+</div>
+
+<!-- ============ 7. ETAT ============ -->
+<h2 id="etat" class="page-break">7. État d'avancement réel</h2>
+<p>Vérification effectuée directement dans le code (et non sur la documentation). Résumé :</p>
+
+<div class="kpi-row">
+  <div class="kpi"><div class="num">100%</div><div class="lbl">Front-end / UI</div></div>
+  <div class="kpi"><div class="num">~5%</div><div class="lbl">Back-end / API</div></div>
+  <div class="kpi"><div class="num">0%</div><div class="lbl">Données réelles</div></div>
+  <div class="kpi"><div class="num">0%</div><div class="lbl">Intégrations tierces</div></div>
+</div>
+
+<table>
+  <tr><th>Chantier</th><th>État</th><th>Détail</th></tr>
+  <tr><td>Pages &amp; UI (22 pages)</td><td><span class="badge b-done">FAIT</span></td><td>Toutes les pages publiques, dashboards et admin existent, responsives, charte appliquée</td></tr>
+  <tr><td>Composants &amp; layouts</td><td><span class="badge b-done">FAIT</span></td><td>Design system (Button, Card, Badge), Navbar, Footer, layouts dashboard/admin</td></tr>
+  <tr><td>Config NextAuth (auth.ts)</td><td><span class="badge b-done">FAIT</span></td><td>Providers Google/Facebook/Credentials, callbacks JWT/session, PrismaAdapter</td></tr>
+  <tr><td>Schéma Prisma</td><td><span class="badge b-done">FAIT</span></td><td>14 modèles complets, prêt pour <code>db push</code></td></tr>
+  <tr><td>Middleware de protection</td><td><span class="badge b-done">FAIT</span></td><td>Garde <code>/dashboard</code> et <code>/admin</code>, redirections sécurisées</td></tr>
+  <tr><td>Sécurité redirections</td><td><span class="badge b-done">FAIT</span></td><td><code>safe-redirect.ts</code> conforme OWASP (anti open-redirect)</td></tr>
+  <tr><td>Route API NextAuth</td><td><span class="badge b-partial">AMORCÉ</span></td><td><code>/api/auth/[...nextauth]</code> et <code>/api/auth/register</code> créés durant l'analyse</td></tr>
+  <tr><td>Connexion BDD réelle</td><td><span class="badge b-todo">À FAIRE</span></td><td><code>DATABASE_URL</code> = placeholder, aucune migration appliquée</td></tr>
+  <tr><td>Données dynamiques (Prisma)</td><td><span class="badge b-todo">À FAIRE</span></td><td>Toutes les pages utilisent des tableaux <code>mock*</code> en dur</td></tr>
+  <tr><td>API métier (profils, messages…)</td><td><span class="badge b-todo">À FAIRE</span></td><td>Dossier <code>/api</code> quasi vide</td></tr>
+  <tr><td>Messagerie fonctionnelle</td><td><span class="badge b-todo">À FAIRE</span></td><td>UI statique, pas de persistance ni gating réel</td></tr>
+  <tr><td>Paiement (Stripe / CinetPay)</td><td><span class="badge b-todo">À FAIRE</span></td><td>Packages installés, zéro intégration ; cités uniquement dans les textes</td></tr>
+  <tr><td>Emails (Resend)</td><td><span class="badge b-todo">À FAIRE</span></td><td>Package installé, jamais utilisé</td></tr>
+  <tr><td>Upload photos (Supabase Storage)</td><td><span class="badge b-todo">À FAIRE</span></td><td>Bouton décoratif non fonctionnel</td></tr>
+  <tr><td>Dashboard famille (sous-pages)</td><td><span class="badge b-todo">À FAIRE</span></td><td>5 sous-pages liées dans la nav mais inexistantes</td></tr>
+  <tr><td>Tests E2E</td><td><span class="badge b-todo">À FAIRE</span></td><td>Playwright installé, aucune suite écrite</td></tr>
+</table>
+
+<!-- ============ 8. FAIT ============ -->
+<h2 id="fait">8. Ce qui est implémenté (détail)</h2>
+<h4>Pages publiques (toutes en place)</h4>
+<p><code>/</code> (accueil), <code>/devenir-au-pair</code>, <code>/accueillir-un-au-pair</code>, <code>/tarifs</code>, <code>/faq</code>, <code>/contact</code>, <code>/trouver-au-pair</code>, <code>/trouver-famille</code>, <code>/blog</code> + <code>/blog/[slug]</code>, <code>/mentions-legales</code>, <code>/securite</code>, <code>/sitemap.xml</code>, <code>/robots.txt</code>.</p>
+<h4>Authentification (UI)</h4>
+<p><code>/connexion</code> (email/password + Google + Facebook) et <code>/inscription</code> (stepper 4 étapes choix rôle → infos → profil → confirmation).</p>
+<h4>Dashboards</h4>
+<p><strong>Au pair :</strong> tableau de bord (KPIs, statut abonnement), <code>/profil</code>, <code>/messages</code>, <code>/abonnement</code>. <strong>Famille :</strong> tableau de bord principal uniquement.</p>
+<h4>Back-office admin</h4>
+<p><code>/admin</code> (KPIs, alertes), <code>/admin/utilisateurs</code>, <code>/admin/moderation</code>, <code>/admin/paiements</code>.</p>
+
+<!-- ============ 9. RESTE ============ -->
+<h2 id="reste">9. Ce qui reste à faire (synthèse)</h2>
+<ol>
+  <li><strong>Base de données réelle</strong> — provisionner PostgreSQL (Supabase prod + Postgres local en dev), appliquer le schéma, créer un jeu de données de seed.</li>
+  <li><strong>Authentification de bout en bout</strong> — finaliser les routes API, brancher inscription/connexion, exposer la session côté client, gérer la déconnexion dans la navbar.</li>
+  <li><strong>Remplacement des données mock</strong> — convertir annuaires, dashboards, blog et FAQ en lectures Prisma réelles.</li>
+  <li><strong>API métier</strong> — profils (CRUD), messages, abonnement, contact, actions admin.</li>
+  <li><strong>Messagerie</strong> — persistance + gating abonnement (côté serveur), puis temps réel.</li>
+  <li><strong>Paiement</strong> — Stripe Checkout + webhook, CinetPay Mobile Money.</li>
+  <li><strong>Emails transactionnels</strong> — Resend (bienvenue, confirmation, rappels d'expiration).</li>
+  <li><strong>Upload de fichiers</strong> — Supabase Storage (photos de profil, pièces d'identité).</li>
+  <li><strong>Pages légales</strong> — compléter CGU, CGV, confidentialité, cookies.</li>
+  <li><strong>Tests E2E</strong> — suite Playwright sur les parcours critiques.</li>
+</ol>
+
+<!-- ============ 10. ROADMAP ============ -->
+<h2 id="roadmap" class="page-break">10. Feuille de route de finalisation</h2>
+<p>Approche recommandée : <strong>MVP d'abord</strong> (parcours utilisable rapidement), paiement réel et temps réel en dernier. Chaque phase est livrable et testable indépendamment.</p>
+
+<div class="phase-head">Phase 0 — Base de données opérationnelle</div>
+<div class="phase-body">
+<ul>
+  <li>Provisionner PostgreSQL : Postgres local pour le dev (Homebrew/Docker) + projet Supabase pour la prod.</li>
+  <li>Renseigner <code>DATABASE_URL</code>, puis <code>npx prisma generate</code> et <code>npx prisma db push</code>.</li>
+  <li>Créer <code>prisma/seed.ts</code> : 1 ADMIN, 2 au pairs + 2 familles (profils ACTIVE), articles de blog, FAQ, témoignages. Mots de passe hashés via <code>bcryptjs</code>.</li>
+</ul>
+</div>
+
+<div class="phase-head">Phase 1 — Authentification fonctionnelle (bloquant)</div>
+<div class="phase-body">
+<ul>
+  <li><code>src/app/api/auth/[...nextauth]/route.ts</code> exportant <code>{ GET, POST } = handlers</code> <span class="muted">(amorcé)</span>.</li>
+  <li><code>src/app/api/auth/register/route.ts</code> : crée <code>User</code> + profil (PENDING), hash bcrypt, email unique <span class="muted">(amorcé)</span>.</li>
+  <li>Brancher le stepper d'inscription (remplacer le TODO par un <code>fetch</code> POST puis <code>signIn</code>).</li>
+  <li>Ajouter <code>&lt;SessionProvider&gt;</code> dans le layout racine ; brancher l'état connecté + <code>signOut</code> dans la Navbar.</li>
+</ul>
+</div>
+
+<div class="phase-head">Phase 2 — Données réelles : annuaires &amp; profils</div>
+<div class="phase-body">
+<ul>
+  <li>Convertir les annuaires (<code>/trouver-au-pair</code>, <code>/trouver-famille</code>) en Server Components avec requêtes Prisma (<code>findMany</code> où <code>status = ACTIVE</code>), filtres via query params.</li>
+  <li>Pages de détail <code>[id]</code> (lecture + bouton « contacter », incrément <code>profileViews</code>).</li>
+  <li>Éditeur de profil au pair + famille branchés sur API <code>/api/profils/...</code> (GET/PUT).</li>
+  <li>Créer les 5 sous-pages manquantes du dashboard famille (profil, recherche, messages, notifications, paramètres).</li>
+  <li>KPIs des dashboards + Blog + FAQ alimentés par Prisma.</li>
+</ul>
+</div>
+
+<div class="phase-head">Phase 3 — Messagerie (polling puis temps réel)</div>
+<div class="phase-body">
+<ul>
+  <li>API <code>/api/messages</code> (liste conversations, envoi) et <code>/api/messages/[userId]</code> (fil + marquage lu).</li>
+  <li>Gating abonnement réel <strong>côté serveur</strong> : helper <code>hasActiveSubscription(userId)</code> ; un au pair sans abonnement actif ne peut pas envoyer (les familles ne sont pas restreintes).</li>
+  <li>UI branchée avec polling (~5 s), puis migration vers Supabase Realtime.</li>
+</ul>
+</div>
+
+<div class="phase-head">Phase 4 — Abonnement</div>
+<div class="phase-body">
+<ul>
+  <li>API <code>/api/abonnement</code> : activation (création <code>Subscription</code> ACTIVE, +30 jours) et lecture (jours restants).</li>
+  <li>Étape transitoire possible : activation <strong>simulée</strong> pour tester le gating avant l'intégration paiement réelle.</li>
+</ul>
+</div>
+
+<div class="phase-head">Phase 5 — Contact &amp; back-office admin</div>
+<div class="phase-body">
+<ul>
+  <li>Formulaire contact → création d'un <code>Ticket</code>.</li>
+  <li>Brancher les pages admin (utilisateurs, modération, paiements) sur Prisma ; API d'actions (valider / masquer / supprimer) protégées par vérification <code>role === "ADMIN"</code>.</li>
+</ul>
+</div>
+
+<div class="phase-head">Phase 6 — Upload photos (Supabase Storage)</div>
+<div class="phase-body">
+<ul>
+  <li>Bucket Supabase Storage, API <code>/api/upload</code> (multipart), stockage des URLs dans <code>profilePhotoUrl</code> / <code>familyPhotoUrl</code> / <code>idDocumentUrl</code>.</li>
+</ul>
+</div>
+
+<div class="phase-head">Phase 7 — Paiement réel &amp; emails (post-MVP)</div>
+<div class="phase-body">
+<ul>
+  <li>Stripe Checkout + webhook (<code>/api/webhooks/stripe</code>) ; CinetPay pour le Mobile Money.</li>
+  <li>Resend : emails transactionnels (bienvenue, confirmation d'abonnement, rappels d'expiration).</li>
+</ul>
+</div>
+
+<!-- ============ 11. SETUP ============ -->
+<h2 id="setup" class="page-break">11. Installation &amp; démarrage</h2>
+<pre><code># 1. Dépendances
+npm install
+
+# 2. Variables d'environnement — copier et compléter
+cp .env.local .env   # renseigner DATABASE_URL, NEXTAUTH_SECRET, clés OAuth, etc.
+
+# 3. Base de données (schéma déjà prêt)
+npx prisma generate          # régénère le client (auto en postinstall)
+npx prisma db push           # applique le schéma à la base
+npx prisma studio            # (optionnel) interface graphique BDD
+
+# 4. Développement
+npm run dev                  # http://localhost:3000
+
+# 5. Build production
+npm run build
+
+# 6. Tests E2E
+npx playwright test</code></pre>
+
+<h4>Variables d'environnement requises (<code>.env.local</code>)</h4>
+<table>
+  <tr><th>Variable</th><th>Usage</th></tr>
+  <tr><td><code>DATABASE_URL</code></td><td>Connexion PostgreSQL (pooler Supabase en prod)</td></tr>
+  <tr><td><code>NEXTAUTH_URL</code> / <code>NEXTAUTH_SECRET</code></td><td>NextAuth — secret à régénérer pour la prod</td></tr>
+  <tr><td><code>GOOGLE_CLIENT_ID/SECRET</code></td><td>OAuth Google</td></tr>
+  <tr><td><code>FACEBOOK_CLIENT_ID/SECRET</code></td><td>OAuth Facebook</td></tr>
+  <tr><td><code>STRIPE_SECRET_KEY</code> / <code>NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code> / <code>STRIPE_WEBHOOK_SECRET</code></td><td>Paiement Stripe</td></tr>
+  <tr><td><code>CINETPAY_API_KEY</code> / <code>CINETPAY_SITE_ID</code></td><td>Paiement Mobile Money</td></tr>
+  <tr><td><code>RESEND_API_KEY</code> / <code>RESEND_FROM_EMAIL</code></td><td>Emails transactionnels</td></tr>
+  <tr><td><code>NEXT_PUBLIC_SUPABASE_URL</code> / <code>..._ANON_KEY</code> / <code>SUPABASE_SERVICE_ROLE_KEY</code></td><td>Realtime + Storage</td></tr>
+</table>
+<p class="muted">Toutes les valeurs actuelles sont des placeholders à remplacer par les vraies clés.</p>
+
+<!-- ============ 12. PIEGES ============ -->
+<h2 id="pieges">12. Points d'attention techniques</h2>
+
+<div class="callout warn">
+<strong>Prisma 7</strong>
+<ul>
+  <li>Le <code>datasource</code> du <code>schema.prisma</code> n'a <strong>pas</strong> de champ <code>url</code> (nouveauté v7) ; l'URL est dans <code>prisma.config.ts</code>.</li>
+  <li>Importer le client depuis <code>@/generated/prisma/client</code> (et non <code>@prisma/client</code>).</li>
+  <li>Utiliser l'adapter <code>PrismaPg</code> (déjà fait dans <code>src/lib/prisma.ts</code>).</li>
+  <li>Après tout changement de schéma : <code>npx prisma generate</code> puis <code>npx prisma db push</code>.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<strong>NextAuth v5</strong>
+<ul>
+  <li>Importer <code>auth</code>, <code>signIn</code>, <code>signOut</code>, <code>handlers</code> depuis <code>@/lib/auth</code>.</li>
+  <li>Dans une route API ou un Server Component : <code>const session = await auth()</code>.</li>
+  <li>La stratégie de session est <strong>JWT</strong> ; le rôle et l'id sont propagés via les callbacks.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<strong>Next.js App Router — règle Client / Server</strong>
+<ul>
+  <li>Une page qui passe des composants React (ex. icônes Lucide) en props à un Client Component doit être <code>"use client"</code>.</li>
+  <li>Une page <code>"use client"</code> ne peut <strong>pas</strong> exporter <code>metadata</code> → créer un wrapper Server Component si besoin de SEO.</li>
+</ul>
+</div>
+
+<div class="callout info">
+<strong>Bonnes pratiques attendues</strong> : valider toutes les entrées API avant écriture (zod recommandé), réutiliser l'instance Prisma partagée de <code>src/lib/prisma.ts</code>, vérifier <code>role === "ADMIN"</code> côté serveur sur les routes admin, ne jamais faire confiance au gating uniquement côté UI.
+</div>
+
+<!-- ============ 13. RECETTE ============ -->
+<h2 id="recette">13. Critères de recette (parcours à valider)</h2>
+<table>
+  <tr><th>#</th><th>Parcours</th><th>Critère de succès</th></tr>
+  <tr><td>1</td><td>Inscription au pair</td><td>Création <code>User</code> + <code>AuPairProfile</code> en base, redirection dashboard</td></tr>
+  <tr><td>2</td><td>Connexion</td><td>Credentials + OAuth fonctionnels, redirection selon le rôle</td></tr>
+  <tr><td>3</td><td>Profil</td><td>Édition persistée et visible après rechargement</td></tr>
+  <tr><td>4</td><td>Annuaires</td><td>Un profil ACTIVE apparaît dans la recherche avec filtres</td></tr>
+  <tr><td>5</td><td>Messagerie — gating</td><td>Au pair sans abonnement bloqué (UI + 403 API) ; débloqué après abonnement</td></tr>
+  <tr><td>6</td><td>Messagerie — échange</td><td>Le message arrive chez le destinataire</td></tr>
+  <tr><td>7</td><td>Contact</td><td>Soumission crée un <code>Ticket</code></td></tr>
+  <tr><td>8</td><td>Admin</td><td>Valider/masquer un profil modifie son affichage public</td></tr>
+  <tr><td>9</td><td>Paiement</td><td>Checkout + webhook activent un abonnement réel</td></tr>
+  <tr><td>10</td><td>Build</td><td><code>npm run build</code> passe (TypeScript strict, séparation client/server)</td></tr>
+</table>
+
+<footer>
+  AuPair A.EU — Cahier des charges &amp; document de reprise · Version 1.0 · 9 juin 2026<br>
+  Document destiné à la reprise du développement par un tiers.
+</footer>
+
+</div>
+</body>
+</html>
