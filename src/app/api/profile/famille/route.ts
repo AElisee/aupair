@@ -24,6 +24,7 @@ export async function GET() {
 
   return NextResponse.json({
     status: profile.status,
+    familyPhotoUrl: profile.familyPhotoUrl ?? "",
     firstName: firstName ?? "",
     lastName: rest.join(" "),
     country: profile.country,

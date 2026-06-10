@@ -147,8 +147,16 @@ export default function ProfileDetailModal({
           <>
             <div className="sticky top-0 bg-white border-b border-gray-100 p-5 flex items-start justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-[#E87722] rounded-full flex items-center justify-center text-white text-lg font-bold flex-shrink-0">
-                  {(data.role === "AU_PAIR" ? data.firstName : data.name ?? "F").charAt(0)}
+                <div className="w-12 h-12 bg-[#E87722] rounded-full flex items-center justify-center text-white text-lg font-bold flex-shrink-0 overflow-hidden">
+                  {(() => {
+                    const photoUrl = data.role === "AU_PAIR" ? data.profilePhotoUrl : data.familyPhotoUrl;
+                    return photoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={photoUrl} alt="" className="w-full h-full object-cover object-top" />
+                    ) : (
+                      (data.role === "AU_PAIR" ? data.firstName : data.name ?? "F").charAt(0)
+                    );
+                  })()}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">

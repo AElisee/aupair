@@ -2,6 +2,7 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { User, Search, MessageCircle, Bell, CreditCard, Settings, Home, CheckCircle, Clock, Smartphone, Globe } from "lucide-react";
+import { formatDate } from "@/lib/utils";
 
 const navItems = [
   { href: "/dashboard/au-pair", icon: Home, label: "Tableau de bord" },
@@ -33,7 +34,7 @@ export default function AbonnementPage() {
             </div>
             <div>
               <p className="text-3xl font-extrabold text-[#1A1A2E]">{currentSub.daysLeft} jours</p>
-              <p className="text-sm text-gray-500">restants · Expire le {new Date(currentSub.expiresAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</p>
+              <p className="text-sm text-gray-500">restants · Expire le {formatDate(currentSub.expiresAt)}</p>
             </div>
           </div>
           <div className="w-full bg-gray-100 rounded-full h-2">

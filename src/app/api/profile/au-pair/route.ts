@@ -36,6 +36,7 @@ export async function GET() {
 
   return NextResponse.json({
     status: profile.status,
+    profilePhotoUrl: profile.profilePhotoUrl ?? "",
     firstName: profile.firstName,
     lastName: profile.lastName,
     dateOfBirth: profile.dateOfBirth.toISOString().slice(0, 10),

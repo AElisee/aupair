@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession, setProfileStatus } from "@/lib/admin";
 import { ProfileStatus } from "@/generated/prisma/client";
+import { formatDate } from "@/lib/utils";
 
 export async function GET() {
   const session = await requireAdminSession();
@@ -34,6 +35,7 @@ export async function GET() {
       status: p.status,
       subscribed: subscribedUserIds.has(p.userId),
       createdAt: p.user.createdAt,
+      photoUrl: p.profilePhotoUrl ?? "",
     })),
     ...families.map((p) => ({
       id: p.userId,
@@ -44,10 +46,11 @@ export async function GET() {
       status: p.status,
       subscribed: false,
       createdAt: p.user.createdAt,
+      photoUrl: p.familyPhotoUrl ?? "",
     })),
   ]
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-    .map((u) => ({ ...u, createdAt: u.createdAt.toISOString().slice(0, 10) }));
+    .map((u) => ({ ...u, createdAt: formatDate(u.createdAt) }));
 
   return NextResponse.json({ users });
 }

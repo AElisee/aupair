@@ -12,6 +12,7 @@ import { useCountries } from "@/hooks/useCountries";
 type AuPair = {
   id: string;
   firstName: string;
+  profilePhotoUrl: string;
   age: number;
   country: string;
   flag: string;
@@ -23,13 +24,18 @@ type AuPair = {
 };
 
 function AuPairCard({ ap, isFamily }: { ap: AuPair; isFamily: boolean }) {
-  return (
+  const card = (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden group">
       {/* Photo */}
-      <div className="relative h-48 bg-gradient-to-br from-[#FFF3E0] to-[#FFE0B2] flex items-center justify-center">
-        <div className="w-20 h-20 bg-[#E87722] rounded-full flex items-center justify-center text-white text-3xl font-bold">
-          {ap.firstName.charAt(0)}
-        </div>
+      <div className="relative h-48 bg-gradient-to-br from-[#FFF3E0] to-[#FFE0B2] flex items-center justify-center overflow-hidden">
+        {ap.profilePhotoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={ap.profilePhotoUrl} alt={ap.firstName} className="absolute inset-0 w-full h-full object-cover object-top" />
+        ) : (
+          <div className="w-20 h-20 bg-[#E87722] rounded-full flex items-center justify-center text-white text-3xl font-bold">
+            {ap.firstName.charAt(0)}
+          </div>
+        )}
         {!ap.available && (
           <div className="absolute top-3 right-3">
             <Badge variant="warning">Indisponible</Badge>
@@ -83,6 +89,11 @@ function AuPairCard({ ap, isFamily }: { ap: AuPair; isFamily: boolean }) {
       </div>
     </div>
   );
+
+  if (isFamily) {
+    return <Link href={`/dashboard/famille/au-pair/${ap.id}`} className="block">{card}</Link>;
+  }
+  return card;
 }
 
 export default function TrouverAuPairPage() {

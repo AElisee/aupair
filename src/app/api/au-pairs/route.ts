@@ -18,6 +18,7 @@ export async function GET() {
   const auPairs = profiles.map((p) => ({
     id: p.userId,
     firstName: p.firstName,
+    profilePhotoUrl: p.profilePhotoUrl ?? "",
     age: calculateAge(p.dateOfBirth),
     country: p.countryOfOrigin,
     flag: flagMap[p.countryOfOrigin] ?? "",

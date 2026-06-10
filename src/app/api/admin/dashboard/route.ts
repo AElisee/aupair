@@ -41,12 +41,12 @@ export async function GET() {
     prisma.auPairProfile.findMany({
       take: 5,
       orderBy: { createdAt: "desc" },
-      select: { userId: true, firstName: true, lastName: true, countryOfOrigin: true, status: true, createdAt: true },
+      select: { userId: true, firstName: true, lastName: true, countryOfOrigin: true, status: true, createdAt: true, profilePhotoUrl: true },
     }),
     prisma.familyProfile.findMany({
       take: 5,
       orderBy: { createdAt: "desc" },
-      select: { userId: true, country: true, status: true, createdAt: true, user: { select: { name: true } } },
+      select: { userId: true, country: true, status: true, createdAt: true, familyPhotoUrl: true, user: { select: { name: true } } },
     }),
     prisma.subscription.findMany({
       take: 5,
@@ -75,6 +75,7 @@ export async function GET() {
       status: p.status,
       date: formatRelativeDate(p.createdAt),
       createdAt: p.createdAt,
+      photoUrl: p.profilePhotoUrl ?? "",
     })),
     ...recentFamilies.map((p) => ({
       id: p.userId,
@@ -84,11 +85,12 @@ export async function GET() {
       status: p.status,
       date: formatRelativeDate(p.createdAt),
       createdAt: p.createdAt,
+      photoUrl: p.familyPhotoUrl ?? "",
     })),
   ]
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
     .slice(0, 5)
-    .map(({ id, name, role, country, status, date }) => ({ id, name, role, country, status, date }));
+    .map(({ id, name, role, country, status, date, photoUrl }) => ({ id, name, role, country, status, date, photoUrl }));
 
   const recentPayments = recentSubscriptions.map((s) => ({
     id: s.id,

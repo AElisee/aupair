@@ -14,6 +14,7 @@ type AdminUser = {
   status: string;
   subscribed: boolean;
   createdAt: string;
+  photoUrl: string;
 };
 
 type Action = "validate" | "hide" | "unhide" | "suspend" | "delete";
@@ -129,8 +130,13 @@ export default function UtilisateursPage() {
                 <tr key={u.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-[#E87722] rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                        {u.name.charAt(0)}
+                      <div className="w-8 h-8 bg-[#E87722] rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 overflow-hidden">
+                        {u.photoUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={u.photoUrl} alt="" className="w-full h-full object-cover object-top" />
+                        ) : (
+                          u.name.charAt(0)
+                        )}
                       </div>
                       <div>
                         <p className="font-semibold text-[#1A1A2E]">{u.name}</p>

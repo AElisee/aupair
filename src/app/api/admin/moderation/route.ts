@@ -39,6 +39,7 @@ export async function GET() {
       description: p.description ?? "",
       waitingDays: waitingDays(p.createdAt),
       hasPhoto: !!p.profilePhotoUrl,
+      photoUrl: p.profilePhotoUrl ?? "",
       hasId: !!p.idDocumentUrl,
     })),
     ...families.map((p) => ({
@@ -51,6 +52,7 @@ export async function GET() {
       description: p.description ?? "",
       waitingDays: waitingDays(p.createdAt),
       hasPhoto: !!p.familyPhotoUrl,
+      photoUrl: p.familyPhotoUrl ?? "",
       hasId: true,
     })),
   ].sort((a, b) => b.waitingDays - a.waitingDays);

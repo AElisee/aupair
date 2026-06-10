@@ -1,9 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { User, Search, MessageCircle, Bell, CreditCard, Settings, Home, Camera, CheckCircle } from "lucide-react";
+import { User, Search, MessageCircle, Bell, CreditCard, Settings, Home, Camera, CheckCircle, Loader2 } from "lucide-react";
 import { DURATIONS, EDUCATION_LEVELS, LANGUAGES } from "@/lib/constants";
 import { useCountries } from "@/hooks/useCountries";
 
@@ -27,6 +27,7 @@ const STATUS_BADGES: Record<string, { variant: "warning" | "success" | "secondar
 
 type Profile = {
   status: string;
+  profilePhotoUrl: string;
   firstName: string; lastName: string; dateOfBirth: string;
   gender: string; nationality: string; countryOfOrigin: string;
   cityOfOrigin: string; languages: string[];
@@ -42,6 +43,7 @@ type Profile = {
 
 const EMPTY_PROFILE: Profile = {
   status: "PENDING",
+  profilePhotoUrl: "",
   firstName: "", lastName: "", dateOfBirth: "",
   gender: "", nationality: "", countryOfOrigin: "",
   cityOfOrigin: "", languages: [],
@@ -62,6 +64,9 @@ export default function AuPairProfilPage() {
   const [profile, setProfile] = useState<Profile>(EMPTY_PROFILE);
   const { origin: originCountries, host: hostCountries } = useCountries();
   const allCountries = [...originCountries, ...hostCountries];
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -77,6 +82,30 @@ export default function AuPairProfilPage() {
       cancelled = true;
     };
   }, []);
+
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setPhotoError("");
+    setUploadingPhoto(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/profile/photo", { method: "POST", body: formData });
+      const data = await res.json();
+      if (res.ok) {
+        setProfile((p) => ({ ...p, profilePhotoUrl: data.url }));
+      } else {
+        setPhotoError(data.error ?? "Erreur lors de l'envoi de la photo.");
+      }
+    } catch {
+      setPhotoError("Erreur lors de l'envoi de la photo.");
+    } finally {
+      setUploadingPhoto(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -123,17 +152,41 @@ export default function AuPairProfilPage() {
           <h2 className="font-bold text-[#1A1A2E] mb-4">Photo de profil</h2>
           <div className="flex items-center gap-5">
             <div className="relative">
-              <div className="w-20 h-20 bg-[#E87722] rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                {profile.firstName.charAt(0)}
+              <div className="w-20 h-20 bg-[#E87722] rounded-full flex items-center justify-center text-white text-2xl font-bold overflow-hidden">
+                {profile.profilePhotoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={profile.profilePhotoUrl} alt="Photo de profil" className="w-full h-full object-cover object-top" />
+                ) : (
+                  profile.firstName.charAt(0)
+                )}
               </div>
-              <button className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#1A1A2E] rounded-full flex items-center justify-center">
-                <Camera className="w-3.5 h-3.5 text-white" />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingPhoto}
+                className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#1A1A2E] rounded-full flex items-center justify-center disabled:opacity-50"
+              >
+                {uploadingPhoto ? (
+                  <Loader2 className="w-3.5 h-3.5 text-white animate-spin" />
+                ) : (
+                  <Camera className="w-3.5 h-3.5 text-white" />
+                )}
               </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png"
+                className="hidden"
+                onChange={handlePhotoChange}
+              />
             </div>
             <div>
               <p className="font-medium text-[#1A1A2E] text-sm mb-1">Ajouter une photo professionnelle</p>
               <p className="text-xs text-gray-400 mb-2">JPG ou PNG, max 5 Mo. Une bonne photo augmente vos chances de contact.</p>
-              <Button size="sm" variant="outline">Télécharger une photo</Button>
+              <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingPhoto}>
+                {uploadingPhoto ? "Envoi en cours..." : "Télécharger une photo"}
+              </Button>
+              {photoError && <p className="text-xs text-red-500 mt-1">{photoError}</p>}
             </div>
           </div>
         </div>

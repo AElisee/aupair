@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
@@ -19,6 +20,26 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children, navItems, role, userName }: DashboardLayoutProps) {
   const pathname = usePathname();
+  const [photoUrl, setPhotoUrl] = useState("");
+  const [favoritesCount, setFavoritesCount] = useState(0);
+
+  useEffect(() => {
+    const endpoint = role === "famille" ? "/api/profile/famille" : "/api/profile/au-pair";
+    fetch(endpoint)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (json) setPhotoUrl(json.profilePhotoUrl || json.familyPhotoUrl || "");
+      });
+  }, [role]);
+
+  useEffect(() => {
+    if (role !== "famille") return;
+    fetch("/api/dashboard/famille")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (json) setFavoritesCount(json.favoritesCount ?? 0);
+      });
+  }, [role]);
 
   return (
     <div className="min-h-screen bg-[#F5F5F5] flex">
@@ -37,8 +58,13 @@ export default function DashboardLayout({ children, navItems, role, userName }: 
         {/* User info */}
         <div className="p-4 border-b border-white/10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#E87722] rounded-full flex items-center justify-center text-white font-bold">
-              {userName?.charAt(0) || "U"}
+            <div className="w-10 h-10 bg-[#E87722] rounded-full flex items-center justify-center text-white font-bold overflow-hidden">
+              {photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={photoUrl} alt="" className="w-full h-full object-cover object-top" />
+              ) : (
+                userName?.charAt(0) || "U"
+              )}
             </div>
             <div>
               <p className="text-white text-sm font-semibold">{userName || "Mon compte"}</p>
@@ -51,7 +77,8 @@ export default function DashboardLayout({ children, navItems, role, userName }: 
         <nav className="flex-1 p-4 space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+            const isDashboardRoot = item.href === "/dashboard/au-pair" || item.href === "/dashboard/famille";
+            const isActive = isDashboardRoot ? pathname === item.href : pathname === item.href || pathname.startsWith(item.href + "/");
             return (
               <Link
                 key={item.href}
@@ -64,6 +91,11 @@ export default function DashboardLayout({ children, navItems, role, userName }: 
               >
                 <Icon className="w-4 h-4" />
                 {item.label}
+                {item.href === "/dashboard/famille/favoris" && favoritesCount > 0 && (
+                  <span className="ml-auto bg-[#E87722] text-white text-xs font-bold rounded-full px-2 py-0.5 min-w-5 text-center">
+                    {favoritesCount}
+                  </span>
+                )}
                 {isActive && <ChevronRight className="w-3 h-3 ml-auto" />}
               </Link>
             );

@@ -33,7 +33,7 @@ export async function GET() {
   }
 
   const [favoritesCount, totalMessages, unreadMessages] = await Promise.all([
-    prisma.favorite.count({ where: { targetId: session.user.id } }),
+    prisma.favorite.count({ where: { userId: session.user.id } }),
     prisma.message.count({ where: { receiverId: session.user.id } }),
     prisma.message.count({
       where: { receiverId: session.user.id, status: "SENT" },

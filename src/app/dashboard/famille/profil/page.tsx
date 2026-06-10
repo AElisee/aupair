@@ -1,9 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { User, Search, MessageCircle, Bell, Settings, Home, Camera, CheckCircle } from "lucide-react";
+import { User, Search, MessageCircle, Bell, Settings, Home, Camera, CheckCircle, Loader2, Heart } from "lucide-react";
 import { LANGUAGES } from "@/lib/constants";
 import { useCountries } from "@/hooks/useCountries";
 
@@ -11,6 +11,7 @@ const navItems = [
   { href: "/dashboard/famille", icon: Home, label: "Tableau de bord" },
   { href: "/dashboard/famille/profil", icon: User, label: "Mon profil" },
   { href: "/dashboard/famille/recherche", icon: Search, label: "Rechercher un au pair" },
+  { href: "/dashboard/famille/favoris", icon: Heart, label: "Mes favoris" },
   { href: "/dashboard/famille/messages", icon: MessageCircle, label: "Messages" },
   { href: "/dashboard/famille/notifications", icon: Bell, label: "Notifications" },
   { href: "/dashboard/famille/parametres", icon: Settings, label: "Paramètres" },
@@ -33,6 +34,7 @@ const MARITAL_STATUSES = [
 
 type Profile = {
   status: string;
+  familyPhotoUrl: string;
   firstName: string; lastName: string;
   country: string; city: string; address: string;
   maritalStatus: string;
@@ -47,6 +49,7 @@ type Profile = {
 
 const EMPTY_PROFILE: Profile = {
   status: "PENDING",
+  familyPhotoUrl: "",
   firstName: "", lastName: "",
   country: "", city: "", address: "",
   maritalStatus: "MARRIED",
@@ -66,6 +69,9 @@ export default function FamilleProfilPage() {
   const [profile, setProfile] = useState<Profile>(EMPTY_PROFILE);
   const { origin: originCountries, host: hostCountries } = useCountries();
   const allCountries = [...originCountries, ...hostCountries];
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -81,6 +87,30 @@ export default function FamilleProfilPage() {
       cancelled = true;
     };
   }, []);
+
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setPhotoError("");
+    setUploadingPhoto(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/profile/photo", { method: "POST", body: formData });
+      const data = await res.json();
+      if (res.ok) {
+        setProfile((p) => ({ ...p, familyPhotoUrl: data.url }));
+      } else {
+        setPhotoError(data.error ?? "Erreur lors de l'envoi de la photo.");
+      }
+    } catch {
+      setPhotoError("Erreur lors de l'envoi de la photo.");
+    } finally {
+      setUploadingPhoto(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -126,17 +156,41 @@ export default function FamilleProfilPage() {
           <h2 className="font-bold text-[#1A1A2E] mb-4">Photo de famille</h2>
           <div className="flex items-center gap-5">
             <div className="relative">
-              <div className="w-20 h-20 bg-[#E87722] rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                {profile.firstName.charAt(0)}
+              <div className="w-20 h-20 bg-[#E87722] rounded-full flex items-center justify-center text-white text-2xl font-bold overflow-hidden">
+                {profile.familyPhotoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={profile.familyPhotoUrl} alt="Photo de famille" className="w-full h-full object-cover object-top" />
+                ) : (
+                  profile.firstName.charAt(0)
+                )}
               </div>
-              <button className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#1A1A2E] rounded-full flex items-center justify-center">
-                <Camera className="w-3.5 h-3.5 text-white" />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingPhoto}
+                className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#1A1A2E] rounded-full flex items-center justify-center disabled:opacity-50"
+              >
+                {uploadingPhoto ? (
+                  <Loader2 className="w-3.5 h-3.5 text-white animate-spin" />
+                ) : (
+                  <Camera className="w-3.5 h-3.5 text-white" />
+                )}
               </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png"
+                className="hidden"
+                onChange={handlePhotoChange}
+              />
             </div>
             <div>
               <p className="font-medium text-[#1A1A2E] text-sm mb-1">Ajouter une photo de famille</p>
               <p className="text-xs text-gray-400 mb-2">JPG ou PNG, max 5 Mo. Une bonne photo augmente vos chances de contact.</p>
-              <Button size="sm" variant="outline">Télécharger une photo</Button>
+              <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingPhoto}>
+                {uploadingPhoto ? "Envoi en cours..." : "Télécharger une photo"}
+              </Button>
+              {photoError && <p className="text-xs text-red-500 mt-1">{photoError}</p>}
             </div>
           </div>
         </div>

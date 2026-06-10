@@ -16,6 +16,7 @@ type PendingProfile = {
   description: string;
   waitingDays: number;
   hasPhoto: boolean;
+  photoUrl: string;
   hasId: boolean;
 };
 
@@ -73,8 +74,13 @@ export default function ModerationPage() {
               <div key={p.userId} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 bg-[#E87722] rounded-full flex items-center justify-center text-white text-xl font-bold flex-shrink-0">
-                      {p.name.charAt(0)}
+                    <div className="w-14 h-14 bg-[#E87722] rounded-full flex items-center justify-center text-white text-xl font-bold flex-shrink-0 overflow-hidden">
+                      {p.photoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={p.photoUrl} alt="" className="w-full h-full object-cover object-top" />
+                      ) : (
+                        p.name.charAt(0)
+                      )}
                     </div>
                     <div>
                       <div className="flex items-center gap-2 mb-1">

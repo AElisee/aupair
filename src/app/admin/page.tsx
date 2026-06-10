@@ -21,6 +21,7 @@ type DashboardData = {
     country: string;
     status: string;
     date: string;
+    photoUrl: string;
   }[];
   recentPayments: {
     id: string;
@@ -117,8 +118,13 @@ export default function AdminPage() {
               ) : recentUsers.map((u) => (
                 <div key={u.id} className="flex items-center justify-between px-5 py-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-[#E87722] rounded-full flex items-center justify-center text-white text-xs font-bold">
-                      {u.name.charAt(0)}
+                    <div className="w-8 h-8 bg-[#E87722] rounded-full flex items-center justify-center text-white text-xs font-bold overflow-hidden">
+                      {u.photoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={u.photoUrl} alt="" className="w-full h-full object-cover object-top" />
+                      ) : (
+                        u.name.charAt(0)
+                      )}
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-[#1A1A2E]">{u.name}</p>

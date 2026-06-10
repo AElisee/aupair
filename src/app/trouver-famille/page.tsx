@@ -1,34 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Search, Filter, MapPin, Users, Clock, Lock } from "lucide-react";
+import { Search, Filter, MapPin, Users, Clock, Lock, Loader2 } from "lucide-react";
 import { useCountries } from "@/hooks/useCountries";
 
-const mockFamilies = [
-  { id: "1", name: "Famille Dumont", city: "Lyon", country: "France", flag: "🇫🇷", kids: 2, kidsAges: [4, 7], tasks: "Garde enfants, aide devoirs, activités sportives", hoursPerWeek: 30, pocketMoney: 350, languages: ["Français"], description: "Famille chaleureuse cherche au pair pour nos deux enfants. Logement indépendant fourni.", isActive: true },
-  { id: "2", name: "Familie Schmidt", city: "Berlin", country: "Allemagne", flag: "🇩🇪", kids: 1, kidsAges: [3], tasks: "Garde enfant, sorties, activités créatives", hoursPerWeek: 25, pocketMoney: 380, languages: ["Allemand", "Anglais"], description: "Jeune couple cherche au pair anglophone ou francophone pour notre fils de 3 ans.", isActive: true },
-  { id: "3", name: "Famille Leblanc", city: "Paris", country: "France", flag: "🇫🇷", kids: 3, kidsAges: [2, 5, 9], tasks: "Garde enfants, école, aide devoirs", hoursPerWeek: 35, pocketMoney: 400, languages: ["Français"], description: "Grande famille parisienne cherche au pair expérimenté(e) pour 3 enfants adorables.", isActive: true },
-  { id: "4", name: "Famille Müller", city: "Zurich", country: "Suisse", flag: "🇨🇭", kids: 2, kidsAges: [6, 8], tasks: "Récupération école, activités, aide devoirs", hoursPerWeek: 20, pocketMoney: 500, languages: ["Français", "Allemand"], description: "Famille aisée à Zurich, logement spacieux, argent de poche attractif.", isActive: false },
-  { id: "5", name: "Famille Dupont", city: "Bruxelles", country: "Belgique", flag: "🇧🇪", kids: 2, kidsAges: [1, 4], tasks: "Garde nourrisson, activités, ménage léger", hoursPerWeek: 30, pocketMoney: 330, languages: ["Français"], description: "Parents actifs cherchent au pair de confiance pour nos deux petits.", isActive: true },
-  { id: "6", name: "Family Johnson", city: "New York", country: "États-Unis", flag: "🇺🇸", kids: 1, kidsAges: [5], tasks: "Garde enfant, activités, aide devoirs", hoursPerWeek: 40, pocketMoney: 600, languages: ["Anglais"], description: "Family in NYC looking for a French-speaking au pair for our daughter.", isActive: true },
-];
+type Family = {
+  id: string;
+  name: string;
+  city: string;
+  country: string;
+  flag: string;
+  kids: number;
+  kidsAges: number[];
+  tasks: string;
+  hoursPerWeek: number;
+  pocketMoney: number;
+  languages: string[];
+  description: string;
+  familyPhotoUrl: string;
+};
 
-function FamilyCard({ fam }: { fam: typeof mockFamilies[0] }) {
+function FamilyCard({ fam }: { fam: Family }) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden group">
-      <div className="relative h-36 bg-gradient-to-br from-[#1A1A2E] to-[#0f3460] flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-4xl mb-1">{fam.flag}</div>
-          <p className="text-white font-bold">{fam.city}</p>
-        </div>
-        <div className="absolute top-3 right-3">
-          <Badge variant={fam.isActive ? "success" : "warning"}>
-            {fam.isActive ? "Active" : "En pause"}
-          </Badge>
-        </div>
+      <div className="relative h-36 bg-linear-to-br from-[#1A1A2E] to-[#0f3460] flex items-center justify-center overflow-hidden">
+        {fam.familyPhotoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={fam.familyPhotoUrl} alt={fam.name} className="absolute inset-0 w-full h-full object-cover object-top" />
+        ) : (
+          <div className="text-center">
+            <div className="text-4xl mb-1">{fam.flag}</div>
+            <p className="text-white font-bold">{fam.city}</p>
+          </div>
+        )}
         <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
           <Lock className="w-6 h-6 text-[#E87722] mb-2" />
           <p className="text-sm font-semibold text-[#1A1A2E] mb-3">Voir le profil complet</p>
@@ -50,7 +56,10 @@ function FamilyCard({ fam }: { fam: typeof mockFamilies[0] }) {
         <div className="space-y-1.5 text-xs text-gray-500">
           <div className="flex items-center gap-2">
             <Users className="w-3.5 h-3.5 text-[#E87722]" />
-            <span>{fam.kids} enfant{fam.kids > 1 ? "s" : ""} ({fam.kidsAges.join(", ")} ans)</span>
+            <span>
+              {fam.kids} enfant{fam.kids > 1 ? "s" : ""}
+              {fam.kidsAges.length > 0 ? ` (${fam.kidsAges.join(", ")} ans)` : ""}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <Clock className="w-3.5 h-3.5 text-[#E87722]" />
@@ -63,12 +72,21 @@ function FamilyCard({ fam }: { fam: typeof mockFamilies[0] }) {
 }
 
 export default function TrouverFamillePage() {
+  const [families, setFamilies] = useState<Family[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterCountry, setFilterCountry] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const { host: hostCountries } = useCountries();
 
-  const filtered = mockFamilies.filter((f) => {
+  useEffect(() => {
+    fetch("/api/families")
+      .then((res) => res.json())
+      .then((data) => setFamilies(data.families ?? []))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = families.filter((f) => {
     const matchSearch = f.name.toLowerCase().includes(search.toLowerCase()) || f.city.toLowerCase().includes(search.toLowerCase()) || f.country.toLowerCase().includes(search.toLowerCase());
     const matchCountry = !filterCountry || f.country === filterCountry;
     return matchSearch && matchCountry;
@@ -82,7 +100,7 @@ export default function TrouverFamillePage() {
             Trouver une famille d'accueil
           </h1>
           <p className="text-white/80 mb-6">
-            {mockFamilies.length} familles disponibles · Abonnement 32€/30 jours pour contacter les familles
+            {families.length} familles disponibles · Abonnement 32€/30 jours pour contacter les familles
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3">
@@ -131,11 +149,27 @@ export default function TrouverFamillePage() {
           </Link>
         </div>
 
-        <p className="text-gray-500 text-sm mb-6">{filtered.length} familles trouvées</p>
+        {loading ? (
+          <div className="py-20 text-center">
+            <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
+            <p className="text-gray-500">Chargement...</p>
+          </div>
+        ) : (
+          <>
+            <p className="text-gray-500 text-sm mb-6">{filtered.length} familles trouvées</p>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map((f) => <FamilyCard key={f.id} fam={f} />)}
-        </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filtered.map((f) => <FamilyCard key={f.id} fam={f} />)}
+            </div>
+
+            {filtered.length === 0 && (
+              <div className="text-center py-20">
+                <p className="text-gray-400 text-lg">Aucune famille trouvée avec ces critères.</p>
+                <button onClick={() => { setSearch(""); setFilterCountry(""); }} className="mt-4 text-[#E87722] font-semibold">Réinitialiser les filtres</button>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
