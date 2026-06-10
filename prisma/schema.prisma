@@ -73,6 +73,11 @@ enum TicketPriority {
   URGENT
 }
 
+enum CountryType {
+  ORIGIN
+  HOST
+}
+
 // ─── USER ────────────────────────────────────────────────────────────────────
 
 model User {
@@ -388,6 +393,21 @@ model Testimonial {
   createdAt     DateTime @default(now())
 
   @@map("testimonials")
+}
+
+// ─── PAYS ────────────────────────────────────────────────────────────────────
+
+model Country {
+  id        String      @id @default(cuid())
+  name      String      @unique
+  flag      String
+  dialCode  String
+  type      CountryType
+  isActive  Boolean     @default(true)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@map("countries")
 }
 
 // ─── NOTIFICATIONS ───────────────────────────────────────────────────────────

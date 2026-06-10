@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Globe, Heart, DollarSign, Home, ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
+import { getCountriesByType } from "@/lib/countries";
 
 export const metadata: Metadata = {
   title: "Devenir au pair en Europe — AuPair A.EU",
@@ -30,22 +31,15 @@ const steps = [
   { step: "3", title: "Contactez les familles", desc: "Parcourez les profils, envoyez des messages et organisez votre départ !" },
 ];
 
-const originCountries = [
-  { name: "Cameroun", flag: "🇨🇲" }, { name: "Côte d'Ivoire", flag: "🇨🇮" },
-  { name: "Sénégal", flag: "🇸🇳" }, { name: "Mali", flag: "🇲🇱" },
-  { name: "Bénin", flag: "🇧🇯" }, { name: "Togo", flag: "🇹🇬" },
-  { name: "Madagascar", flag: "🇲🇬" }, { name: "Ghana", flag: "🇬🇭" },
-  { name: "Gabon", flag: "🇬🇦" }, { name: "Congo", flag: "🇨🇬" },
-  { name: "Burkina Faso", flag: "🇧🇫" }, { name: "Maroc", flag: "🇲🇦" },
-];
-
 const faqs = [
   { q: "Combien coûte l'abonnement au pair ?", a: "L'abonnement pour les au pairs est de 32€ (ou 20 800 FCFA) pour 30 jours. Les familles s'inscrivent gratuitement." },
   { q: "Mes profil est-il visible immédiatement ?", a: "Non. Chaque profil est vérifié manuellement par notre équipe avant d'être publié, pour garantir la qualité et la sécurité." },
   { q: "Quels pays d'accueil sont disponibles ?", a: "France, Allemagne, Belgique, Luxembourg, Suisse et États-Unis. D'autres pays seront ajoutés prochainement." },
 ];
 
-export default function DevenirAuPairPage() {
+export default async function DevenirAuPairPage() {
+  const originCountries = await getCountriesByType("ORIGIN");
+
   return (
     <div>
       {/* Hero */}

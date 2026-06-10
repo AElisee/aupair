@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { PHONE_COUNTRY_CODES } from "@/lib/constants";
+import { getCountriesByType, splitPhoneNumber } from "@/lib/countries";
 
 function formatChildcareYears(years: number | null): string {
   if (years === null) return "";
@@ -13,25 +13,6 @@ function parseChildcareYears(value: string): number | null {
   if (value === "5+") return 5;
   const n = parseInt(value, 10);
   return Number.isFinite(n) ? n : null;
-}
-
-/** Sépare un numéro WhatsApp complet ("+237 6XX...") en indicatif + reste. */
-function splitPhone(phone: string | null, fallbackCountry: string): { phoneCountryCode: string; phoneNumber: string } {
-  const fallbackCode = PHONE_COUNTRY_CODES.find((c) => c.country === fallbackCountry)?.code ?? "";
-
-  if (!phone) return { phoneCountryCode: fallbackCode, phoneNumber: "" };
-
-  const trimmed = phone.trim();
-  // On essaie l'indicatif le plus long d'abord (ex: +352 avant +33)
-  const match = [...PHONE_COUNTRY_CODES]
-    .sort((a, b) => b.code.length - a.code.length)
-    .find((c) => trimmed.startsWith(c.code));
-
-  if (match) {
-    return { phoneCountryCode: match.code, phoneNumber: trimmed.slice(match.code.length).trim() };
-  }
-
-  return { phoneCountryCode: fallbackCode, phoneNumber: trimmed };
 }
 
 export async function GET() {
@@ -49,8 +30,9 @@ export async function GET() {
     return NextResponse.json({ error: "Profil introuvable." }, { status: 404 });
   }
 
-  const phone1 = splitPhone(profile.phoneWhatsapp1, profile.countryOfOrigin);
-  const phone2 = splitPhone(profile.phoneWhatsapp2, profile.countryOfOrigin);
+  const countries = await getCountriesByType();
+  const phone1 = splitPhoneNumber(profile.phoneWhatsapp1, profile.countryOfOrigin, countries);
+  const phone2 = splitPhoneNumber(profile.phoneWhatsapp2, profile.countryOfOrigin, countries);
 
   return NextResponse.json({
     status: profile.status,

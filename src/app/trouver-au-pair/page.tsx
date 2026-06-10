@@ -1,25 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, MapPin, Languages, Star, Lock } from "lucide-react";
-import { COUNTRIES_ORIGIN, LANGUAGES } from "@/lib/constants";
+import { Search, Filter, MapPin, Languages, Star, Lock, Loader2 } from "lucide-react";
+import { LANGUAGES } from "@/lib/constants";
+import { useCountries } from "@/hooks/useCountries";
 
-// Données fictives pour la démo
-const mockAuPairs = [
-  { id: "1", firstName: "Aminata", age: 23, country: "Cameroun", flag: "🇨🇲", languages: ["Français", "Anglais"], experience: 3, targetCountries: ["France", "Belgique"], description: "Passionnée par les enfants, j'ai 3 ans d'expérience en garde d'enfants. Je parle couramment français et anglais.", available: true, isPremium: true },
-  { id: "2", firstName: "Kofi", age: 25, country: "Ghana", flag: "🇬🇭", languages: ["Anglais", "Français"], experience: 2, targetCountries: ["Allemagne", "Suisse"], description: "Jeune dynamique avec 2 ans d'expérience auprès d'enfants de 2 à 10 ans.", available: true, isPremium: false },
-  { id: "3", firstName: "Fatou", age: 22, country: "Sénégal", flag: "🇸🇳", languages: ["Français"], experience: 1, targetCountries: ["France", "Luxembourg"], description: "Diplômée en éducation de la petite enfance, je cherche une famille accueillante.", available: true, isPremium: true },
-  { id: "4", firstName: "Yves", age: 27, country: "Côte d'Ivoire", flag: "🇨🇮", languages: ["Français", "Anglais"], experience: 4, targetCountries: ["France", "Suisse"], description: "Expérimenté avec les enfants, je suis titulaire du permis de conduire et du certificat de premiers secours.", available: false, isPremium: true },
-  { id: "5", firstName: "Bénédicte", age: 24, country: "Bénin", flag: "🇧🇯", languages: ["Français"], experience: 2, targetCountries: ["France", "Belgique"], description: "Jeune femme souriante, patiente et aimant les enfants. Disponible dès juin 2026.", available: true, isPremium: false },
-  { id: "6", firstName: "Samuel", age: 26, country: "Madagascar", flag: "🇲🇬", languages: ["Français", "Malgache"], experience: 3, targetCountries: ["France"], description: "Fort de 3 ans d'expérience en babysitting et aide aux devoirs.", available: true, isPremium: true },
-  { id: "7", firstName: "Chloé", age: 21, country: "Togo", flag: "🇹🇬", languages: ["Français", "Anglais"], experience: 1, targetCountries: ["Allemagne", "Belgique"], description: "Motivée et sérieuse, je cherche ma première expérience au pair.", available: true, isPremium: false },
-  { id: "8", firstName: "Ibrahim", age: 28, country: "Mali", flag: "🇲🇱", languages: ["Français"], experience: 5, targetCountries: ["France", "Luxembourg"], description: "5 ans d'expérience avec des enfants de tout âge. Références disponibles sur demande.", available: true, isPremium: true },
-];
+type AuPair = {
+  id: string;
+  firstName: string;
+  age: number;
+  country: string;
+  flag: string;
+  languages: string[];
+  experience: number;
+  targetCountries: string[];
+  description: string;
+  available: boolean;
+};
 
-function AuPairCard({ ap }: { ap: typeof mockAuPairs[0] }) {
+function AuPairCard({ ap, isFamily }: { ap: AuPair; isFamily: boolean }) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden group">
       {/* Photo */}
@@ -37,14 +40,16 @@ function AuPairCard({ ap }: { ap: typeof mockAuPairs[0] }) {
             <Badge variant="success">Disponible</Badge>
           </div>
         )}
-        {/* Overlay CTA si non connecté */}
-        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-          <Lock className="w-6 h-6 text-[#E87722] mb-2" />
-          <p className="text-sm font-semibold text-[#1A1A2E] mb-3">Voir le profil complet</p>
-          <Link href="/inscription?role=famille">
-            <Button size="sm">S'inscrire gratuitement</Button>
-          </Link>
-        </div>
+        {/* Overlay CTA si non connecté en tant que famille */}
+        {!isFamily && (
+          <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <Lock className="w-6 h-6 text-[#E87722] mb-2" />
+            <p className="text-sm font-semibold text-[#1A1A2E] mb-3">Voir le profil complet</p>
+            <Link href="/inscription?role=famille">
+              <Button size="sm">S'inscrire gratuitement</Button>
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Contenu */}
@@ -81,12 +86,25 @@ function AuPairCard({ ap }: { ap: typeof mockAuPairs[0] }) {
 }
 
 export default function TrouverAuPairPage() {
+  const { data: session } = useSession();
+  const isFamily = session?.user?.role === "FAMILLE";
+
+  const [auPairs, setAuPairs] = useState<AuPair[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterCountry, setFilterCountry] = useState("");
   const [filterLang, setFilterLang] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const { origin: originCountries } = useCountries();
 
-  const filtered = mockAuPairs.filter((ap) => {
+  useEffect(() => {
+    fetch("/api/au-pairs")
+      .then((res) => res.json())
+      .then((data) => setAuPairs(data.auPairs ?? []))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = auPairs.filter((ap) => {
     const matchSearch = ap.firstName.toLowerCase().includes(search.toLowerCase()) || ap.country.toLowerCase().includes(search.toLowerCase());
     const matchCountry = !filterCountry || ap.country === filterCountry;
     const matchLang = !filterLang || ap.languages.includes(filterLang);
@@ -102,7 +120,8 @@ export default function TrouverAuPairPage() {
             Trouver un au pair africain
           </h1>
           <p className="text-gray-400 mb-6">
-            {mockAuPairs.length} au pairs disponibles • Inscription famille gratuite pour accéder aux profils complets
+            {auPairs.length} au pairs disponibles
+            {!isFamily && " • Inscription famille gratuite pour accéder aux profils complets"}
           </p>
 
           {/* Barre de recherche */}
@@ -135,7 +154,7 @@ export default function TrouverAuPairPage() {
                 className="px-4 py-3 rounded-xl bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
               >
                 <option value="">Tous les pays d'origine</option>
-                {COUNTRIES_ORIGIN.map((c) => <option key={c} value={c}>{c}</option>)}
+                {originCountries.map((c) => <option key={c.name} value={c.name}>{c.name}</option>)}
               </select>
               <select
                 value={filterLang}
@@ -153,27 +172,38 @@ export default function TrouverAuPairPage() {
       {/* Grille */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Bannière inscription */}
-        <div className="bg-[#FFF3E0] border border-[#E87722]/30 rounded-2xl p-5 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            <p className="font-bold text-[#1A1A2E]">👨‍👩‍👧 Inscrivez-vous gratuitement pour voir les profils complets</p>
-            <p className="text-sm text-gray-500">Accès aux coordonnées, messagerie, favoris — 100% gratuit pour les familles.</p>
+        {!isFamily && (
+          <div className="bg-[#FFF3E0] border border-[#E87722]/30 rounded-2xl p-5 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <p className="font-bold text-[#1A1A2E]">👨‍👩‍👧 Inscrivez-vous gratuitement pour voir les profils complets</p>
+              <p className="text-sm text-gray-500">Accès aux coordonnées, messagerie, favoris — 100% gratuit pour les familles.</p>
+            </div>
+            <Link href="/inscription?role=famille">
+              <Button>Inscription gratuite</Button>
+            </Link>
           </div>
-          <Link href="/inscription?role=famille">
-            <Button>Inscription gratuite</Button>
-          </Link>
-        </div>
+        )}
 
-        <p className="text-gray-500 text-sm mb-6">{filtered.length} au pairs trouvés</p>
-
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filtered.map((ap) => <AuPairCard key={ap.id} ap={ap} />)}
-        </div>
-
-        {filtered.length === 0 && (
-          <div className="text-center py-20">
-            <p className="text-gray-400 text-lg">Aucun au pair trouvé avec ces critères.</p>
-            <button onClick={() => { setSearch(""); setFilterCountry(""); setFilterLang(""); }} className="mt-4 text-[#E87722] font-semibold">Réinitialiser les filtres</button>
+        {loading ? (
+          <div className="py-20 text-center">
+            <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
+            <p className="text-gray-500">Chargement...</p>
           </div>
+        ) : (
+          <>
+            <p className="text-gray-500 text-sm mb-6">{filtered.length} au pairs trouvés</p>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filtered.map((ap) => <AuPairCard key={ap.id} ap={ap} isFamily={isFamily} />)}
+            </div>
+
+            {filtered.length === 0 && (
+              <div className="text-center py-20">
+                <p className="text-gray-400 text-lg">Aucun au pair trouvé avec ces critères.</p>
+                <button onClick={() => { setSearch(""); setFilterCountry(""); setFilterLang(""); }} className="mt-4 text-[#E87722] font-semibold">Réinitialiser les filtres</button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

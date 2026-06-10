@@ -2,21 +2,51 @@
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, X, Eye, Clock } from "lucide-react";
-import { useState } from "react";
+import { CheckCircle, X, Eye, Clock, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import ProfileDetailModal from "@/components/admin/ProfileDetailModal";
 
-const pendingProfiles = [
-  { id: "1", name: "Aminata Koné", role: "AU_PAIR", country: "Cameroun", flag: "🇨🇲", age: 23, description: "Passionnée par les enfants avec 3 ans d'expérience.", waitingDays: 1, hasPhoto: true, hasId: true },
-  { id: "2", name: "Kofi Mensah", role: "AU_PAIR", country: "Ghana", flag: "🇬🇭", age: 25, description: "Jeune dynamique avec expérience en garde d'enfants.", waitingDays: 2, hasPhoto: true, hasId: false },
-  { id: "3", name: "Fatou Sow", role: "AU_PAIR", country: "Sénégal", flag: "🇸🇳", age: 22, description: "Diplômée en éducation de la petite enfance.", waitingDays: 0, hasPhoto: false, hasId: true },
-  { id: "4", name: "Famille Girard", role: "FAMILLE", country: "France", flag: "🇫🇷", age: 0, description: "Famille avec 2 enfants cherche au pair francophone.", waitingDays: 1, hasPhoto: true, hasId: true },
-];
+type PendingProfile = {
+  userId: string;
+  role: "AU_PAIR" | "FAMILLE";
+  name: string;
+  country: string;
+  flag: string;
+  age: number;
+  description: string;
+  waitingDays: number;
+  hasPhoto: boolean;
+  hasId: boolean;
+};
 
 export default function ModerationPage() {
-  const [profiles, setProfiles] = useState(pendingProfiles);
+  const [profiles, setProfiles] = useState<PendingProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [processingId, setProcessingId] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<{ userId: string; role: "AU_PAIR" | "FAMILLE" } | null>(null);
 
-  const validate = (id: string) => setProfiles(prev => prev.filter(p => p.id !== id));
-  const reject = (id: string) => setProfiles(prev => prev.filter(p => p.id !== id));
+  useEffect(() => {
+    fetch("/api/admin/moderation")
+      .then((res) => res.json())
+      .then((data) => setProfiles(data.profiles ?? []))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleAction = async (p: PendingProfile, action: "validate" | "reject") => {
+    setProcessingId(p.userId);
+    try {
+      const res = await fetch("/api/admin/moderation", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: p.userId, role: p.role, action }),
+      });
+      if (res.ok) {
+        setProfiles((prev) => prev.filter((item) => item.userId !== p.userId));
+      }
+    } finally {
+      setProcessingId(null);
+    }
+  };
 
   return (
     <AdminLayout>
@@ -26,7 +56,12 @@ export default function ModerationPage() {
           <Badge variant="warning">{profiles.length} profil(s) en attente</Badge>
         </div>
 
-        {profiles.length === 0 ? (
+        {loading ? (
+          <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
+            <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
+            <p className="text-gray-500">Chargement...</p>
+          </div>
+        ) : profiles.length === 0 ? (
           <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
             <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
             <h2 className="font-bold text-[#1A1A2E] text-lg">File vide !</h2>
@@ -35,7 +70,7 @@ export default function ModerationPage() {
         ) : (
           <div className="space-y-4">
             {profiles.map((p) => (
-              <div key={p.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <div key={p.userId} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-4">
                     <div className="w-14 h-14 bg-[#E87722] rounded-full flex items-center justify-center text-white text-xl font-bold flex-shrink-0">
@@ -67,14 +102,15 @@ export default function ModerationPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <Button size="sm" variant="outline" className="text-blue-600 border-blue-200 hover:bg-blue-50">
+                    <Button size="sm" variant="outline" className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                      onClick={() => setViewing({ userId: p.userId, role: p.role })}>
                       <Eye className="w-3.5 h-3.5 mr-1" /> Voir profil
                     </Button>
-                    <Button size="sm" onClick={() => validate(p.id)}
+                    <Button size="sm" disabled={processingId === p.userId} onClick={() => handleAction(p, "validate")}
                       className="bg-green-500 hover:bg-green-600 text-white">
                       <CheckCircle className="w-3.5 h-3.5 mr-1" /> Valider
                     </Button>
-                    <Button size="sm" variant="destructive" onClick={() => reject(p.id)}>
+                    <Button size="sm" variant="destructive" disabled={processingId === p.userId} onClick={() => handleAction(p, "reject")}>
                       <X className="w-3.5 h-3.5 mr-1" /> Rejeter
                     </Button>
                   </div>
@@ -84,6 +120,10 @@ export default function ModerationPage() {
           </div>
         )}
       </div>
+
+      {viewing && (
+        <ProfileDetailModal userId={viewing.userId} role={viewing.role} onClose={() => setViewing(null)} />
+      )}
     </AdminLayout>
   );
 }

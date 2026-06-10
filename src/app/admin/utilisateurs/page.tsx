@@ -1,24 +1,63 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Badge } from "@/components/ui/badge";
-import { Search, CheckCircle, EyeOff, Trash2, Mail } from "lucide-react";
+import { Search, CheckCircle, Eye, EyeOff, Trash2, Mail, Loader2 } from "lucide-react";
+import ProfileDetailModal from "@/components/admin/ProfileDetailModal";
 
-const mockUsers = [
-  { id: "1", name: "Aminata Koné", email: "aminata@email.com", role: "AU_PAIR", country: "Cameroun", status: "PENDING", subscribed: true, createdAt: "2026-03-05" },
-  { id: "2", name: "Famille Martin", email: "martin@email.com", role: "FAMILLE", country: "France", status: "ACTIVE", subscribed: false, createdAt: "2026-03-04" },
-  { id: "3", name: "Kofi Mensah", email: "kofi@email.com", role: "AU_PAIR", country: "Ghana", status: "PENDING", subscribed: true, createdAt: "2026-03-04" },
-  { id: "4", name: "Fatou Sow", email: "fatou@email.com", role: "AU_PAIR", country: "Sénégal", status: "ACTIVE", subscribed: true, createdAt: "2026-03-03" },
-  { id: "5", name: "Famille Becker", email: "becker@email.com", role: "FAMILLE", country: "Allemagne", status: "ACTIVE", subscribed: false, createdAt: "2026-03-02" },
-  { id: "6", name: "Ibrahim Diallo", email: "ibrahim@email.com", role: "AU_PAIR", country: "Mali", status: "SUSPENDED", subscribed: false, createdAt: "2026-03-01" },
-];
+type AdminUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: "AU_PAIR" | "FAMILLE";
+  country: string;
+  status: string;
+  subscribed: boolean;
+  createdAt: string;
+};
+
+type Action = "validate" | "hide" | "unhide" | "suspend" | "delete";
 
 export default function UtilisateursPage() {
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [processingId, setProcessingId] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<{ userId: string; role: "AU_PAIR" | "FAMILLE" } | null>(null);
 
-  const filtered = mockUsers.filter(u => {
+  useEffect(() => {
+    fetch("/api/admin/users")
+      .then((res) => res.json())
+      .then((data) => setUsers(data.users ?? []))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleAction = async (u: AdminUser, action: Action) => {
+    if (action === "delete" && !confirm(`Supprimer le compte de ${u.name} ?`)) return;
+
+    setProcessingId(u.id);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: u.id, role: u.role, action }),
+      });
+      if (res.ok) {
+        const status = { validate: "ACTIVE", hide: "HIDDEN", unhide: "ACTIVE", suspend: "SUSPENDED", delete: "DELETED" }[action];
+        if (action === "delete") {
+          setUsers((prev) => prev.filter((item) => item.id !== u.id));
+        } else {
+          setUsers((prev) => prev.map((item) => (item.id === u.id ? { ...item, status } : item)));
+        }
+      }
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const filtered = users.filter(u => {
     const matchSearch = u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase());
     const matchRole = !filterRole || u.role === filterRole;
     const matchStatus = !filterStatus || u.status === filterStatus;
@@ -29,6 +68,8 @@ export default function UtilisateursPage() {
     if (s === "ACTIVE") return <Badge variant="success">Actif</Badge>;
     if (s === "PENDING") return <Badge variant="warning">En attente</Badge>;
     if (s === "SUSPENDED") return <Badge variant="destructive">Suspendu</Badge>;
+    if (s === "HIDDEN") return <Badge variant="secondary">Masqué</Badge>;
+    if (s === "DELETED") return <Badge variant="destructive">Supprimé</Badge>;
     return <Badge variant="secondary">{s}</Badge>;
   };
 
@@ -58,12 +99,20 @@ export default function UtilisateursPage() {
             <option value="">Tous les statuts</option>
             <option value="ACTIVE">Actif</option>
             <option value="PENDING">En attente</option>
+            <option value="HIDDEN">Masqué</option>
             <option value="SUSPENDED">Suspendu</option>
+            <option value="DELETED">Supprimé</option>
           </select>
         </div>
 
         {/* Tableau */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          {loading ? (
+            <div className="p-12 text-center">
+              <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
+              <p className="text-gray-500">Chargement...</p>
+            </div>
+          ) : (
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
@@ -103,18 +152,32 @@ export default function UtilisateursPage() {
                   <td className="px-5 py-3.5 text-gray-500 text-xs">{u.createdAt}</td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center justify-end gap-1">
+                      <button onClick={() => setViewing({ userId: u.id, role: u.role })}
+                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Voir profil">
+                        <Eye className="w-4 h-4" />
+                      </button>
                       {u.status === "PENDING" && (
-                        <button className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Valider">
+                        <button disabled={processingId === u.id} onClick={() => handleAction(u, "validate")}
+                          className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50" title="Valider">
                           <CheckCircle className="w-4 h-4" />
                         </button>
                       )}
-                      <button className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors" title="Masquer">
-                        <EyeOff className="w-4 h-4" />
-                      </button>
+                      {u.status === "HIDDEN" ? (
+                        <button disabled={processingId === u.id} onClick={() => handleAction(u, "unhide")}
+                          className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50" title="Démasquer">
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      ) : (
+                        <button disabled={processingId === u.id} onClick={() => handleAction(u, "hide")}
+                          className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50" title="Masquer">
+                          <EyeOff className="w-4 h-4" />
+                        </button>
+                      )}
                       <button className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="Envoyer email">
                         <Mail className="w-4 h-4" />
                       </button>
-                      <button className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Supprimer">
+                      <button disabled={processingId === u.id} onClick={() => handleAction(u, "delete")}
+                        className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50" title="Supprimer">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -123,8 +186,13 @@ export default function UtilisateursPage() {
               ))}
             </tbody>
           </table>
+          )}
         </div>
       </div>
+
+      {viewing && (
+        <ProfileDetailModal userId={viewing.userId} role={viewing.role} onClose={() => setViewing(null)} />
+      )}
     </AdminLayout>
   );
 }

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, Filter, MapPin, Users, Clock, Lock } from "lucide-react";
-import { COUNTRIES_HOST } from "@/lib/constants";
+import { useCountries } from "@/hooks/useCountries";
 
 const mockFamilies = [
   { id: "1", name: "Famille Dumont", city: "Lyon", country: "France", flag: "🇫🇷", kids: 2, kidsAges: [4, 7], tasks: "Garde enfants, aide devoirs, activités sportives", hoursPerWeek: 30, pocketMoney: 350, languages: ["Français"], description: "Famille chaleureuse cherche au pair pour nos deux enfants. Logement indépendant fourni.", isActive: true },
@@ -66,6 +66,7 @@ export default function TrouverFamillePage() {
   const [search, setSearch] = useState("");
   const [filterCountry, setFilterCountry] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const { host: hostCountries } = useCountries();
 
   const filtered = mockFamilies.filter((f) => {
     const matchSearch = f.name.toLowerCase().includes(search.toLowerCase()) || f.city.toLowerCase().includes(search.toLowerCase()) || f.country.toLowerCase().includes(search.toLowerCase());
@@ -112,7 +113,7 @@ export default function TrouverFamillePage() {
                 className="px-4 py-3 rounded-xl bg-white text-gray-800 text-sm focus:outline-none w-full sm:w-64"
               >
                 <option value="">Tous les pays d'accueil</option>
-                {COUNTRIES_HOST.map((c) => <option key={c} value={c}>{c}</option>)}
+                {hostCountries.map((c) => <option key={c.name} value={c.name}>{c.name}</option>)}
               </select>
             </div>
           )}

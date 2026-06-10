@@ -4,7 +4,8 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { User, Search, MessageCircle, Bell, CreditCard, Settings, Home, Camera, CheckCircle } from "lucide-react";
-import { COUNTRIES_ORIGIN, COUNTRIES_HOST, DURATIONS, EDUCATION_LEVELS, LANGUAGES, PHONE_COUNTRY_CODES } from "@/lib/constants";
+import { DURATIONS, EDUCATION_LEVELS, LANGUAGES } from "@/lib/constants";
+import { useCountries } from "@/hooks/useCountries";
 
 const navItems = [
   { href: "/dashboard/au-pair", icon: Home, label: "Tableau de bord" },
@@ -59,6 +60,8 @@ export default function AuPairProfilPage() {
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<Profile>(EMPTY_PROFILE);
+  const { origin: originCountries, host: hostCountries } = useCountries();
+  const allCountries = [...originCountries, ...hostCountries];
 
   useEffect(() => {
     let cancelled = false;
@@ -172,7 +175,7 @@ export default function AuPairProfilPage() {
               <label className="block text-sm font-semibold text-gray-700 mb-1">Pays d'origine</label>
               <select value={profile.countryOfOrigin} onChange={e => setProfile({ ...profile, countryOfOrigin: e.target.value })}
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
-                {COUNTRIES_ORIGIN.map(c => <option key={c}>{c}</option>)}
+                {originCountries.map(c => <option key={c.name}>{c.name}</option>)}
               </select>
             </div>
             <div>
@@ -277,7 +280,7 @@ export default function AuPairProfilPage() {
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Pays de destination souhaités</label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {COUNTRIES_HOST.map(country => (
+                {hostCountries.map(({ name: country }) => (
                   <label key={country} className={`flex items-center gap-2 border rounded-xl px-3 py-2 cursor-pointer text-sm transition-all ${
                     profile.targetCountries.includes(country)
                       ? "border-[#E87722] bg-[#FFF3E0] text-[#E87722] font-semibold"
@@ -352,8 +355,8 @@ export default function AuPairProfilPage() {
               <div className="flex gap-2">
                 <select value={profile.phoneCountryCode} onChange={e => setProfile({ ...profile, phoneCountryCode: e.target.value })}
                   className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
-                  {PHONE_COUNTRY_CODES.map(c => (
-                    <option key={c.country} value={c.code}>{c.country} ({c.code})</option>
+                  {allCountries.map(c => (
+                    <option key={c.name} value={c.dialCode}>{c.name} ({c.dialCode})</option>
                   ))}
                 </select>
                 <input type="tel" value={profile.phoneNumber} onChange={e => setProfile({ ...profile, phoneNumber: e.target.value })}
@@ -366,8 +369,8 @@ export default function AuPairProfilPage() {
               <div className="flex gap-2">
                 <select value={profile.phoneCountryCode2} onChange={e => setProfile({ ...profile, phoneCountryCode2: e.target.value })}
                   className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
-                  {PHONE_COUNTRY_CODES.map(c => (
-                    <option key={c.country} value={c.code}>{c.country} ({c.code})</option>
+                  {allCountries.map(c => (
+                    <option key={c.name} value={c.dialCode}>{c.name} ({c.dialCode})</option>
                   ))}
                 </select>
                 <input type="tel" value={profile.phoneNumber2} onChange={e => setProfile({ ...profile, phoneNumber2: e.target.value })}

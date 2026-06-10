@@ -1,30 +1,16 @@
 import Link from "next/link";
+import { getCountriesByType, getCountryCounts } from "@/lib/countries";
 
-const originCountries = [
-  { name: "Cameroun", flag: "🇨🇲", count: 450 },
-  { name: "Côte d'Ivoire", flag: "🇨🇮", count: 380 },
-  { name: "Sénégal", flag: "🇸🇳", count: 290 },
-  { name: "Mali", flag: "🇲🇱", count: 210 },
-  { name: "Bénin", flag: "🇧🇯", count: 180 },
-  { name: "Togo", flag: "🇹🇬", count: 160 },
-  { name: "Madagascar", flag: "🇲🇬", count: 140 },
-  { name: "Ghana", flag: "🇬🇭", count: 130 },
-  { name: "Gabon", flag: "🇬🇦", count: 90 },
-  { name: "Congo", flag: "🇨🇬", count: 80 },
-  { name: "Burkina Faso", flag: "🇧🇫", count: 75 },
-  { name: "Maroc", flag: "🇲🇦", count: 200 },
-];
+export default async function CountriesSection() {
+  const [origin, host, { auPairCounts, familyCounts }] = await Promise.all([
+    getCountriesByType("ORIGIN"),
+    getCountriesByType("HOST"),
+    getCountryCounts(),
+  ]);
 
-const hostCountries = [
-  { name: "France", flag: "🇫🇷", count: 620 },
-  { name: "Allemagne", flag: "🇩🇪", count: 310 },
-  { name: "Belgique", flag: "🇧🇪", count: 180 },
-  { name: "Luxembourg", flag: "🇱🇺", count: 95 },
-  { name: "Suisse", flag: "🇨🇭", count: 140 },
-  { name: "États-Unis", flag: "🇺🇸", count: 85 },
-];
+  const originCountries = origin.map((c) => ({ name: c.name, flag: c.flag, count: auPairCounts[c.name] ?? 0 }));
+  const hostCountries = host.map((c) => ({ name: c.name, flag: c.flag, count: familyCounts[c.name] ?? 0 }));
 
-export default function CountriesSection() {
   return (
     <section className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

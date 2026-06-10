@@ -28,8 +28,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
+        const normalizedEmail = (credentials.email as string).trim().toLowerCase();
+
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
+          where: { email: normalizedEmail },
         });
 
         if (!user || !user.password) return null;
@@ -74,5 +76,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   session: {
     strategy: "jwt",
+  },
+  events: {
+    /** Lors d'une première connexion OAuth, l'adapter crée le User mais pas son profil métier. */
+    async createUser({ user }) {
+      if (!user.id) return;
+
+      const parts = (user.name ?? "").trim().split(/\s+/).filter(Boolean);
+      const firstName = parts[0] || "Utilisateur";
+      const lastName = parts.slice(1).join(" ") || "Au Pair";
+
+      await prisma.auPairProfile.create({
+        data: {
+          userId: user.id,
+          status: "PENDING",
+          firstName,
+          lastName,
+          dateOfBirth: new Date("2000-01-01"),
+          gender: "",
+          nationality: "",
+          countryOfOrigin: "",
+          languages: [],
+          targetCountries: [],
+        },
+      });
+    },
   },
 });

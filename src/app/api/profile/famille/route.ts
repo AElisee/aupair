@@ -1,26 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { PHONE_COUNTRY_CODES } from "@/lib/constants";
-
-/** Sépare un numéro WhatsApp complet ("+33 6XX...") en indicatif + reste. */
-function splitPhone(phone: string | null, fallbackCountry: string): { phoneCountryCode: string; phoneNumber: string } {
-  const fallbackCode = PHONE_COUNTRY_CODES.find((c) => c.country === fallbackCountry)?.code ?? "";
-
-  if (!phone) return { phoneCountryCode: fallbackCode, phoneNumber: "" };
-
-  const trimmed = phone.trim();
-  // On essaie l'indicatif le plus long d'abord (ex: +352 avant +33)
-  const match = [...PHONE_COUNTRY_CODES]
-    .sort((a, b) => b.code.length - a.code.length)
-    .find((c) => trimmed.startsWith(c.code));
-
-  if (match) {
-    return { phoneCountryCode: match.code, phoneNumber: trimmed.slice(match.code.length).trim() };
-  }
-
-  return { phoneCountryCode: fallbackCode, phoneNumber: trimmed };
-}
+import { getCountriesByType, splitPhoneNumber } from "@/lib/countries";
 
 export async function GET() {
   const session = await auth();
@@ -39,6 +20,7 @@ export async function GET() {
   }
 
   const [firstName, ...rest] = (user.name ?? "").split(" ");
+  const countries = await getCountriesByType();
 
   return NextResponse.json({
     status: profile.status,
@@ -60,7 +42,7 @@ export async function GET() {
     preferredAgeMin: profile.preferredAgeMin?.toString() ?? "",
     preferredAgeMax: profile.preferredAgeMax?.toString() ?? "",
     preferredLanguages: profile.preferredLanguages,
-    ...splitPhone(profile.phoneWhatsapp, profile.country),
+    ...splitPhoneNumber(profile.phoneWhatsapp, profile.country, countries),
   });
 }
 

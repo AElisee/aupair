@@ -1,31 +1,68 @@
 "use client";
+import { useEffect, useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
-import { Users, DollarSign, Shield, AlertTriangle, UserPlus } from "lucide-react";
+import { Users, DollarSign, Shield, AlertTriangle, UserPlus, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 
-const kpis = [
-  { icon: Users, label: "Utilisateurs totaux", value: "6 234", change: "+124 ce mois", color: "text-blue-600", bg: "bg-blue-50" },
-  { icon: UserPlus, label: "Inscriptions (30j)", value: "342", change: "+18% vs mois dernier", color: "text-green-600", bg: "bg-green-50" },
-  { icon: DollarSign, label: "Revenus (30j)", value: "8 960€", change: "+280 abonnements actifs", color: "text-[#E87722]", bg: "bg-[#FFF3E0]" },
-  { icon: Shield, label: "Profils en attente", value: "23", change: "À valider", color: "text-red-600", bg: "bg-red-50" },
-];
-
-const recentUsers = [
-  { id: "1", name: "Aminata K.", role: "AU_PAIR", country: "🇨🇲 Cameroun", status: "PENDING", date: "Il y a 2h" },
-  { id: "2", name: "Famille Dubois", role: "FAMILLE", country: "🇫🇷 France", status: "ACTIVE", date: "Il y a 4h" },
-  { id: "3", name: "Kofi M.", role: "AU_PAIR", country: "🇬🇭 Ghana", status: "PENDING", date: "Il y a 6h" },
-  { id: "4", name: "Famille Weber", role: "FAMILLE", country: "🇩🇪 Allemagne", status: "ACTIVE", date: "Hier" },
-  { id: "5", name: "Fatou S.", role: "AU_PAIR", country: "🇸🇳 Sénégal", status: "PENDING", date: "Hier" },
-];
-
-const recentPayments = [
-  { id: "1", user: "Aminata K.", amount: "32€", method: "Mobile Money", status: "ACTIVE", date: "Il y a 1h" },
-  { id: "2", user: "Kofi M.", amount: "20 800 FCFA", method: "Mobile Money", status: "ACTIVE", date: "Il y a 3h" },
-  { id: "3", user: "Ibrahim D.", amount: "32€", method: "Stripe", status: "ACTIVE", date: "Hier" },
-];
+type DashboardData = {
+  kpis: {
+    totalUsers: number;
+    signups30d: number;
+    signupsChange: string;
+    revenue30d: string;
+    activeSubscriptions: number;
+    pendingProfiles: number;
+  };
+  recentUsers: {
+    id: string;
+    name: string;
+    role: "AU_PAIR" | "FAMILLE";
+    country: string;
+    status: string;
+    date: string;
+  }[];
+  recentPayments: {
+    id: string;
+    user: string;
+    amount: string;
+    method: string;
+    status: string;
+    date: string;
+  }[];
+};
 
 export default function AdminPage() {
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/admin/dashboard")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => setData(json))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading || !data) {
+    return (
+      <AdminLayout>
+        <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
+          <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
+          <p className="text-gray-500">Chargement...</p>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  const { kpis, recentUsers, recentPayments } = data;
+
+  const kpiCards = [
+    { icon: Users, label: "Utilisateurs totaux", value: String(kpis.totalUsers), change: `+${kpis.signups30d} ce mois`, color: "text-blue-600", bg: "bg-blue-50" },
+    { icon: UserPlus, label: "Inscriptions (30j)", value: String(kpis.signups30d), change: kpis.signupsChange, color: "text-green-600", bg: "bg-green-50" },
+    { icon: DollarSign, label: "Revenus (30j)", value: kpis.revenue30d, change: `${kpis.activeSubscriptions} abonnements actifs`, color: "text-[#E87722]", bg: "bg-[#FFF3E0]" },
+    { icon: Shield, label: "Profils en attente", value: String(kpis.pendingProfiles), change: "À valider", color: "text-red-600", bg: "bg-red-50" },
+  ];
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -36,7 +73,7 @@ export default function AdminPage() {
 
         {/* KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {kpis.map((kpi) => {
+          {kpiCards.map((kpi) => {
             const Icon = kpi.icon;
             return (
               <div key={kpi.label} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
@@ -52,18 +89,20 @@ export default function AdminPage() {
         </div>
 
         {/* Alerte modération */}
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3">
-          <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
-          <div className="flex-1">
-            <p className="font-semibold text-amber-800 text-sm">23 profils en attente de validation</p>
-            <p className="text-xs text-amber-600">Validez les profils pour les rendre visibles sur la plateforme.</p>
+        {kpis.pendingProfiles > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="font-semibold text-amber-800 text-sm">{kpis.pendingProfiles} profil(s) en attente de validation</p>
+              <p className="text-xs text-amber-600">Validez les profils pour les rendre visibles sur la plateforme.</p>
+            </div>
+            <Link href="/admin/moderation">
+              <button className="bg-amber-600 text-white text-xs px-3 py-1.5 rounded-lg font-semibold hover:bg-amber-700 transition-colors">
+                Modérer
+              </button>
+            </Link>
           </div>
-          <Link href="/admin/moderation">
-            <button className="bg-amber-600 text-white text-xs px-3 py-1.5 rounded-lg font-semibold hover:bg-amber-700 transition-colors">
-              Modérer
-            </button>
-          </Link>
-        </div>
+        )}
 
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Derniers utilisateurs */}
@@ -73,7 +112,9 @@ export default function AdminPage() {
               <Link href="/admin/utilisateurs" className="text-[#E87722] text-xs font-semibold">Voir tous →</Link>
             </div>
             <div className="divide-y divide-gray-50">
-              {recentUsers.map((u) => (
+              {recentUsers.length === 0 ? (
+                <p className="px-5 py-6 text-sm text-gray-400 text-center">Aucune inscription récente.</p>
+              ) : recentUsers.map((u) => (
                 <div key={u.id} className="flex items-center justify-between px-5 py-3">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-[#E87722] rounded-full flex items-center justify-center text-white text-xs font-bold">
@@ -104,7 +145,9 @@ export default function AdminPage() {
               <Link href="/admin/paiements" className="text-[#E87722] text-xs font-semibold">Voir tous →</Link>
             </div>
             <div className="divide-y divide-gray-50">
-              {recentPayments.map((p) => (
+              {recentPayments.length === 0 ? (
+                <p className="px-5 py-6 text-sm text-gray-400 text-center">Aucun paiement récent.</p>
+              ) : recentPayments.map((p) => (
                 <div key={p.id} className="flex items-center justify-between px-5 py-3">
                   <div>
                     <p className="text-sm font-semibold text-[#1A1A2E]">{p.user}</p>
@@ -112,7 +155,9 @@ export default function AdminPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-[#E87722]">{p.amount}</span>
-                    <Badge variant="success" className="text-xs">Payé</Badge>
+                    <Badge variant={p.status === "ACTIVE" ? "success" : "secondary"} className="text-xs">
+                      {p.status === "ACTIVE" ? "Payé" : p.status}
+                    </Badge>
                   </div>
                 </div>
               ))}

@@ -8,6 +8,7 @@ const navItems = [
   { href: "/admin/utilisateurs", icon: Users, label: "Utilisateurs" },
   { href: "/admin/moderation", icon: Shield, label: "Modération" },
   { href: "/admin/paiements", icon: DollarSign, label: "Paiements" },
+  { href: "/admin/pays", icon: Globe, label: "Pays" },
   { href: "/admin/analytics", icon: BarChart2, label: "Analytics" },
   { href: "/admin/blog", icon: FileText, label: "Blog" },
   { href: "/admin/faq", icon: HelpCircle, label: "FAQ" },

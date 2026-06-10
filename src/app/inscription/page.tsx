@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { Globe, CheckCircle, ArrowRight, ArrowLeft, User, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { COUNTRIES_ORIGIN, EDUCATION_LEVELS, LANGUAGES } from "@/lib/constants";
+import { EDUCATION_LEVELS, LANGUAGES } from "@/lib/constants";
+import { useCountries } from "@/hooks/useCountries";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
@@ -23,6 +24,7 @@ function InscriptionContent() {
   });
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const { origin: originCountries } = useCountries();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const steps = role === "au-pair"
@@ -201,7 +203,7 @@ function InscriptionContent() {
                   <select value={form.country} onChange={e => setForm({ ...form, country: e.target.value })}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
                     <option value="">Sélectionner votre pays</option>
-                    {COUNTRIES_ORIGIN.map(c => <option key={c} value={c}>{c}</option>)}
+                    {originCountries.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
                   </select>
                 </div>
                 <div>

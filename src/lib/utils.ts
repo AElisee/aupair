@@ -13,6 +13,19 @@ export function formatDate(date: Date | string, locale = "fr-FR"): string {
   }).format(new Date(date));
 }
 
+export function formatRelativeDate(date: Date | string): string {
+  const diffMs = Date.now() - new Date(date).getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMin < 1) return "À l'instant";
+  if (diffMin < 60) return `Il y a ${diffMin} min`;
+  if (diffHours < 24) return `Il y a ${diffHours}h`;
+  if (diffDays === 1) return "Hier";
+  return `Il y a ${diffDays} jours`;
+}
+
 export function calculateAge(dateOfBirth: Date | string): number {
   const today = new Date();
   const birth = new Date(dateOfBirth);
