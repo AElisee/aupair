@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { getSafeCallbackUrl } from "@/lib/safe-redirect";
+import { getSafeCallbackUrl, getDefaultRedirectForRole } from "@/lib/safe-redirect";
 
 /**
  * Routes protégées par authentification (tout utilisateur connecté)
@@ -13,19 +13,34 @@ const AUTH_REQUIRED = ["/dashboard"];
  */
 const ADMIN_ONLY = ["/admin"];
 
-export async function middleware(request: NextRequest) {
+/**
+ * Routes interdites aux utilisateurs déjà connectés (redirigés vers leur dashboard)
+ */
+const GUEST_ONLY = ["/connexion"];
+
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isAuthRequired = AUTH_REQUIRED.some((p) => pathname.startsWith(p));
   const isAdminOnly = ADMIN_ONLY.some((p) => pathname.startsWith(p));
+  const isGuestOnly = GUEST_ONLY.some((p) => pathname.startsWith(p));
 
-  if (!isAuthRequired && !isAdminOnly) return NextResponse.next();
+  if (!isAuthRequired && !isAdminOnly && !isGuestOnly) return NextResponse.next();
 
   // Décode le JWT NextAuth sans requête DB (compatible Edge runtime)
   const token = await getToken({
     req: request,
     secret: process.env.AUTH_SECRET,
   });
+
+  // ── Déjà authentifié → on bloque l'accès aux pages réservées aux invités ───
+  if (isGuestOnly) {
+    if (token) {
+      const dashboardUrl = getDefaultRedirectForRole(token.role as string | undefined);
+      return NextResponse.redirect(new URL(dashboardUrl, request.url));
+    }
+    return NextResponse.next();
+  }
 
   // ── Non authentifié → redirection vers /connexion ──────────────────────────
   if (!token) {
@@ -60,5 +75,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*"],
+  matcher: ["/dashboard/:path*", "/admin/:path*", "/connexion"],
 };

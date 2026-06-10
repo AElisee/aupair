@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { Globe, LogOut, ChevronRight } from "lucide-react";
 
 interface NavItem {
@@ -71,7 +72,10 @@ export default function DashboardLayout({ children, navItems, role, userName }: 
 
         {/* Déconnexion */}
         <div className="p-4 border-t border-white/10">
-          <button className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:bg-white/10 hover:text-white w-full transition-all">
+          <button
+            onClick={() => signOut({ callbackUrl: "/connexion" })}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:bg-white/10 hover:text-white w-full transition-all"
+          >
             <LogOut className="w-4 h-4" />
             Se déconnecter
           </button>

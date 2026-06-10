@@ -5,7 +5,12 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Globe, Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getSafeCallbackUrl, getDefaultRedirectForRole } from "@/lib/safe-redirect";
+import {
+  getSafeCallbackUrl,
+  getDefaultRedirectForRole,
+} from "@/lib/safe-redirect";
+import { FcGoogle } from "react-icons/fc";
+import { FaFacebook } from "react-icons/fa";
 
 function ConnexionForm() {
   const searchParams = useSearchParams();
@@ -64,7 +69,8 @@ function ConnexionForm() {
     const { signIn } = await import("next-auth/react");
     // On passe uniquement l'URL déjà validée — jamais la valeur brute
     await signIn(provider, {
-      callbackUrl: safeCallbackUrl !== "/" ? safeCallbackUrl : "/dashboard/au-pair",
+      callbackUrl:
+        safeCallbackUrl !== "/" ? safeCallbackUrl : "/dashboard/au-pair",
     });
   };
 
@@ -76,11 +82,22 @@ function ConnexionForm() {
           <div className="w-20 h-20 bg-[#E87722] rounded-full flex items-center justify-center mx-auto mb-6">
             <Globe className="w-10 h-10 text-white" />
           </div>
-          <h2 className="text-3xl font-extrabold mb-4">Bienvenue sur AuPair A.EU</h2>
-          <p className="text-gray-300 text-lg">La première plateforme mondiale dédiée aux au pairs africains.</p>
+          <h2 className="text-3xl font-extrabold mb-4">
+            Bienvenue sur AuPair A.EU
+          </h2>
+          <p className="text-gray-300 text-lg">
+            La première plateforme mondiale dédiée aux au pairs africains.
+          </p>
           <div className="mt-8 space-y-3 text-left">
-            {["✅ 5 000+ au pairs africains", "✅ 1 200+ familles d'accueil", "✅ 6 pays européens", "✅ Profils vérifiés"].map(t => (
-              <p key={t} className="text-gray-300">{t}</p>
+            {[
+              "✅ 5 000+ au pairs africains",
+              "✅ 1 200+ familles d'accueil",
+              "✅ 6 pays européens",
+              "✅ Profils vérifiés",
+            ].map((t) => (
+              <p key={t} className="text-gray-300">
+                {t}
+              </p>
             ))}
           </div>
         </div>
@@ -94,10 +111,13 @@ function ConnexionForm() {
             <div className="w-8 h-8 bg-[#E87722] rounded-full flex items-center justify-center">
               <Globe className="w-5 h-5 text-white" />
             </div>
-            <span className="text-[#1A1A2E]">AuPair</span><span className="text-[#E87722]">A.EU</span>
+            <span className="text-[#1A1A2E]">AuPair</span>
+            <span className="text-[#E87722]">A.EU</span>
           </div>
 
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E] mb-2">Connexion</h1>
+          <h1 className="text-2xl font-extrabold text-[#1A1A2E] mb-2">
+            Connexion
+          </h1>
           <p className="text-gray-500 mb-8">Accédez à votre espace personnel</p>
 
           {/* OAuth */}
@@ -106,14 +126,14 @@ function ConnexionForm() {
               onClick={() => handleOAuth("google")}
               className="w-full flex items-center justify-center gap-3 border border-gray-200 rounded-xl py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
             >
-              <span className="text-lg">🇬</span>
+              <FcGoogle className="w-5 h-5" />
               Continuer avec Google
             </button>
             <button
               onClick={() => handleOAuth("facebook")}
               className="w-full flex items-center justify-center gap-3 bg-[#1877F2] text-white rounded-xl py-3 text-sm font-medium hover:bg-[#166fe5] transition-colors"
             >
-              <span className="text-lg">f</span>
+              <FaFacebook className="w-5 h-5" />
               Continuer avec Facebook
             </button>
           </div>
@@ -134,12 +154,16 @@ function ConnexionForm() {
           {/* Formulaire */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Adresse email</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Adresse email
+              </label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
-                  type="email" required value={form.email}
-                  onChange={e => setForm({ ...form, email: e.target.value })}
+                  type="email"
+                  required
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
                   className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] focus:border-transparent"
                   placeholder="votre@email.com"
                   autoComplete="email"
@@ -148,32 +172,61 @@ function ConnexionForm() {
             </div>
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="text-sm font-semibold text-gray-700">Mot de passe</label>
-                <Link href="/mot-de-passe-oublie" className="text-xs text-[#E87722] hover:underline">Mot de passe oublié ?</Link>
+                <label className="text-sm font-semibold text-gray-700">
+                  Mot de passe
+                </label>
+                <Link
+                  href="/mot-de-passe-oublie"
+                  className="text-xs text-[#E87722] hover:underline"
+                >
+                  Mot de passe oublié ?
+                </Link>
               </div>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
-                  type={showPassword ? "text" : "password"} required value={form.password}
-                  onChange={e => setForm({ ...form, password: e.target.value })}
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={form.password}
+                  onChange={(e) =>
+                    setForm({ ...form, password: e.target.value })
+                  }
                   className="w-full pl-10 pr-11 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] focus:border-transparent"
                   placeholder="••••••••"
                   autoComplete="current-password"
                 />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
                 </button>
               </div>
             </div>
 
-            <Button type="submit" className="w-full" size="lg" disabled={loading}>
+            <Button
+              type="submit"
+              className="w-full"
+              size="lg"
+              disabled={loading}
+            >
               {loading ? "Connexion en cours..." : "Se connecter"}
             </Button>
           </form>
 
           <p className="text-center text-sm text-gray-500 mt-6">
             Pas encore de compte ?{" "}
-            <Link href="/inscription" className="text-[#E87722] font-semibold hover:underline">S&apos;inscrire</Link>
+            <Link
+              href="/inscription"
+              className="text-[#E87722] font-semibold hover:underline"
+            >
+              S&apos;inscrire
+            </Link>
           </p>
         </div>
       </div>

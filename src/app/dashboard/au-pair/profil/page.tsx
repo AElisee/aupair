@@ -1,10 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { User, Search, MessageCircle, Bell, CreditCard, Settings, Home, Camera, CheckCircle } from "lucide-react";
-import { COUNTRIES_ORIGIN, EDUCATION_LEVELS } from "@/lib/constants";
+import { COUNTRIES_ORIGIN, COUNTRIES_HOST, DURATIONS, EDUCATION_LEVELS, LANGUAGES, PHONE_COUNTRY_CODES } from "@/lib/constants";
 
 const navItems = [
   { href: "/dashboard/au-pair", icon: Home, label: "Tableau de bord" },
@@ -16,33 +16,103 @@ const navItems = [
   { href: "/dashboard/au-pair/parametres", icon: Settings, label: "Paramètres" },
 ];
 
-export default function AuPairProfilPage() {
-  const [saved, setSaved] = useState(false);
-  const [profile, setProfile] = useState({
-    firstName: "Aminata", lastName: "Koné", dateOfBirth: "2002-05-15",
-    gender: "F", nationality: "Camerounaise", countryOfOrigin: "Cameroun",
-    cityOfOrigin: "Yaoundé", languages: ["Français", "Anglais"],
-    educationLevel: "Licence / Bachelor", childcareYears: "3",
-    targetCountries: ["France", "Belgique"], preferredDuration: "1 an",
-    isSmoker: false, description: "Passionnée par les enfants, je cherche une famille accueillante pour une expérience inoubliable.",
-    motivation: "Je souhaite devenir au pair pour découvrir la culture européenne tout en m'occupant d'enfants.",
-    phoneWhatsapp1: "+237 6XX XXX XXX",
-  });
+const STATUS_BADGES: Record<string, { variant: "warning" | "success" | "secondary" | "destructive"; label: string }> = {
+  PENDING: { variant: "warning", label: "En attente de validation" },
+  ACTIVE: { variant: "success", label: "Profil validé" },
+  HIDDEN: { variant: "secondary", label: "Profil masqué" },
+  SUSPENDED: { variant: "destructive", label: "Profil suspendu" },
+  DELETED: { variant: "destructive", label: "Profil supprimé" },
+};
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+type Profile = {
+  status: string;
+  firstName: string; lastName: string; dateOfBirth: string;
+  gender: string; nationality: string; countryOfOrigin: string;
+  cityOfOrigin: string; languages: string[];
+  educationLevel: string; childcareExperience: string; childcareYears: string;
+  firstAidCertified: boolean; drivingLicense: boolean;
+  targetCountries: string[]; availableFrom: string; availableTo: string; preferredDuration: string;
+  isSmoker: boolean; healthDeclaration: string; hasCriminalRecord: boolean;
+  description: string;
+  motivation: string;
+  phoneCountryCode: string; phoneNumber: string;
+  phoneCountryCode2: string; phoneNumber2: string;
+};
+
+const EMPTY_PROFILE: Profile = {
+  status: "PENDING",
+  firstName: "", lastName: "", dateOfBirth: "",
+  gender: "", nationality: "", countryOfOrigin: "",
+  cityOfOrigin: "", languages: [],
+  educationLevel: "", childcareExperience: "", childcareYears: "",
+  firstAidCertified: false, drivingLicense: false,
+  targetCountries: [], availableFrom: "", availableTo: "", preferredDuration: "",
+  isSmoker: false, healthDeclaration: "", hasCriminalRecord: false,
+  description: "",
+  motivation: "",
+  phoneCountryCode: "", phoneNumber: "",
+  phoneCountryCode2: "", phoneNumber2: "",
+};
+
+export default function AuPairProfilPage() {
+  const [loading, setLoading] = useState(true);
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [profile, setProfile] = useState<Profile>(EMPTY_PROFILE);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/profile/au-pair")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (!cancelled && json) setProfile(json);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/profile/au-pair", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profile),
+      });
+      if (res.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      }
+    } finally {
+      setSaving(false);
+    }
   };
 
+  const statusBadge = STATUS_BADGES[profile.status] ?? STATUS_BADGES.PENDING;
+
+  const userName = profile.firstName ? `${profile.firstName} ${profile.lastName.charAt(0)}.` : "";
+
+  if (loading) {
+    return (
+      <DashboardLayout navItems={navItems} role="au-pair" userName={userName}>
+        <p className="text-gray-500">Chargement du profil...</p>
+      </DashboardLayout>
+    );
+  }
+
   return (
-    <DashboardLayout navItems={navItems} role="au-pair" userName="Aminata K.">
+    <DashboardLayout navItems={navItems} role="au-pair" userName={userName}>
       <div className="max-w-3xl space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-extrabold text-[#1A1A2E]">Mon profil</h1>
             <p className="text-gray-500">Votre profil est visible après validation par notre équipe.</p>
           </div>
-          <Badge variant="warning">En attente de validation</Badge>
+          <Badge variant={statusBadge.variant}>{statusBadge.label}</Badge>
         </div>
 
         {/* Photo de profil */}
@@ -85,11 +155,30 @@ export default function AuPairProfilPage() {
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]" />
             </div>
             <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Genre</label>
+              <select value={profile.gender} onChange={e => setProfile({ ...profile, gender: e.target.value })}
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
+                <option value="">Sélectionner</option>
+                <option value="Femme">Femme</option>
+                <option value="Homme">Homme</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Nationalité</label>
+              <input type="text" value={profile.nationality} onChange={e => setProfile({ ...profile, nationality: e.target.value })}
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]" />
+            </div>
+            <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Pays d'origine</label>
               <select value={profile.countryOfOrigin} onChange={e => setProfile({ ...profile, countryOfOrigin: e.target.value })}
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
                 {COUNTRIES_ORIGIN.map(c => <option key={c}>{c}</option>)}
               </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Ville d'origine</label>
+              <input type="text" value={profile.cityOfOrigin} onChange={e => setProfile({ ...profile, cityOfOrigin: e.target.value })}
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]" />
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Niveau d'études</label>
@@ -98,12 +187,117 @@ export default function AuPairProfilPage() {
                 {EDUCATION_LEVELS.map(e => <option key={e}>{e}</option>)}
               </select>
             </div>
+          </div>
+        </div>
+
+        {/* Langues parlées */}
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+          <h2 className="font-bold text-[#1A1A2E] mb-5">Langues parlées</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {LANGUAGES.map(lang => (
+              <label key={lang} className={`flex items-center gap-2 border rounded-xl px-3 py-2 cursor-pointer text-sm transition-all ${
+                profile.languages.includes(lang)
+                  ? "border-[#E87722] bg-[#FFF3E0] text-[#E87722] font-semibold"
+                  : "border-gray-200 text-gray-700 hover:border-[#E87722]"
+              }`}>
+                <input
+                  type="checkbox"
+                  className="sr-only"
+                  checked={profile.languages.includes(lang)}
+                  onChange={e => setProfile({
+                    ...profile,
+                    languages: e.target.checked
+                      ? [...profile.languages, lang]
+                      : profile.languages.filter(l => l !== lang),
+                  })}
+                />
+                {lang}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Expérience & qualifications */}
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+          <h2 className="font-bold text-[#1A1A2E] mb-5">Expérience & qualifications</h2>
+          <div className="space-y-4">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Expérience (années)</label>
+                <select value={profile.childcareYears} onChange={e => setProfile({ ...profile, childcareYears: e.target.value })}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
+                  {["0", "1", "2", "3", "4", "5+"].map(n => <option key={n}>{n}</option>)}
+                </select>
+              </div>
+            </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Expérience (années)</label>
-              <select value={profile.childcareYears} onChange={e => setProfile({ ...profile, childcareYears: e.target.value })}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
-                {["0", "1", "2", "3", "4", "5+"].map(n => <option key={n}>{n}</option>)}
-              </select>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Décrivez votre expérience avec les enfants</label>
+              <textarea value={profile.childcareExperience} onChange={e => setProfile({ ...profile, childcareExperience: e.target.value })}
+                rows={3} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] resize-none" />
+            </div>
+            <div className="flex flex-wrap gap-4">
+              <label className="flex items-center gap-2 border rounded-xl px-3 py-2 cursor-pointer text-sm transition-all border-gray-200 text-gray-700 hover:border-[#E87722]">
+                <input type="checkbox" className="accent-[#E87722]" checked={profile.firstAidCertified}
+                  onChange={e => setProfile({ ...profile, firstAidCertified: e.target.checked })} />
+                Certifié(e) premiers secours
+              </label>
+              <label className="flex items-center gap-2 border rounded-xl px-3 py-2 cursor-pointer text-sm transition-all border-gray-200 text-gray-700 hover:border-[#E87722]">
+                <input type="checkbox" className="accent-[#E87722]" checked={profile.drivingLicense}
+                  onChange={e => setProfile({ ...profile, drivingLicense: e.target.checked })} />
+                Permis de conduire
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {/* Disponibilité & destination */}
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+          <h2 className="font-bold text-[#1A1A2E] mb-5">Disponibilité & destination</h2>
+          <div className="space-y-4">
+            <div className="grid sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Disponible à partir du</label>
+                <input type="date" value={profile.availableFrom} onChange={e => setProfile({ ...profile, availableFrom: e.target.value })}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Disponible jusqu'au</label>
+                <input type="date" value={profile.availableTo} onChange={e => setProfile({ ...profile, availableTo: e.target.value })}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Durée souhaitée</label>
+                <select value={profile.preferredDuration} onChange={e => setProfile({ ...profile, preferredDuration: e.target.value })}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
+                  <option value="">Sélectionner</option>
+                  {DURATIONS.map(d => <option key={d}>{d}</option>)}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Pays de destination souhaités</label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {COUNTRIES_HOST.map(country => (
+                  <label key={country} className={`flex items-center gap-2 border rounded-xl px-3 py-2 cursor-pointer text-sm transition-all ${
+                    profile.targetCountries.includes(country)
+                      ? "border-[#E87722] bg-[#FFF3E0] text-[#E87722] font-semibold"
+                      : "border-gray-200 text-gray-700 hover:border-[#E87722]"
+                  }`}>
+                    <input
+                      type="checkbox"
+                      className="sr-only"
+                      checked={profile.targetCountries.includes(country)}
+                      onChange={e => setProfile({
+                        ...profile,
+                        targetCountries: e.target.checked
+                          ? [...profile.targetCountries, country]
+                          : profile.targetCountries.filter(c => c !== country),
+                      })}
+                    />
+                    {country}
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -125,20 +319,70 @@ export default function AuPairProfilPage() {
           </div>
         </div>
 
+        {/* Santé & déclarations */}
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+          <h2 className="font-bold text-[#1A1A2E] mb-5">Santé & déclarations</h2>
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-4">
+              <label className="flex items-center gap-2 border rounded-xl px-3 py-2 cursor-pointer text-sm transition-all border-gray-200 text-gray-700 hover:border-[#E87722]">
+                <input type="checkbox" className="accent-[#E87722]" checked={profile.isSmoker}
+                  onChange={e => setProfile({ ...profile, isSmoker: e.target.checked })} />
+                Fumeur(se)
+              </label>
+              <label className="flex items-center gap-2 border rounded-xl px-3 py-2 cursor-pointer text-sm transition-all border-gray-200 text-gray-700 hover:border-[#E87722]">
+                <input type="checkbox" className="accent-[#E87722]" checked={profile.hasCriminalRecord}
+                  onChange={e => setProfile({ ...profile, hasCriminalRecord: e.target.checked })} />
+                Casier judiciaire non vierge
+              </label>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Déclaration de santé (allergies, traitements, etc.)</label>
+              <textarea value={profile.healthDeclaration} onChange={e => setProfile({ ...profile, healthDeclaration: e.target.value })}
+                rows={3} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] resize-none" />
+            </div>
+          </div>
+        </div>
+
         {/* Contact */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
           <h2 className="font-bold text-[#1A1A2E] mb-5">Contact WhatsApp</h2>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Numéro WhatsApp principal</label>
-            <input type="tel" value={profile.phoneWhatsapp1} onChange={e => setProfile({ ...profile, phoneWhatsapp1: e.target.value })}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
-              placeholder="+237 6XX XXX XXX" />
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Numéro WhatsApp principal</label>
+              <div className="flex gap-2">
+                <select value={profile.phoneCountryCode} onChange={e => setProfile({ ...profile, phoneCountryCode: e.target.value })}
+                  className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
+                  {PHONE_COUNTRY_CODES.map(c => (
+                    <option key={c.country} value={c.code}>{c.country} ({c.code})</option>
+                  ))}
+                </select>
+                <input type="tel" value={profile.phoneNumber} onChange={e => setProfile({ ...profile, phoneNumber: e.target.value })}
+                  className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
+                  placeholder="6XX XXX XXX" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Numéro WhatsApp secondaire (optionnel)</label>
+              <div className="flex gap-2">
+                <select value={profile.phoneCountryCode2} onChange={e => setProfile({ ...profile, phoneCountryCode2: e.target.value })}
+                  className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
+                  {PHONE_COUNTRY_CODES.map(c => (
+                    <option key={c.country} value={c.code}>{c.country} ({c.code})</option>
+                  ))}
+                </select>
+                <input type="tel" value={profile.phoneNumber2} onChange={e => setProfile({ ...profile, phoneNumber2: e.target.value })}
+                  className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
+                  placeholder="6XX XXX XXX" />
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Bouton sauvegarder */}
         <div className="flex items-center gap-4">
-          <Button size="lg" onClick={handleSave}>Sauvegarder les modifications</Button>
+          <Button size="lg" onClick={handleSave} disabled={saving}>
+            {saving ? "Sauvegarde..." : "Sauvegarder les modifications"}
+          </Button>
           {saved && (
             <div className="flex items-center gap-2 text-green-600 text-sm font-medium">
               <CheckCircle className="w-4 h-4" /> Profil sauvegardé !

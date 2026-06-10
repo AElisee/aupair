@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,34 +21,68 @@ const suggestedAuPairs = [
   { id: "3", firstName: "Samuel", age: 26, country: "Madagascar", flag: "🇲🇬", languages: ["Français"], experience: 3 },
 ];
 
+interface DashboardData {
+  name: string;
+  city: string;
+  country: string;
+  profileCompletion: number;
+  profileViews: number;
+  favoritesCount: number;
+  totalMessages: number;
+  unreadMessages: number;
+}
+
 export default function FamilleDashboard() {
+  const [data, setData] = useState<DashboardData | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/dashboard/famille")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (!cancelled && json) setData(json);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const profileCompletion = data?.profileCompletion ?? 0;
+
   const stats = [
-    { icon: Eye, label: "Vues du profil", value: "47", trend: "+8 cette semaine" },
-    { icon: MessageCircle, label: "Candidatures reçues", value: "12", trend: "3 non lues" },
-    { icon: Heart, label: "Au pairs favoris", value: "6", trend: "+2 cette semaine" },
+    { icon: Eye, label: "Vues du profil", value: data?.profileViews ?? 0 },
+    {
+      icon: MessageCircle,
+      label: "Candidatures reçues",
+      value: data?.totalMessages ?? 0,
+      trend: data && data.unreadMessages > 0 ? `${data.unreadMessages} non lue${data.unreadMessages > 1 ? "s" : ""}` : undefined,
+    },
+    { icon: Heart, label: "Au pairs favoris", value: data?.favoritesCount ?? 0 },
   ];
 
   return (
-    <DashboardLayout navItems={navItems} role="famille" userName="Famille Martin">
+    <DashboardLayout navItems={navItems} role="famille" userName={data?.name ?? ""}>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">Bonjour, Famille Martin 👋</h1>
+          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">Bonjour, {data?.name ?? ""} 👋</h1>
           <p className="text-gray-500">Voici un résumé de votre activité sur AuPair A.EU</p>
         </div>
 
         {/* Alerte profil incomplet */}
-        <div className="bg-[#FFF3E0] border border-[#E87722]/30 rounded-2xl p-5 flex items-start gap-4">
-          <div className="w-10 h-10 bg-[#E87722] rounded-full flex items-center justify-center flex-shrink-0">
-            <User className="w-5 h-5 text-white" />
+        {profileCompletion < 100 && (
+          <div className="bg-[#FFF3E0] border border-[#E87722]/30 rounded-2xl p-5 flex items-start gap-4">
+            <div className="w-10 h-10 bg-[#E87722] rounded-full flex items-center justify-center flex-shrink-0">
+              <User className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1">
+              <p className="font-bold text-[#1A1A2E] mb-1">Complétez votre profil famille ({profileCompletion}%)</p>
+              <p className="text-sm text-gray-500 mb-3">Un profil complet avec photo et description attire 5x plus d&apos;au pairs qualifiés.</p>
+              <Link href="/dashboard/famille/profil">
+                <Button size="sm">Compléter mon profil</Button>
+              </Link>
+            </div>
           </div>
-          <div className="flex-1">
-            <p className="font-bold text-[#1A1A2E] mb-1">Complétez votre profil famille</p>
-            <p className="text-sm text-gray-500 mb-3">Un profil complet avec photo et description attire 5x plus d'au pairs qualifiés.</p>
-            <Link href="/dashboard/famille/profil">
-              <Button size="sm">Compléter mon profil</Button>
-            </Link>
-          </div>
-        </div>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4">
@@ -60,7 +95,7 @@ export default function FamilleDashboard() {
                 </div>
                 <div className="text-2xl font-extrabold text-[#1A1A2E]">{s.value}</div>
                 <div className="text-xs text-gray-500 mt-0.5">{s.label}</div>
-                <div className="text-xs text-[#E87722] mt-1 font-medium">{s.trend}</div>
+                {s.trend && <div className="text-xs text-[#E87722] mt-1 font-medium">{s.trend}</div>}
               </div>
             );
           })}

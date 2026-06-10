@@ -2,9 +2,11 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Globe, Menu, X, User } from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
+import { Globe, Menu, X, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLang } from "@/contexts/LanguageContext";
+import { getDefaultRedirectForRole } from "@/lib/safe-redirect";
 
 const navLinks = [
   { href: "/trouver-au-pair", fr: "Trouver un au pair", en: "Find an au pair" },
@@ -17,6 +19,15 @@ const navLinks = [
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const { lang, setLang, t } = useLang();
+  const { data: session } = useSession();
+
+  const profileUrl = session
+    ? session.user.role === "AU_PAIR"
+      ? "/dashboard/au-pair/profil"
+      : session.user.role === "FAMILLE"
+        ? "/dashboard/famille/profil"
+        : getDefaultRedirectForRole(session.user.role)
+    : "/connexion";
 
   return (
     <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
@@ -56,18 +67,25 @@ export default function Navbar() {
               <span className="font-medium">{lang.toUpperCase()}</span>
             </button>
 
-            <Link href="/connexion">
+            <Link href={profileUrl}>
               <Button variant="ghost" size="sm">
                 <User className="w-4 h-4" />
-                {t("Connexion", "Login")}
+                {session ? t("Profil", "Profile") : t("Connexion", "Login")}
               </Button>
             </Link>
 
-            <Link href="/inscription">
-              <Button size="sm">
-                {t("S'inscrire", "Sign up")}
+            {session ? (
+              <Button size="sm" onClick={() => signOut({ callbackUrl: "/" })}>
+                <LogOut className="w-4 h-4" />
+                {t("Se déconnecter", "Log out")}
               </Button>
-            </Link>
+            ) : (
+              <Link href="/inscription">
+                <Button size="sm">
+                  {t("S'inscrire", "Sign up")}
+                </Button>
+              </Link>
+            )}
           </div>
 
           {/* Menu mobile */}
@@ -101,12 +119,20 @@ export default function Navbar() {
               <Globe className="w-4 h-4" />
               {lang === "fr" ? "EN" : "FR"}
             </button>
-            <Link href="/connexion" className="flex-1">
-              <Button variant="outline" size="sm" className="w-full">{t("Connexion", "Login")}</Button>
+            <Link href={profileUrl} className="flex-1">
+              <Button variant="outline" size="sm" className="w-full">
+                {session ? t("Profil", "Profile") : t("Connexion", "Login")}
+              </Button>
             </Link>
-            <Link href="/inscription" className="flex-1">
-              <Button size="sm" className="w-full">{t("S'inscrire", "Sign up")}</Button>
-            </Link>
+            {session ? (
+              <Button size="sm" className="flex-1 w-full" onClick={() => signOut({ callbackUrl: "/" })}>
+                {t("Se déconnecter", "Log out")}
+              </Button>
+            ) : (
+              <Link href="/inscription" className="flex-1">
+                <Button size="sm" className="w-full">{t("S'inscrire", "Sign up")}</Button>
+              </Link>
+            )}
           </div>
         </div>
       )}

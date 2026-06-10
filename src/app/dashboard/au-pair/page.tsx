@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,21 +22,54 @@ const suggestedFamilies = [
   { id: "3", name: "Famille Moreau", city: "Paris", country: "France", flag: "🇫🇷", kids: 2, hoursPerWeek: 35, pocketMoney: 400 },
 ];
 
+interface DashboardData {
+  firstName: string;
+  lastName: string;
+  profileCompletion: number;
+  profileViews: number;
+  favoritesCount: number;
+  totalMessages: number;
+  unreadMessages: number;
+  subscription: { active: boolean; daysLeft: number };
+}
+
 export default function AuPairDashboard() {
-  const profileCompletion = 65;
-  const daysLeft = 18;
+  const [data, setData] = useState<DashboardData | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/dashboard/au-pair")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (!cancelled && json) setData(json);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const profileCompletion = data?.profileCompletion ?? 0;
+  const subscriptionActive = data?.subscription.active ?? false;
+  const daysLeft = data?.subscription.daysLeft ?? 0;
+  const userName = data ? `${data.firstName} ${data.lastName.charAt(0)}.` : "";
+
   const stats = [
-    { icon: Eye, label: "Vues du profil", value: "124", trend: "+12 cette semaine" },
-    { icon: Heart, label: "Mis en favoris", value: "8", trend: "+3 cette semaine" },
-    { icon: MessageCircle, label: "Messages reçus", value: "5", trend: "2 non lus" },
+    { icon: Eye, label: "Vues du profil", value: data?.profileViews ?? 0 },
+    { icon: Heart, label: "Mis en favoris", value: data?.favoritesCount ?? 0 },
+    {
+      icon: MessageCircle,
+      label: "Messages reçus",
+      value: data?.totalMessages ?? 0,
+      trend: data && data.unreadMessages > 0 ? `${data.unreadMessages} non lu${data.unreadMessages > 1 ? "s" : ""}` : undefined,
+    },
   ];
 
   return (
-    <DashboardLayout navItems={navItems} role="au-pair" userName="Aminata K.">
+    <DashboardLayout navItems={navItems} role="au-pair" userName={userName}>
       <div className="space-y-6">
         {/* En-tête */}
         <div>
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">Bonjour, Aminata 👋</h1>
+          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">Bonjour, {data?.firstName ?? ""} 👋</h1>
           <p className="text-gray-500">Voici un résumé de votre activité sur AuPair A.EU</p>
         </div>
 
@@ -57,11 +91,11 @@ export default function AuPairDashboard() {
           </div>
 
           {/* Abonnement */}
-          <div className={`rounded-2xl p-5 border shadow-sm ${daysLeft <= 3 ? "bg-red-50 border-red-200" : daysLeft <= 7 ? "bg-yellow-50 border-yellow-200" : "bg-white border-gray-100"}`}>
+          <div className={`rounded-2xl p-5 border shadow-sm ${!subscriptionActive ? "bg-red-50 border-red-200" : daysLeft <= 7 ? "bg-yellow-50 border-yellow-200" : "bg-white border-gray-100"}`}>
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-[#1A1A2E]">Mon abonnement</h3>
-              <Badge variant={daysLeft <= 3 ? "destructive" : daysLeft <= 7 ? "warning" : "success"}>
-                Actif
+              <Badge variant={!subscriptionActive ? "destructive" : daysLeft <= 7 ? "warning" : "success"}>
+                {subscriptionActive ? "Actif" : "Inactif"}
               </Badge>
             </div>
             <div className="flex items-center gap-2 mb-3">
@@ -70,8 +104,8 @@ export default function AuPairDashboard() {
               <span className="text-gray-500">jours restants</span>
             </div>
             <Link href="/dashboard/au-pair/abonnement">
-              <Button size="sm" variant={daysLeft <= 7 ? "default" : "outline"}>
-                {daysLeft <= 7 ? "Renouveler maintenant" : "Gérer l'abonnement"}
+              <Button size="sm" variant={!subscriptionActive || daysLeft <= 7 ? "default" : "outline"}>
+                {subscriptionActive ? (daysLeft <= 7 ? "Renouveler maintenant" : "Gérer l'abonnement") : "S'abonner"}
               </Button>
             </Link>
           </div>
@@ -88,7 +122,7 @@ export default function AuPairDashboard() {
                 </div>
                 <div className="text-2xl font-extrabold text-[#1A1A2E]">{s.value}</div>
                 <div className="text-xs text-gray-500 mt-0.5">{s.label}</div>
-                <div className="text-xs text-[#E87722] mt-1 font-medium">{s.trend}</div>
+                {s.trend && <div className="text-xs text-[#E87722] mt-1 font-medium">{s.trend}</div>}
               </div>
             );
           })}

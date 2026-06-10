@@ -27,9 +27,10 @@ npx prisma generate  # Regenerate client after schema changes
 npx prisma db push   # Apply schema to database (no migration file)
 npx prisma studio    # GUI for database
 npx playwright test  # E2E tests
+npm run db:seed      # Create/update the admin account from ADMIN_* env vars
 ```
 
-`postinstall` runs `prisma generate` automatically on `npm install`.
+`postinstall` runs `prisma generate` automatically on `npm install`. `predev` runs `prisma/seed.ts` automatically before `npm run dev`, which upserts an `ADMIN` user from `ADMIN_EMAIL` / `ADMIN_PASSWORD` / `ADMIN_NAME` (no-op if `ADMIN_EMAIL`/`ADMIN_PASSWORD` are unset).
 
 ## Critical: Prisma 7 differences from v5/v6
 
@@ -97,4 +98,5 @@ CINETPAY_API_KEY / CINETPAY_SITE_ID
 RESEND_API_KEY / RESEND_FROM_EMAIL
 NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY
 NEXT_PUBLIC_APP_URL
+ADMIN_EMAIL / ADMIN_PASSWORD / ADMIN_NAME (optional — seeds an ADMIN account on `npm run dev`)
 ```
