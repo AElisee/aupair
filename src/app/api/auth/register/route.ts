@@ -10,6 +10,7 @@ type RegisterBody = {
   password?: string;
   // Au pair
   country?: string;
+  gender?: string;
   languages?: string[];
   educationLevel?: string;
   experience?: string;
@@ -48,6 +49,12 @@ export async function POST(request: Request) {
   if (password.length < 8) {
     return NextResponse.json(
       { error: "Le mot de passe doit contenir au moins 8 caractères." },
+      { status: 400 }
+    );
+  }
+  if (role === "au-pair" && body.gender !== "Femme" && body.gender !== "Homme") {
+    return NextResponse.json(
+      { error: "Le genre est obligatoire." },
       { status: 400 }
     );
   }
@@ -93,7 +100,7 @@ export async function POST(request: Request) {
                   firstName,
                   lastName,
                   dateOfBirth: new Date("2000-01-01"),
-                  gender: "",
+                  gender: body.gender ?? "",
                   nationality: body.country ?? "",
                   countryOfOrigin: body.country ?? "",
                   languages: body.languages ?? [],

@@ -80,6 +80,10 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Requête invalide." }, { status: 400 });
   }
 
+  if (body.gender !== "Femme" && body.gender !== "Homme") {
+    return NextResponse.json({ error: "Le genre est obligatoire." }, { status: 400 });
+  }
+
   const phoneCountryCode = body.phoneCountryCode ? String(body.phoneCountryCode) : "";
   const phoneNumber = body.phoneNumber ? String(body.phoneNumber).trim() : "";
   const phoneWhatsapp1 = phoneNumber ? `${phoneCountryCode} ${phoneNumber}`.trim() : null;

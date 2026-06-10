@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Search, Filter, MapPin, Users, Clock, Lock, Loader2 } from "lucide-react";
 import { useCountries } from "@/hooks/useCountries";
@@ -22,8 +23,8 @@ type Family = {
   familyPhotoUrl: string;
 };
 
-function FamilyCard({ fam }: { fam: Family }) {
-  return (
+function FamilyCard({ fam, isAuPair }: { fam: Family; isAuPair: boolean }) {
+  const card = (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden group">
       <div className="relative h-36 bg-linear-to-br from-[#1A1A2E] to-[#0f3460] flex items-center justify-center overflow-hidden">
         {fam.familyPhotoUrl ? (
@@ -35,13 +36,15 @@ function FamilyCard({ fam }: { fam: Family }) {
             <p className="text-white font-bold">{fam.city}</p>
           </div>
         )}
-        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-          <Lock className="w-6 h-6 text-[#E87722] mb-2" />
-          <p className="text-sm font-semibold text-[#1A1A2E] mb-3">Voir le profil complet</p>
-          <Link href="/inscription?role=au-pair">
-            <Button size="sm">S'inscrire — 32€/30j</Button>
-          </Link>
-        </div>
+        {!isAuPair && (
+          <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <Lock className="w-6 h-6 text-[#E87722] mb-2" />
+            <p className="text-sm font-semibold text-[#1A1A2E] mb-3">Voir le profil complet</p>
+            <Link href="/inscription?role=au-pair">
+              <Button size="sm">S'inscrire — 32€/30j</Button>
+            </Link>
+          </div>
+        )}
       </div>
 
       <div className="p-5">
@@ -69,9 +72,17 @@ function FamilyCard({ fam }: { fam: Family }) {
       </div>
     </div>
   );
+
+  if (isAuPair) {
+    return <Link href={`/dashboard/au-pair/famille/${fam.id}`} className="block">{card}</Link>;
+  }
+  return card;
 }
 
 export default function TrouverFamillePage() {
+  const { data: session } = useSession();
+  const isAuPair = session?.user?.role === "AU_PAIR";
+
   const [families, setFamilies] = useState<Family[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -100,7 +111,8 @@ export default function TrouverFamillePage() {
             Trouver une famille d'accueil
           </h1>
           <p className="text-white/80 mb-6">
-            {families.length} familles disponibles · Abonnement 32€/30 jours pour contacter les familles
+            {families.length} familles disponibles
+            {!isAuPair && " · Abonnement 32€/30 jours pour contacter les familles"}
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3">
@@ -139,15 +151,17 @@ export default function TrouverFamillePage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-[#FFF3E0] border border-[#E87722]/30 rounded-2xl p-5 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            <p className="font-bold text-[#1A1A2E]">👤 Inscrivez-vous pour contacter les familles</p>
-            <p className="text-sm text-gray-500">Abonnement au pair à 32€ pour 30 jours. Messagerie illimitée incluse.</p>
+        {!isAuPair && (
+          <div className="bg-[#FFF3E0] border border-[#E87722]/30 rounded-2xl p-5 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <p className="font-bold text-[#1A1A2E]">👤 Inscrivez-vous pour contacter les familles</p>
+              <p className="text-sm text-gray-500">Abonnement au pair à 32€ pour 30 jours. Messagerie illimitée incluse.</p>
+            </div>
+            <Link href="/inscription?role=au-pair">
+              <Button>S'inscrire — 32€/30j</Button>
+            </Link>
           </div>
-          <Link href="/inscription?role=au-pair">
-            <Button>S'inscrire — 32€/30j</Button>
-          </Link>
-        </div>
+        )}
 
         {loading ? (
           <div className="py-20 text-center">
@@ -159,7 +173,7 @@ export default function TrouverFamillePage() {
             <p className="text-gray-500 text-sm mb-6">{filtered.length} familles trouvées</p>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filtered.map((f) => <FamilyCard key={f.id} fam={f} />)}
+              {filtered.map((f) => <FamilyCard key={f.id} fam={f} isAuPair={isAuPair} />)}
             </div>
 
             {filtered.length === 0 && (

@@ -16,11 +16,16 @@ const navItems = [
   { href: "/dashboard/famille/parametres", icon: Settings, label: "Paramètres" },
 ];
 
-const suggestedAuPairs = [
-  { id: "1", firstName: "Aminata", age: 23, country: "Cameroun", flag: "🇨🇲", languages: ["Français", "Anglais"], experience: 3 },
-  { id: "2", firstName: "Fatou", age: 22, country: "Sénégal", flag: "🇸🇳", languages: ["Français"], experience: 1 },
-  { id: "3", firstName: "Samuel", age: 26, country: "Madagascar", flag: "🇲🇬", languages: ["Français"], experience: 3 },
-];
+interface SuggestedAuPair {
+  id: string;
+  firstName: string;
+  profilePhotoUrl: string;
+  age: number;
+  country: string;
+  flag: string;
+  languages: string[];
+  experience: number;
+}
 
 interface DashboardData {
   name: string;
@@ -31,6 +36,7 @@ interface DashboardData {
   favoritesCount: number;
   totalMessages: number;
   unreadMessages: number;
+  suggestedAuPairs: SuggestedAuPair[];
 }
 
 export default function FamilleDashboard() {
@@ -108,25 +114,35 @@ export default function FamilleDashboard() {
             <h3 className="font-bold text-[#1A1A2E]">Au pairs suggérés pour vous</h3>
             <Link href="/dashboard/famille/recherche" className="text-[#E87722] text-sm font-semibold">Voir tous →</Link>
           </div>
-          <div className="space-y-3">
-            {suggestedAuPairs.map((ap) => (
-              <div key={ap.id} className="flex items-center justify-between p-3 bg-[#F5F5F5] rounded-xl hover:bg-[#FFF3E0] transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-[#E87722] rounded-full flex items-center justify-center text-white font-bold text-sm">
-                    {ap.firstName.charAt(0)}
+          {data && data.suggestedAuPairs.length === 0 ? (
+            <p className="text-sm text-gray-500">Aucune suggestion pour le moment. Complétez vos préférences pour de meilleures recommandations.</p>
+          ) : (
+            <div className="space-y-3">
+              {(data?.suggestedAuPairs ?? []).map((ap) => (
+                <Link
+                  key={ap.id}
+                  href={`/dashboard/famille/au-pair/${ap.id}`}
+                  className="flex items-center justify-between p-3 bg-[#F5F5F5] rounded-xl hover:bg-[#FFF3E0] transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-[#E87722] rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden shrink-0">
+                      {ap.profilePhotoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={ap.profilePhotoUrl} alt={ap.firstName} className="w-full h-full object-cover object-top" />
+                      ) : (
+                        ap.firstName.charAt(0)
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-[#1A1A2E] text-sm">{ap.firstName}, {ap.age} ans</p>
+                      <p className="text-xs text-gray-500">{ap.flag} {ap.country} · {ap.languages.join(", ")}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-semibold text-[#1A1A2E] text-sm">{ap.firstName}, {ap.age} ans</p>
-                    <p className="text-xs text-gray-500">{ap.flag} {ap.country} · {ap.languages.join(", ")}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
                   <Badge variant="success">{ap.experience} ans exp.</Badge>
-                  <Button size="sm" variant="outline">Voir profil</Button>
-                </div>
-              </div>
-            ))}
-          </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </DashboardLayout>

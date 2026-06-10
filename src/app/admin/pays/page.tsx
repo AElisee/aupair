@@ -44,13 +44,22 @@ const REGIONAL_INDICATOR_OFFSET = "🇦".codePointAt(0)! - "A".charCodeAt(0);
 const isoToFlag = (iso: string): string => {
   const code = iso.trim().toUpperCase();
   if (!/^[A-Z]{2}$/.test(code)) return code;
-  return [...code].map((c) => String.fromCodePoint(c.charCodeAt(0) + REGIONAL_INDICATOR_OFFSET)).join("");
+  return [...code]
+    .map((c) =>
+      String.fromCodePoint(c.charCodeAt(0) + REGIONAL_INDICATOR_OFFSET),
+    )
+    .join("");
 };
 
 const flagToIso = (flag: string): string => {
   const points = [...flag].map((c) => c.codePointAt(0) ?? 0);
-  if (points.length === 2 && points.every((p) => p >= 0x1f1e6 && p <= 0x1f1ff)) {
-    return points.map((p) => String.fromCharCode(p - REGIONAL_INDICATOR_OFFSET)).join("");
+  if (
+    points.length === 2 &&
+    points.every((p) => p >= 0x1f1e6 && p <= 0x1f1ff)
+  ) {
+    return points
+      .map((p) => String.fromCharCode(p - REGIONAL_INDICATOR_OFFSET))
+      .join("");
   }
   return flag;
 };
@@ -82,7 +91,12 @@ export default function AdminPaysPage() {
 
   const startEdit = (c: Country) => {
     setEditingId(c.id);
-    setForm({ name: c.name, flag: flagToIso(c.flag), dialCode: c.dialCode, type: c.type });
+    setForm({
+      name: c.name,
+      flag: flagToIso(c.flag),
+      dialCode: c.dialCode,
+      type: c.type,
+    });
     setError("");
   };
 
@@ -191,7 +205,10 @@ export default function AdminPaysPage() {
   const filtered = countries.filter((c) => {
     const matchType = !filterType || c.type === filterType;
     const q = search.trim().toLowerCase();
-    const matchSearch = !q || c.name.toLowerCase().includes(q) || c.dialCode.toLowerCase().includes(q);
+    const matchSearch =
+      !q ||
+      c.name.toLowerCase().includes(q) ||
+      c.dialCode.toLowerCase().includes(q);
     return matchType && matchSearch;
   });
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -259,7 +276,9 @@ export default function AdminPaysPage() {
               <input
                 type="text"
                 value={form.flag}
-                onChange={(e) => setForm({ ...form, flag: e.target.value.toUpperCase() })}
+                onChange={(e) =>
+                  setForm({ ...form, flag: e.target.value.toUpperCase() })
+                }
                 placeholder="FR"
                 maxLength={2}
                 className="w-20 border border-gray-200 rounded-xl px-3 py-2 text-sm text-center uppercase focus:outline-none focus:ring-2 focus:ring-[#E87722]"
@@ -432,7 +451,7 @@ export default function AdminPaysPage() {
                           className="w-4 h-4 rounded border-gray-300 text-[#E87722] focus:ring-[#E87722]"
                         />
                       </td>
-                      <td className="px-5 py-3.5 text-sm leading-none">
+                      <td className="px-5 py-3.5 text-md leading-none">
                         {c.flag}
                       </td>
                       <td className="px-5 py-3.5 font-semibold text-[#1A1A2E]">

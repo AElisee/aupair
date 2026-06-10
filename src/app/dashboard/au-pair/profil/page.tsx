@@ -61,6 +61,7 @@ export default function AuPairProfilPage() {
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [profile, setProfile] = useState<Profile>(EMPTY_PROFILE);
   const { origin: originCountries, host: hostCountries } = useCountries();
   const allCountries = [...originCountries, ...hostCountries];
@@ -109,6 +110,7 @@ export default function AuPairProfilPage() {
 
   const handleSave = async () => {
     setSaving(true);
+    setSaveError("");
     try {
       const res = await fetch("/api/profile/au-pair", {
         method: "PUT",
@@ -118,6 +120,9 @@ export default function AuPairProfilPage() {
       if (res.ok) {
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
+      } else {
+        const data = await res.json().catch(() => null);
+        setSaveError(data?.error ?? "Erreur lors de la sauvegarde du profil.");
       }
     } finally {
       setSaving(false);
@@ -211,7 +216,7 @@ export default function AuPairProfilPage() {
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]" />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Genre</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Genre *</label>
               <select value={profile.gender} onChange={e => setProfile({ ...profile, gender: e.target.value })}
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
                 <option value="">Sélectionner</option>
@@ -435,15 +440,18 @@ export default function AuPairProfilPage() {
         </div>
 
         {/* Bouton sauvegarder */}
-        <div className="flex items-center gap-4">
-          <Button size="lg" onClick={handleSave} disabled={saving}>
-            {saving ? "Sauvegarde..." : "Sauvegarder les modifications"}
-          </Button>
-          {saved && (
-            <div className="flex items-center gap-2 text-green-600 text-sm font-medium">
-              <CheckCircle className="w-4 h-4" /> Profil sauvegardé !
-            </div>
-          )}
+        <div className="space-y-2">
+          <div className="flex items-center gap-4">
+            <Button size="lg" onClick={handleSave} disabled={saving}>
+              {saving ? "Sauvegarde..." : "Sauvegarder les modifications"}
+            </Button>
+            {saved && (
+              <div className="flex items-center gap-2 text-green-600 text-sm font-medium">
+                <CheckCircle className="w-4 h-4" /> Profil sauvegardé !
+              </div>
+            )}
+          </div>
+          {saveError && <p className="text-sm text-red-500">{saveError}</p>}
         </div>
       </div>
     </DashboardLayout>

@@ -18,7 +18,7 @@ function InscriptionContent() {
   const [role, setRole] = useState<Role>(defaultRole);
   const [form, setForm] = useState({
     firstName: "", lastName: "", email: "", password: "",
-    country: "", languages: [] as string[],
+    country: "", gender: "", languages: [] as string[],
     educationLevel: "", experience: "",
     city: "", numberOfKids: "",
   });
@@ -46,6 +46,7 @@ function InscriptionContent() {
           email: form.email,
           password: form.password,
           country: form.country,
+          gender: form.gender,
           languages: form.languages,
           educationLevel: form.educationLevel,
           experience: form.experience,
@@ -204,6 +205,15 @@ function InscriptionContent() {
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
                     <option value="">Sélectionner votre pays</option>
                     {originCountries.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Genre *</label>
+                  <select value={form.gender} onChange={e => setForm({ ...form, gender: e.target.value })}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
+                    <option value="">Sélectionner</option>
+                    <option value="Femme">Femme</option>
+                    <option value="Homme">Homme</option>
                   </select>
                 </div>
                 <div>
