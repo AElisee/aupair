@@ -26,6 +26,13 @@ export async function GET(
     return NextResponse.json({ error: "Profil introuvable" }, { status: 404 });
   }
 
+  if (profile.userId !== session.user.id) {
+    await prisma.familyProfile.update({
+      where: { id: profile.id },
+      data: { profileViews: { increment: 1 } },
+    });
+  }
+
   return NextResponse.json({
     name: profile.user.name ?? "Famille",
     familyPhotoUrl: profile.familyPhotoUrl ?? "",

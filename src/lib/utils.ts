@@ -35,11 +35,8 @@ export function calculateAge(dateOfBirth: Date | string): number {
   return age;
 }
 
-export function formatCurrency(amount: number, currency: "EUR" | "XOF" = "EUR"): string {
-  if (currency === "XOF") {
-    return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "XOF" }).format(amount);
-  }
-  return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(amount);
+export function formatCurrency(amount: number, currency: "EUR" | "XOF" | "USD" = "EUR"): string {
+  return new Intl.NumberFormat("fr-FR", { style: "currency", currency }).format(amount);
 }
 
 export function slugify(text: string): string {

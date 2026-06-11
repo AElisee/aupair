@@ -145,7 +145,7 @@ export default function FamilleProfilPage() {
 
   return (
     <DashboardLayout navItems={navItems} role="famille" userName={userName}>
-      <div className="max-w-3xl space-y-6">
+      <div className="max-w-3xl space-y-6 pb-24">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-extrabold text-[#1A1A2E]">Mon profil</h1>
@@ -370,8 +370,11 @@ export default function FamilleProfilPage() {
           </div>
         </div>
 
-        {/* Bouton sauvegarder */}
-        <div className="flex items-center gap-4">
+      </div>
+
+      {/* Bouton sauvegarder (sticky) */}
+      <div className="fixed bottom-0 left-0 right-0 md:left-64 z-30 bg-white border-t border-gray-100 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] p-4">
+        <div className="max-w-3xl mx-auto flex items-center gap-4">
           <Button size="lg" onClick={handleSave} disabled={saving}>
             {saving ? "Sauvegarde..." : "Sauvegarder les modifications"}
           </Button>

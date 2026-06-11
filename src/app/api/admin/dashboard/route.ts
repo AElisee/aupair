@@ -106,7 +106,7 @@ export async function GET() {
   const recentPayments = recentSubscriptions.map((s) => ({
     id: s.id,
     user: s.user.name ?? "Utilisateur",
-    amount: formatCurrency(s.amount, s.currency as "EUR" | "XOF"),
+    amount: formatCurrency(s.amount, s.currency),
     method: s.paymentMethod,
     status: s.status,
     date: formatRelativeDate(s.createdAt),

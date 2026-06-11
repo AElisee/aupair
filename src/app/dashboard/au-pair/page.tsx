@@ -118,6 +118,12 @@ export default function AuPairDashboard() {
   };
 
   const profileCompletion = data?.profileCompletion ?? 0;
+  const completionColor =
+    profileCompletion >= 80
+      ? { bar: "bg-green-500", text: "text-green-600" }
+      : profileCompletion >= 50
+        ? { bar: "bg-[#E87722]", text: "text-[#E87722]" }
+        : { bar: "bg-red-500", text: "text-red-500" };
   const subscriptionActive = data?.subscription.active ?? false;
   const daysLeft = data?.subscription.daysLeft ?? 0;
   const userName = data ? `${data.firstName} ${data.lastName.charAt(0)}.` : "";
@@ -194,13 +200,13 @@ export default function AuPairDashboard() {
               <h3 className="font-semibold text-[#1A1A2E]">
                 Complétion du profil
               </h3>
-              <span className="text-[#E87722] font-bold text-lg">
+              <span className={`font-bold text-lg ${completionColor.text}`}>
                 {profileCompletion}%
               </span>
             </div>
             <div className="w-full bg-gray-100 rounded-full h-2 mb-3">
               <div
-                className="bg-[#E87722] h-2 rounded-full transition-all"
+                className={`h-2 rounded-full transition-all ${completionColor.bar}`}
                 style={{ width: `${profileCompletion}%` }}
               />
             </div>

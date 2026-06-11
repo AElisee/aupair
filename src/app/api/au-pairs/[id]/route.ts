@@ -31,6 +31,13 @@ export async function GET(
     return NextResponse.json({ error: "Profil introuvable" }, { status: 404 });
   }
 
+  if (profile.userId !== session.user.id) {
+    await prisma.auPairProfile.update({
+      where: { id: profile.id },
+      data: { profileViews: { increment: 1 } },
+    });
+  }
+
   return NextResponse.json({
     available: profile.isAvailable,
     isFavorite: !!favorite,
