@@ -715,6 +715,8 @@ Notes :
 
 ## Tache 20 - Brancher le dashboard admin
 
+Statut : Termine (11 juin 2026)
+
 Periode : Jour 19  
 Priorite : haute
 
@@ -747,7 +749,16 @@ Critere de validation :
 - Les chiffres changent selon les donnees en base.
 - Un non-admin ne peut pas acceder.
 
+Notes :
+
+- Deja en place : `totalUsers`, `signups30d`/`signupsChange`, `revenue30d`, `activeSubscriptions`, `pendingProfiles`, `openReports` dans `src/app/api/admin/dashboard/route.ts`.
+- Ajoute dans cette session : `totalAuPairs` (`prisma.auPairProfile.count()`), `totalFamilies` (`prisma.familyProfile.count()`) et `totalRevenue` (somme all-time des abonnements EUR au statut `ACTIVE`/`EXPIRED`).
+- `src/app/admin/page.tsx` affiche desormais 7 cartes KPI couvrant exactement les KPIs requis (Utilisateurs totaux, Au pairs, Familles, Profils en attente, Abonnements actifs, Revenus totaux, Signalements ouverts), les indicateurs 30 jours etant conserves en sous-texte.
+- Acces non-admin deja bloque via `requireAdminSession()` (403).
+
 ## Tache 21 - Brancher admin utilisateurs
+
+Statut : Termine (11 juin 2026)
 
 Periode : Jour 20  
 Priorite : haute
@@ -777,7 +788,15 @@ Critere de validation :
 - La liste affiche les utilisateurs reels.
 - Les actions modifient la base.
 
+Notes :
+
+- Deja en place : `src/app/api/admin/users/route.ts` (GET liste reelle au pair + famille avec statut d'abonnement, PATCH actions `validate`/`hide`/`unhide`/`suspend`/`delete` -> `setProfileStatus()`), filtres role/statut et recherche cote client dans `src/app/admin/utilisateurs/page.tsx`, confirmation de suppression via `ConfirmDialog`.
+- Ajoute dans cette session : pagination (10 utilisateurs par page) dans `src/app/admin/utilisateurs/page.tsx`, sur le meme modele que `/admin/pays`, avec retour a la page 1 lors d'un changement de recherche/filtre.
+- Pas de route `[id]` dediee : le PATCH utilise `userId` dans le corps de la requete (`/api/admin/users`), fonctionnellement equivalent a la route prevue dans le plan.
+
 ## Tache 22 - Brancher moderation
+
+Statut : Termine (11 juin 2026)
 
 Periode : Jour 21  
 Priorite : haute
@@ -806,6 +825,14 @@ Critere de validation :
 
 - Valider un profil le rend visible publiquement.
 - Masquer un profil le retire des annuaires.
+
+Notes :
+
+- Deja en place : `src/app/api/admin/moderation/route.ts` GET (liste des profils `PENDING` triee par anciennete) et `src/app/admin/moderation/page.tsx` (cartes profil + bouton "Voir profil").
+- Le PATCH ne supportait que `validate`/`reject` (reject -> `SUSPENDED`). Ajoute dans cette session : actions `hide` (masquer -> `HIDDEN`) et `delete` (supprimer -> `DELETED`), en plus de `validate` (-> `ACTIVE`) et `suspend` (-> `SUSPENDED`).
+- UI : boutons "Masquer" et "Suspendre" ajoutes ; "Supprimer" passe par `ConfirmDialog` (irreversible).
+- Verifie que "masquer" retire bien le profil des annuaires : `src/app/api/au-pairs/route.ts` et `src/app/api/families/route.ts` filtrent deja sur `status: ProfileStatus.ACTIVE`, donc les profils `HIDDEN`/`SUSPENDED`/`DELETED` n'apparaissent plus.
+- Pas de route `[profileId]` dediee : le PATCH utilise `userId`/`role` dans le corps de la requete (`/api/admin/moderation`), fonctionnellement equivalent.
 
 ## Tache 23 - Brancher paiements admin
 

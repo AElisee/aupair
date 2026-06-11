@@ -3,9 +3,10 @@ import { useEffect, useRef, useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { User, Search, MessageCircle, Bell, CreditCard, Settings, Home, Camera, CheckCircle, Loader2 } from "lucide-react";
+import { User, Search, MessageCircle, Bell, CreditCard, Settings, Home, Camera, CheckCircle, Loader2, FileText, Upload } from "lucide-react";
 import { useCountries } from "@/hooks/useCountries";
 import { useConstants } from "@/hooks/useConstants";
+import PhotoViewerModal from "@/components/ui/photo-viewer-modal";
 
 const navItems = [
   { href: "/dashboard/au-pair", icon: Home, label: "Tableau de bord" },
@@ -28,6 +29,7 @@ const STATUS_BADGES: Record<string, { variant: "warning" | "success" | "secondar
 type Profile = {
   status: string;
   profilePhotoUrl: string;
+  idDocumentUrl: string;
   firstName: string; lastName: string; dateOfBirth: string;
   gender: string; nationality: string; countryOfOrigin: string;
   cityOfOrigin: string; languages: string[];
@@ -44,6 +46,7 @@ type Profile = {
 const EMPTY_PROFILE: Profile = {
   status: "PENDING",
   profilePhotoUrl: "",
+  idDocumentUrl: "",
   firstName: "", lastName: "", dateOfBirth: "",
   gender: "", nationality: "", countryOfOrigin: "",
   cityOfOrigin: "", languages: [],
@@ -69,6 +72,10 @@ export default function AuPairProfilPage() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoError, setPhotoError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showPhoto, setShowPhoto] = useState(false);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [docError, setDocError] = useState("");
+  const docInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -106,6 +113,30 @@ export default function AuPairProfilPage() {
     } finally {
       setUploadingPhoto(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDocChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setDocError("");
+    setUploadingDoc(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/profile/id-document", { method: "POST", body: formData });
+      const data = await res.json();
+      if (res.ok) {
+        setProfile((p) => ({ ...p, idDocumentUrl: data.url }));
+      } else {
+        setDocError(data.error ?? "Erreur lors de l'envoi du document.");
+      }
+    } catch {
+      setDocError("Erreur lors de l'envoi du document.");
+    } finally {
+      setUploadingDoc(false);
+      if (docInputRef.current) docInputRef.current.value = "";
     }
   };
 
@@ -189,10 +220,60 @@ export default function AuPairProfilPage() {
             <div>
               <p className="font-medium text-[#1A1A2E] text-sm mb-1">Ajouter une photo professionnelle</p>
               <p className="text-xs text-gray-400 mb-2">JPG ou PNG, max 5 Mo. Une bonne photo augmente vos chances de contact.</p>
-              <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingPhoto}>
-                {uploadingPhoto ? "Envoi en cours..." : "Télécharger une photo"}
-              </Button>
+              <div className="flex items-center gap-3 flex-wrap">
+                <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingPhoto}>
+                  {uploadingPhoto ? "Envoi en cours..." : "Télécharger une photo"}
+                </Button>
+                {profile.profilePhotoUrl && (
+                  <button type="button" onClick={() => setShowPhoto(true)} className="text-sm font-semibold text-[#E87722] hover:underline">
+                    Voir la photo
+                  </button>
+                )}
+              </div>
               {photoError && <p className="text-xs text-red-500 mt-1">{photoError}</p>}
+            </div>
+          </div>
+        </div>
+
+        {/* Pièce d'identité */}
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+          <h2 className="font-bold text-[#1A1A2E] mb-4">Pièce d'identité</h2>
+          <div className="flex items-center gap-5">
+            <div className="w-20 h-20 rounded-2xl bg-[#FFF3E0] flex items-center justify-center flex-shrink-0">
+              <FileText className="w-8 h-8 text-[#E87722]" />
+            </div>
+            <div>
+              <p className="font-medium text-[#1A1A2E] text-sm mb-1">
+                {profile.idDocumentUrl ? "Document envoyé" : "Aucun document envoyé"}
+              </p>
+              <p className="text-xs text-gray-400 mb-2">
+                Carte d'identité, passeport ou titre de séjour. JPG, PNG ou PDF, max 10 Mo. Ce document n'est visible que par notre équipe.
+              </p>
+              <div className="flex items-center gap-3 flex-wrap">
+                <Button size="sm" variant="outline" onClick={() => docInputRef.current?.click()} disabled={uploadingDoc}>
+                  {uploadingDoc ? (
+                    "Envoi en cours..."
+                  ) : (
+                    <>
+                      <Upload className="w-3.5 h-3.5 mr-1.5" />
+                      {profile.idDocumentUrl ? "Remplacer le document" : "Télécharger un document"}
+                    </>
+                  )}
+                </Button>
+                {profile.idDocumentUrl && (
+                  <a href={profile.idDocumentUrl} target="_blank" rel="noreferrer" className="text-sm font-semibold text-[#E87722] hover:underline">
+                    Voir le document
+                  </a>
+                )}
+              </div>
+              <input
+                ref={docInputRef}
+                type="file"
+                accept="image/jpeg,image/png,application/pdf"
+                className="hidden"
+                onChange={handleDocChange}
+              />
+              {docError && <p className="text-xs text-red-500 mt-1">{docError}</p>}
             </div>
           </div>
         </div>
@@ -455,6 +536,10 @@ export default function AuPairProfilPage() {
           {saveError && <p className="text-sm text-red-500">{saveError}</p>}
         </div>
       </div>
+
+      {showPhoto && profile.profilePhotoUrl && (
+        <PhotoViewerModal url={profile.profilePhotoUrl} onClose={() => setShowPhoto(false)} />
+      )}
     </DashboardLayout>
   );
 }

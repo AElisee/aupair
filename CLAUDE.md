@@ -83,7 +83,7 @@ All of these call `auth()` first and return `401` if `!session?.user?.id`.
 - `/api/admin/dashboard` (GET) — KPIs (`totalUsers`, `signups30d`, `revenue30d`, `activeSubscriptions`, `pendingProfiles`), recent users, recent payments
 - `/api/admin/users` (GET/PATCH) — combined AuPair + Family list; PATCH applies `action: "validate" | "hide" | "unhide" | "suspend" | "delete"` via `setProfileStatus()`
 - `/api/admin/moderation` (GET/PATCH) — `PENDING` profiles sorted by waiting time; PATCH applies `action: "validate" | "reject"`
-- `/api/admin/profile/[userId]` (GET, `?role=AU_PAIR|FAMILLE`) — full profile detail, rendered by `src/components/admin/ProfileDetailModal.tsx`
+- `/api/admin/profile/[userId]` (GET, `?role=AU_PAIR|FAMILLE`) — full profile detail, rendered by `src/app/admin/profil/[userId]/page.tsx` (full-page view, opened in a new tab via the "eye" icon in `/admin/utilisateurs` and `/admin/moderation`)
 - `/api/admin/countries` (GET/POST/PATCH/DELETE) — CRUD for the `Country` table, used by `/admin/pays`
 
 `setProfileStatus()` (`src/lib/admin.ts`) sets `validatedAt`/`validatedBy` when transitioning a profile to `ACTIVE`.
@@ -124,7 +124,7 @@ Origin/host countries, flags, and WhatsApp dial codes live in the `Country` mode
 
 - `src/lib/countries.ts` — `getCountriesByType(type?)`, `getCountryFlagMap()` (name → emoji, used by admin pages), `splitPhoneNumber(phone, fallbackCountry, countries)` (splits a stored WhatsApp number into dial code + local number)
 - `/api/countries` (GET, public) — returns `{ origin: CountryDTO[], host: CountryDTO[] }` (active only, `{ name, flag, dialCode }`)
-- `src/hooks/useCountries.ts` — client hook fetching `/api/countries`, used by registration/profile forms and `ProfileDetailModal` for country selects and flag lookups
+- `src/hooks/useCountries.ts` — client hook fetching `/api/countries`, used by registration/profile forms and the admin profile page for country selects and flag lookups
 
 ## Key constants
 

@@ -17,9 +17,12 @@ export async function GET() {
 
   const [
     totalUsers,
+    totalAuPairs,
+    totalFamilies,
     signups30d,
     signupsPrev30d,
     revenueAgg,
+    totalRevenueAgg,
     activeSubscriptions,
     pendingAuPairs,
     pendingFamilies,
@@ -30,11 +33,17 @@ export async function GET() {
     flagMap,
   ] = await Promise.all([
     prisma.user.count(),
+    prisma.auPairProfile.count(),
+    prisma.familyProfile.count(),
     prisma.user.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
     prisma.user.count({ where: { createdAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo } } }),
     prisma.subscription.aggregate({
       _sum: { amount: true },
       where: { createdAt: { gte: thirtyDaysAgo }, currency: "EUR" },
+    }),
+    prisma.subscription.aggregate({
+      _sum: { amount: true },
+      where: { currency: "EUR", status: { in: ["ACTIVE", "EXPIRED"] } },
     }),
     prisma.subscription.count({ where: { status: "ACTIVE" } }),
     prisma.auPairProfile.count({ where: { status: ProfileStatus.PENDING } }),
@@ -106,9 +115,12 @@ export async function GET() {
   return NextResponse.json({
     kpis: {
       totalUsers,
+      totalAuPairs,
+      totalFamilies,
       signups30d,
       signupsChange,
       revenue30d: formatCurrency(revenueAgg._sum.amount ?? 0, "EUR"),
+      totalRevenue: formatCurrency(totalRevenueAgg._sum.amount ?? 0, "EUR"),
       activeSubscriptions,
       pendingProfiles,
       openReports,

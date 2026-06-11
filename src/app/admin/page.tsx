@@ -1,16 +1,19 @@
 "use client";
 import { useEffect, useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
-import { Users, DollarSign, Shield, AlertTriangle, UserPlus, Loader2, Flag } from "lucide-react";
+import { Users, UserCheck, Home, Wallet, CreditCard, Shield, AlertTriangle, Loader2, Flag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 
 type DashboardData = {
   kpis: {
     totalUsers: number;
+    totalAuPairs: number;
+    totalFamilies: number;
     signups30d: number;
     signupsChange: string;
     revenue30d: string;
+    totalRevenue: string;
     activeSubscriptions: number;
     pendingProfiles: number;
     openReports: number;
@@ -59,10 +62,12 @@ export default function AdminPage() {
   const { kpis, recentUsers, recentPayments } = data;
 
   const kpiCards = [
-    { icon: Users, label: "Utilisateurs totaux", value: String(kpis.totalUsers), change: `+${kpis.signups30d} ce mois`, color: "text-blue-600", bg: "bg-blue-50" },
-    { icon: UserPlus, label: "Inscriptions (30j)", value: String(kpis.signups30d), change: kpis.signupsChange, color: "text-green-600", bg: "bg-green-50" },
-    { icon: DollarSign, label: "Revenus (30j)", value: kpis.revenue30d, change: `${kpis.activeSubscriptions} abonnements actifs`, color: "text-[#E87722]", bg: "bg-[#FFF3E0]" },
+    { icon: Users, label: "Utilisateurs totaux", value: String(kpis.totalUsers), change: `+${kpis.signups30d} ce mois (${kpis.signupsChange})`, color: "text-blue-600", bg: "bg-blue-50" },
+    { icon: UserCheck, label: "Au pairs", value: String(kpis.totalAuPairs), change: "Profils au pair", color: "text-purple-600", bg: "bg-purple-50" },
+    { icon: Home, label: "Familles", value: String(kpis.totalFamilies), change: "Profils famille", color: "text-teal-600", bg: "bg-teal-50" },
     { icon: Shield, label: "Profils en attente", value: String(kpis.pendingProfiles), change: "À valider", color: "text-red-600", bg: "bg-red-50" },
+    { icon: CreditCard, label: "Abonnements actifs", value: String(kpis.activeSubscriptions), change: `${kpis.revenue30d} sur 30 jours`, color: "text-indigo-600", bg: "bg-indigo-50" },
+    { icon: Wallet, label: "Revenus totaux", value: kpis.totalRevenue, change: `${kpis.revenue30d} ce mois-ci`, color: "text-[#E87722]", bg: "bg-[#FFF3E0]" },
     { icon: Flag, label: "Signalements ouverts", value: String(kpis.openReports), change: "À traiter", color: "text-amber-600", bg: "bg-amber-50" },
   ];
 

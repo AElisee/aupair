@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { User, Search, MessageCircle, Bell, Settings, Home, Camera, CheckCircle, Loader2, Heart } from "lucide-react";
 import { useCountries } from "@/hooks/useCountries";
 import { useConstants } from "@/hooks/useConstants";
+import PhotoViewerModal from "@/components/ui/photo-viewer-modal";
 
 const navItems = [
   { href: "/dashboard/famille", icon: Home, label: "Tableau de bord" },
@@ -73,6 +74,7 @@ export default function FamilleProfilPage() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoError, setPhotoError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showPhoto, setShowPhoto] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -188,9 +190,16 @@ export default function FamilleProfilPage() {
             <div>
               <p className="font-medium text-[#1A1A2E] text-sm mb-1">Ajouter une photo de famille</p>
               <p className="text-xs text-gray-400 mb-2">JPG ou PNG, max 5 Mo. Une bonne photo augmente vos chances de contact.</p>
-              <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingPhoto}>
-                {uploadingPhoto ? "Envoi en cours..." : "Télécharger une photo"}
-              </Button>
+              <div className="flex items-center gap-3 flex-wrap">
+                <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingPhoto}>
+                  {uploadingPhoto ? "Envoi en cours..." : "Télécharger une photo"}
+                </Button>
+                {profile.familyPhotoUrl && (
+                  <button type="button" onClick={() => setShowPhoto(true)} className="text-sm font-semibold text-[#E87722] hover:underline">
+                    Voir la photo
+                  </button>
+                )}
+              </div>
               {photoError && <p className="text-xs text-red-500 mt-1">{photoError}</p>}
             </div>
           </div>
@@ -373,6 +382,10 @@ export default function FamilleProfilPage() {
           )}
         </div>
       </div>
+
+      {showPhoto && profile.familyPhotoUrl && (
+        <PhotoViewerModal url={profile.familyPhotoUrl} onClose={() => setShowPhoto(false)} />
+      )}
     </DashboardLayout>
   );
 }

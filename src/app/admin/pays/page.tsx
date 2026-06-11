@@ -11,10 +11,9 @@ import {
   EyeOff,
   Loader2,
   Globe,
-  X,
-  AlertTriangle,
   Search,
 } from "lucide-react";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
 
 type Country = {
   id: string;
@@ -396,6 +395,7 @@ export default function AdminPaysPage() {
               <p className="text-gray-500">Chargement...</p>
             </div>
           ) : (
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
@@ -513,6 +513,7 @@ export default function AdminPaysPage() {
                 )}
               </tbody>
             </table>
+            </div>
           )}
           {!loading && filtered.length > 0 && (
             <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100">
@@ -555,59 +556,21 @@ export default function AdminPaysPage() {
 
       {/* Modale de confirmation de suppression */}
       {deleteTarget && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
-          onClick={() => setDeleteTarget(null)}
-        >
-          <div
-            className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                <AlertTriangle className="w-5 h-5 text-red-500" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-[#1A1A2E]">
-                  Supprimer ce pays ?
-                </h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  <span className="font-semibold text-[#1A1A2E]">
-                    {deleteTarget.flag} {deleteTarget.name}
-                  </span>{" "}
-                  sera définitivement supprimé. Cette action est irréversible.
-                </p>
-              </div>
-              <button
-                onClick={() => setDeleteTarget(null)}
-                className="p-1 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="flex justify-end gap-2 mt-5">
-              <Button
-                variant="outline"
-                onClick={() => setDeleteTarget(null)}
-                disabled={processingId === deleteTarget.id}
-              >
-                Annuler
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={confirmDelete}
-                disabled={processingId === deleteTarget.id}
-              >
-                {processingId === deleteTarget.id ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Trash2 className="w-4 h-4" />
-                )}
-                Supprimer
-              </Button>
-            </div>
-          </div>
-        </div>
+        <ConfirmDialog
+          title="Supprimer ce pays ?"
+          description={
+            <>
+              <span className="font-semibold text-[#1A1A2E]">
+                {deleteTarget.flag} {deleteTarget.name}
+              </span>{" "}
+              sera définitivement supprimé. Cette action est irréversible.
+            </>
+          }
+          confirmLabel="Supprimer"
+          loading={processingId === deleteTarget.id}
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteTarget(null)}
+        />
       )}
     </AdminLayout>
   );

@@ -2,9 +2,10 @@
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, X, Eye, Clock, Loader2, Flag } from "lucide-react";
+import { CheckCircle, X, Eye, EyeOff, Ban, Trash2, Clock, Loader2, Flag } from "lucide-react";
 import { useEffect, useState } from "react";
-import ProfileDetailModal from "@/components/admin/ProfileDetailModal";
+import Link from "next/link";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
 
 type PendingProfile = {
   userId: string;
@@ -38,7 +39,7 @@ export default function ModerationPage() {
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [processingReportId, setProcessingReportId] = useState<string | null>(null);
-  const [viewing, setViewing] = useState<{ userId: string; role: "AU_PAIR" | "FAMILLE" } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<PendingProfile | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -52,7 +53,7 @@ export default function ModerationPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleAction = async (p: PendingProfile, action: "validate" | "reject") => {
+  const performAction = async (p: PendingProfile, action: "validate" | "hide" | "suspend" | "delete") => {
     setProcessingId(p.userId);
     try {
       const res = await fetch("/api/admin/moderation", {
@@ -66,6 +67,20 @@ export default function ModerationPage() {
     } finally {
       setProcessingId(null);
     }
+  };
+
+  const handleAction = (p: PendingProfile, action: "validate" | "hide" | "suspend" | "delete") => {
+    if (action === "delete") {
+      setDeleteTarget(p);
+      return;
+    }
+    performAction(p, action);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    await performAction(deleteTarget, "delete");
+    setDeleteTarget(null);
   };
 
   const handleResolveReport = async (reportId: string) => {
@@ -107,7 +122,7 @@ export default function ModerationPage() {
           <div className="space-y-4">
             {profiles.map((p) => (
               <div key={p.userId} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                   <div className="flex items-start gap-4">
                     <div className="w-14 h-14 bg-[#E87722] rounded-full flex items-center justify-center text-white text-xl font-bold flex-shrink-0 overflow-hidden">
                       {p.photoUrl ? (
@@ -142,17 +157,29 @@ export default function ModerationPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <Button size="sm" variant="outline" className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                      onClick={() => setViewing({ userId: p.userId, role: p.role })}>
+                  <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
+                    <Link
+                      href={`/admin/profil/${p.userId}?role=${p.role}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-semibold transition-all duration-200 h-8 px-3 text-xs border-2 border-blue-200 text-blue-600 bg-transparent hover:bg-blue-50"
+                    >
                       <Eye className="w-3.5 h-3.5 mr-1" /> Voir profil
-                    </Button>
+                    </Link>
                     <Button size="sm" disabled={processingId === p.userId} onClick={() => handleAction(p, "validate")}
                       className="bg-green-500 hover:bg-green-600 text-white">
                       <CheckCircle className="w-3.5 h-3.5 mr-1" /> Valider
                     </Button>
-                    <Button size="sm" variant="destructive" disabled={processingId === p.userId} onClick={() => handleAction(p, "reject")}>
-                      <X className="w-3.5 h-3.5 mr-1" /> Rejeter
+                    <Button size="sm" variant="outline" className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                      disabled={processingId === p.userId} onClick={() => handleAction(p, "hide")}>
+                      <EyeOff className="w-3.5 h-3.5 mr-1" /> Masquer
+                    </Button>
+                    <Button size="sm" variant="outline" className="text-amber-600 border-amber-200 hover:bg-amber-50"
+                      disabled={processingId === p.userId} onClick={() => handleAction(p, "suspend")}>
+                      <Ban className="w-3.5 h-3.5 mr-1" /> Suspendre
+                    </Button>
+                    <Button size="sm" variant="destructive" disabled={processingId === p.userId} onClick={() => handleAction(p, "delete")}>
+                      <Trash2 className="w-3.5 h-3.5 mr-1" /> Supprimer
                     </Button>
                   </div>
                 </div>
@@ -213,8 +240,21 @@ export default function ModerationPage() {
         )}
       </div>
 
-      {viewing && (
-        <ProfileDetailModal userId={viewing.userId} role={viewing.role} onClose={() => setViewing(null)} />
+      {deleteTarget && (
+        <ConfirmDialog
+          title="Supprimer ce profil ?"
+          description={
+            <>
+              Le profil de{" "}
+              <span className="font-semibold text-[#1A1A2E]">{deleteTarget.name}</span>{" "}
+              sera définitivement supprimé. Cette action est irréversible.
+            </>
+          }
+          confirmLabel="Supprimer"
+          loading={processingId === deleteTarget.userId}
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteTarget(null)}
+        />
       )}
     </AdminLayout>
   );

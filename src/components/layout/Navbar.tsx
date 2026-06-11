@@ -109,7 +109,7 @@ export default function Navbar() {
               {lang === "fr" ? link.fr : link.en}
             </Link>
           ))}
-          <div className="flex gap-2 pt-2 border-t border-gray-100">
+          <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
             <button
               onClick={() => setLang(lang === "fr" ? "en" : "fr")}
               className="flex items-center gap-1 text-sm text-gray-600 px-3 py-2 border border-gray-200 rounded-lg"

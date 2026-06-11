@@ -70,16 +70,21 @@ export async function PATCH(req: Request) {
   const { userId, role, action } = body as {
     userId?: string;
     role?: "AU_PAIR" | "FAMILLE";
-    action?: "validate" | "reject";
+    action?: "validate" | "hide" | "suspend" | "delete";
   };
 
-  if (!userId || !role || !action) {
+  const statusMap = {
+    validate: ProfileStatus.ACTIVE,
+    hide: ProfileStatus.HIDDEN,
+    suspend: ProfileStatus.SUSPENDED,
+    delete: ProfileStatus.DELETED,
+  } as const;
+
+  if (!userId || !role || !action || !(action in statusMap)) {
     return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 });
   }
 
-  const status = action === "validate" ? ProfileStatus.ACTIVE : ProfileStatus.SUSPENDED;
-
-  await setProfileStatus(userId, role, status, session.user.id as string);
+  await setProfileStatus(userId, role, statusMap[action], session.user.id as string);
 
   return NextResponse.json({ success: true });
 }
