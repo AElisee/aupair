@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Search, Filter, MapPin, Users, Clock, Lock, Loader2 } from "lucide-react";
 import { useCountries } from "@/hooks/useCountries";
+import { useConstants } from "@/hooks/useConstants";
 
 type Family = {
   id: string;
@@ -87,8 +88,12 @@ export default function TrouverFamillePage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterCountry, setFilterCountry] = useState("");
+  const [filterMinKids, setFilterMinKids] = useState("");
+  const [filterMinPocketMoney, setFilterMinPocketMoney] = useState("");
+  const [filterLang, setFilterLang] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const { host: hostCountries } = useCountries();
+  const { languages: LANGUAGES } = useConstants();
 
   useEffect(() => {
     fetch("/api/families")
@@ -97,10 +102,21 @@ export default function TrouverFamillePage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const resetFilters = () => {
+    setSearch("");
+    setFilterCountry("");
+    setFilterMinKids("");
+    setFilterMinPocketMoney("");
+    setFilterLang("");
+  };
+
   const filtered = families.filter((f) => {
     const matchSearch = f.name.toLowerCase().includes(search.toLowerCase()) || f.city.toLowerCase().includes(search.toLowerCase()) || f.country.toLowerCase().includes(search.toLowerCase());
     const matchCountry = !filterCountry || f.country === filterCountry;
-    return matchSearch && matchCountry;
+    const matchMinKids = !filterMinKids || f.kids >= Number(filterMinKids);
+    const matchMinPocketMoney = !filterMinPocketMoney || f.pocketMoney >= Number(filterMinPocketMoney);
+    const matchLang = !filterLang || f.languages.includes(filterLang);
+    return matchSearch && matchCountry && matchMinKids && matchMinPocketMoney && matchLang;
   });
 
   return (
@@ -136,14 +152,38 @@ export default function TrouverFamillePage() {
           </div>
 
           {showFilters && (
-            <div className="mt-4">
+            <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <select
                 value={filterCountry}
                 onChange={(e) => setFilterCountry(e.target.value)}
-                className="px-4 py-3 rounded-xl bg-white text-gray-800 text-sm focus:outline-none w-full sm:w-64"
+                className="px-4 py-3 rounded-xl bg-white text-gray-800 text-sm focus:outline-none"
               >
                 <option value="">Tous les pays d'accueil</option>
                 {hostCountries.map((c) => <option key={c.name} value={c.name}>{c.name}</option>)}
+              </select>
+              <select
+                value={filterLang}
+                onChange={(e) => setFilterLang(e.target.value)}
+                className="px-4 py-3 rounded-xl bg-white text-gray-800 text-sm focus:outline-none"
+              >
+                <option value="">Toutes les langues souhaitées</option>
+                {LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
+              </select>
+              <select
+                value={filterMinKids}
+                onChange={(e) => setFilterMinKids(e.target.value)}
+                className="px-4 py-3 rounded-xl bg-white text-gray-800 text-sm focus:outline-none"
+              >
+                <option value="">Nombre d'enfants min.</option>
+                {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}+</option>)}
+              </select>
+              <select
+                value={filterMinPocketMoney}
+                onChange={(e) => setFilterMinPocketMoney(e.target.value)}
+                className="px-4 py-3 rounded-xl bg-white text-gray-800 text-sm focus:outline-none"
+              >
+                <option value="">Argent de poche min.</option>
+                {[100, 200, 300, 400, 500].map((m) => <option key={m} value={m}>{m}€+</option>)}
               </select>
             </div>
           )}
@@ -179,7 +219,7 @@ export default function TrouverFamillePage() {
             {filtered.length === 0 && (
               <div className="text-center py-20">
                 <p className="text-gray-400 text-lg">Aucune famille trouvée avec ces critères.</p>
-                <button onClick={() => { setSearch(""); setFilterCountry(""); }} className="mt-4 text-[#E87722] font-semibold">Réinitialiser les filtres</button>
+                <button onClick={resetFilters} className="mt-4 text-[#E87722] font-semibold">Réinitialiser les filtres</button>
               </div>
             )}
           </>

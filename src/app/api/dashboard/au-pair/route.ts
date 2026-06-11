@@ -120,6 +120,8 @@ export async function GET() {
   return NextResponse.json({
     firstName: profile.firstName,
     lastName: profile.lastName,
+    status: profile.status,
+    isAvailable: profile.isAvailable,
     profileCompletion,
     profileViews: profile.profileViews,
     favoritesCount,

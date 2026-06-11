@@ -40,7 +40,7 @@ export async function GET() {
       waitingDays: waitingDays(p.createdAt),
       hasPhoto: !!p.profilePhotoUrl,
       photoUrl: p.profilePhotoUrl ?? "",
-      hasId: !!p.idDocumentUrl,
+      hasId: p.idDocumentUrls.length > 0,
     })),
     ...families.map((p) => ({
       userId: p.userId,

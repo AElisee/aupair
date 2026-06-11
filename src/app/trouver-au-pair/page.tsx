@@ -14,10 +14,12 @@ type AuPair = {
   firstName: string;
   profilePhotoUrl: string;
   age: number;
+  gender: string;
   country: string;
   flag: string;
   languages: string[];
   experience: number;
+  drivingLicense: boolean;
   targetCountries: string[];
   description: string;
   available: boolean;
@@ -105,8 +107,13 @@ export default function TrouverAuPairPage() {
   const [search, setSearch] = useState("");
   const [filterCountry, setFilterCountry] = useState("");
   const [filterLang, setFilterLang] = useState("");
+  const [filterGender, setFilterGender] = useState("");
+  const [filterMinAge, setFilterMinAge] = useState("");
+  const [filterMaxAge, setFilterMaxAge] = useState("");
+  const [filterMinExperience, setFilterMinExperience] = useState("");
+  const [filterTargetCountry, setFilterTargetCountry] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-  const { origin: originCountries } = useCountries();
+  const { origin: originCountries, host: hostCountries } = useCountries();
   const { languages: LANGUAGES } = useConstants();
 
   useEffect(() => {
@@ -116,11 +123,27 @@ export default function TrouverAuPairPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const resetFilters = () => {
+    setSearch("");
+    setFilterCountry("");
+    setFilterLang("");
+    setFilterGender("");
+    setFilterMinAge("");
+    setFilterMaxAge("");
+    setFilterMinExperience("");
+    setFilterTargetCountry("");
+  };
+
   const filtered = auPairs.filter((ap) => {
     const matchSearch = ap.firstName.toLowerCase().includes(search.toLowerCase()) || ap.country.toLowerCase().includes(search.toLowerCase());
     const matchCountry = !filterCountry || ap.country === filterCountry;
     const matchLang = !filterLang || ap.languages.includes(filterLang);
-    return matchSearch && matchCountry && matchLang;
+    const matchGender = !filterGender || ap.gender === filterGender;
+    const matchMinAge = !filterMinAge || ap.age >= Number(filterMinAge);
+    const matchMaxAge = !filterMaxAge || ap.age <= Number(filterMaxAge);
+    const matchExperience = !filterMinExperience || ap.experience >= Number(filterMinExperience);
+    const matchTargetCountry = !filterTargetCountry || ap.targetCountries.includes(filterTargetCountry);
+    return matchSearch && matchCountry && matchLang && matchGender && matchMinAge && matchMaxAge && matchExperience && matchTargetCountry;
   });
 
   return (
@@ -159,7 +182,7 @@ export default function TrouverAuPairPage() {
 
           {/* Filtres étendus */}
           {showFilters && (
-            <div className="mt-4 grid sm:grid-cols-2 gap-3">
+            <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <select
                 value={filterCountry}
                 onChange={(e) => setFilterCountry(e.target.value)}
@@ -175,6 +198,47 @@ export default function TrouverAuPairPage() {
               >
                 <option value="">Toutes les langues</option>
                 {LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
+              </select>
+              <select
+                value={filterGender}
+                onChange={(e) => setFilterGender(e.target.value)}
+                className="px-4 py-3 rounded-xl bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
+              >
+                <option value="">Tous les genres</option>
+                <option value="Femme">Femme</option>
+                <option value="Homme">Homme</option>
+              </select>
+              <select
+                value={filterTargetCountry}
+                onChange={(e) => setFilterTargetCountry(e.target.value)}
+                className="px-4 py-3 rounded-xl bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
+              >
+                <option value="">Toutes destinations souhaitées</option>
+                {hostCountries.map((c) => <option key={c.name} value={c.name}>{c.name}</option>)}
+              </select>
+              <select
+                value={filterMinAge}
+                onChange={(e) => setFilterMinAge(e.target.value)}
+                className="px-4 py-3 rounded-xl bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
+              >
+                <option value="">Âge min.</option>
+                {[18, 20, 22, 25, 28, 30, 35, 40].map((a) => <option key={a} value={a}>{a} ans</option>)}
+              </select>
+              <select
+                value={filterMaxAge}
+                onChange={(e) => setFilterMaxAge(e.target.value)}
+                className="px-4 py-3 rounded-xl bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
+              >
+                <option value="">Âge max.</option>
+                {[20, 22, 25, 28, 30, 35, 40, 50].map((a) => <option key={a} value={a}>{a} ans</option>)}
+              </select>
+              <select
+                value={filterMinExperience}
+                onChange={(e) => setFilterMinExperience(e.target.value)}
+                className="px-4 py-3 rounded-xl bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
+              >
+                <option value="">Expérience minimale</option>
+                {[1, 2, 3, 4, 5].map((y) => <option key={y} value={y}>{y}+ an{y > 1 ? "s" : ""}</option>)}
               </select>
             </div>
           )}
@@ -212,7 +276,7 @@ export default function TrouverAuPairPage() {
             {filtered.length === 0 && (
               <div className="text-center py-20">
                 <p className="text-gray-400 text-lg">Aucun au pair trouvé avec ces critères.</p>
-                <button onClick={() => { setSearch(""); setFilterCountry(""); setFilterLang(""); }} className="mt-4 text-[#E87722] font-semibold">Réinitialiser les filtres</button>
+                <button onClick={resetFilters} className="mt-4 text-[#E87722] font-semibold">Réinitialiser les filtres</button>
               </div>
             )}
           </>

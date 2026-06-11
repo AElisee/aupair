@@ -56,7 +56,8 @@ export async function GET(
       phoneWhatsapp1: profile.phoneWhatsapp1,
       phoneWhatsapp2: profile.phoneWhatsapp2,
       profilePhotoUrl: profile.profilePhotoUrl,
-      idDocumentUrl: profile.idDocumentUrl,
+      idDocumentUrls: profile.idDocumentUrls,
+      isAvailable: profile.isAvailable,
     });
   }
 

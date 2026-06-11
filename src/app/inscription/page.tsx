@@ -6,6 +6,7 @@ import { Globe, CheckCircle, ArrowRight, ArrowLeft, User, Home } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { useCountries } from "@/hooks/useCountries";
 import { useConstants } from "@/hooks/useConstants";
+import { calculateAge } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
@@ -18,7 +19,7 @@ function InscriptionContent() {
   const [role, setRole] = useState<Role>(defaultRole);
   const [form, setForm] = useState({
     firstName: "", lastName: "", email: "", password: "",
-    country: "", gender: "", languages: [] as string[],
+    country: "", gender: "", dateOfBirth: "", languages: [] as string[],
     educationLevel: "", experience: "",
     city: "", numberOfKids: "",
   });
@@ -31,6 +32,13 @@ function InscriptionContent() {
   const steps = role === "au-pair"
     ? ["Mon rôle", "Infos personnelles", "Mon profil", "Confirmation"]
     : ["Mon rôle", "Infos famille", "Mes besoins", "Confirmation"];
+
+  const dobError = (() => {
+    if (step !== 2 || role !== "au-pair") return null;
+    if (!form.dateOfBirth) return "La date de naissance est obligatoire.";
+    if (calculateAge(form.dateOfBirth) < 18) return "Vous devez avoir au moins 18 ans pour vous inscrire.";
+    return null;
+  })();
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -48,6 +56,7 @@ function InscriptionContent() {
           password: form.password,
           country: form.country,
           gender: form.gender,
+          dateOfBirth: form.dateOfBirth,
           languages: form.languages,
           educationLevel: form.educationLevel,
           experience: form.experience,
@@ -218,6 +227,12 @@ function InscriptionContent() {
                   </select>
                 </div>
                 <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Date de naissance *</label>
+                  <input type="date" value={form.dateOfBirth} onChange={e => setForm({ ...form, dateOfBirth: e.target.value })}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]" />
+                  {dobError && <p className="text-xs text-red-500 mt-1">{dobError}</p>}
+                </div>
+                <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Langues parlées *</label>
                   <div className="grid grid-cols-2 gap-2">
                     {LANGUAGES.map(lang => (
@@ -321,7 +336,7 @@ function InscriptionContent() {
                 <ArrowLeft className="w-4 h-4" /> Retour
               </button>
               {step < 3 ? (
-                <Button onClick={() => setStep(step + 1)}>
+                <Button onClick={() => setStep(step + 1)} disabled={!!dobError}>
                   Continuer <ArrowRight className="w-4 h-4" />
                 </Button>
               ) : (

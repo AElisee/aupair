@@ -29,7 +29,6 @@ export async function GET() {
   ]);
 
   const profileMap = new Map(profiles.map((p) => [p.userId, p]));
-  const now = new Date();
 
   const auPairs = targetIds
     .map((id) => profileMap.get(id))
@@ -45,7 +44,7 @@ export async function GET() {
       experience: p.childcareYears ?? 0,
       targetCountries: p.targetCountries,
       description: p.description ?? "",
-      available: !p.availableFrom || p.availableFrom <= now,
+      available: p.isAvailable,
     }));
 
   return NextResponse.json({ auPairs });

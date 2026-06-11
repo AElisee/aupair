@@ -32,7 +32,7 @@ export async function GET(
   }
 
   return NextResponse.json({
-    available: !profile.availableFrom || profile.availableFrom <= new Date(),
+    available: profile.isAvailable,
     isFavorite: !!favorite,
     firstName: profile.firstName,
     lastName: profile.lastName,

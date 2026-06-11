@@ -40,7 +40,8 @@ type AuPairDetail = {
   phoneWhatsapp1: string | null;
   phoneWhatsapp2: string | null;
   profilePhotoUrl: string | null;
-  idDocumentUrl: string | null;
+  idDocumentUrls: string[];
+  isAvailable: boolean;
 };
 
 type FamilyDetail = {
@@ -186,6 +187,11 @@ export default function AdminProfilePage() {
                       {data.role === "AU_PAIR" ? "Au pair" : "Famille"}
                     </Badge>
                     {status && <Badge variant={status.variant}>{status.label}</Badge>}
+                    {data.role === "AU_PAIR" && (
+                      <Badge variant={data.isAvailable ? "success" : "warning"}>
+                        {data.isAvailable ? "Disponible" : "Indisponible"}
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </div>
@@ -276,7 +282,17 @@ export default function AdminProfilePage() {
                     />
                     <Field
                       label="Pièce d'identité"
-                      value={data.idDocumentUrl ? <a href={data.idDocumentUrl} target="_blank" rel="noreferrer" className="text-[#E87722] underline">Voir le document</a> : null}
+                      value={
+                        data.idDocumentUrls.length > 0 ? (
+                          <span className="flex flex-col gap-1">
+                            {data.idDocumentUrls.map((url, i) => (
+                              <a key={url} href={url} target="_blank" rel="noreferrer" className="text-[#E87722] underline">
+                                Voir le document {data.idDocumentUrls.length > 1 ? i + 1 : ""}
+                              </a>
+                            ))}
+                          </span>
+                        ) : null
+                      }
                     />
                   </div>
                 </div>

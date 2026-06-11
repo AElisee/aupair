@@ -62,6 +62,8 @@ interface SuggestedFamily {
 interface DashboardData {
   firstName: string;
   lastName: string;
+  status: string;
+  isAvailable: boolean;
   profileCompletion: number;
   profileViews: number;
   favoritesCount: number;
@@ -73,23 +75,53 @@ interface DashboardData {
 
 export default function AuPairDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
+  const [isAvailable, setIsAvailable] = useState(true);
+  const [togglingAvailability, setTogglingAvailability] = useState(false);
+  const [availabilityError, setAvailabilityError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
     fetch("/api/dashboard/au-pair")
       .then((res) => (res.ok ? res.json() : null))
       .then((json) => {
-        if (!cancelled && json) setData(json);
+        if (!cancelled && json) {
+          setData(json);
+          setIsAvailable(json.isAvailable);
+        }
       });
     return () => {
       cancelled = true;
     };
   }, []);
 
+  const handleToggleAvailability = async () => {
+    const next = !isAvailable;
+    setTogglingAvailability(true);
+    setAvailabilityError("");
+    try {
+      const res = await fetch("/api/profile/availability", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isAvailable: next }),
+      });
+      const json = await res.json().catch(() => null);
+      if (res.ok) {
+        setIsAvailable(next);
+      } else {
+        setAvailabilityError(json?.error ?? "Erreur lors de la mise à jour de la disponibilité.");
+      }
+    } catch {
+      setAvailabilityError("Erreur réseau. Veuillez réessayer.");
+    } finally {
+      setTogglingAvailability(false);
+    }
+  };
+
   const profileCompletion = data?.profileCompletion ?? 0;
   const subscriptionActive = data?.subscription.active ?? false;
   const daysLeft = data?.subscription.daysLeft ?? 0;
   const userName = data ? `${data.firstName} ${data.lastName.charAt(0)}.` : "";
+  const isHiddenByAdmin = data?.status === "HIDDEN";
 
   const stats = [
     { icon: Eye, label: "Vues du profil", value: data?.profileViews ?? 0 },
@@ -116,6 +148,42 @@ export default function AuPairDashboard() {
           <p className="text-gray-500">
             Voici un résumé de votre activité sur AuPair A.EU
           </p>
+        </div>
+
+        {/* Disponibilité */}
+        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-semibold text-[#1A1A2E]">Visibilité auprès des familles</h3>
+              <Badge variant={isAvailable ? "success" : "warning"}>
+                {isAvailable ? "Disponible" : "Indisponible"}
+              </Badge>
+            </div>
+            <p className="text-sm text-gray-500">
+              {isHiddenByAdmin
+                ? "Votre profil a été masqué par notre équipe. Contactez le support pour plus d'informations."
+                : isAvailable
+                  ? "Votre profil apparaît comme disponible dans l'annuaire des familles."
+                  : "Votre profil apparaît comme indisponible. Activez-le quand vous êtes prêt(e) à recevoir des contacts."}
+            </p>
+            {availabilityError && <p className="text-xs text-red-500 mt-1">{availabilityError}</p>}
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={isAvailable}
+            onClick={handleToggleAvailability}
+            disabled={togglingAvailability || isHiddenByAdmin}
+            className={`relative inline-flex h-7 w-14 flex-shrink-0 items-center rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+              isAvailable ? "bg-[#E87722]" : "bg-gray-300"
+            }`}
+          >
+            <span
+              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                isAvailable ? "translate-x-8" : "translate-x-1"
+              }`}
+            />
+          </button>
         </div>
 
         {/* Alertes */}

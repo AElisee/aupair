@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { calculateAge } from "@/lib/utils";
 
 type RegisterBody = {
   role?: "au-pair" | "famille";
@@ -11,6 +12,7 @@ type RegisterBody = {
   // Au pair
   country?: string;
   gender?: string;
+  dateOfBirth?: string;
   languages?: string[];
   educationLevel?: string;
   experience?: string;
@@ -59,6 +61,29 @@ export async function POST(request: Request) {
     );
   }
 
+  let dateOfBirth: Date | null = null;
+  if (role === "au-pair") {
+    if (!body.dateOfBirth) {
+      return NextResponse.json(
+        { error: "La date de naissance est obligatoire." },
+        { status: 400 }
+      );
+    }
+    dateOfBirth = new Date(body.dateOfBirth);
+    if (Number.isNaN(dateOfBirth.getTime())) {
+      return NextResponse.json(
+        { error: "Date de naissance invalide." },
+        { status: 400 }
+      );
+    }
+    if (calculateAge(dateOfBirth) < 18) {
+      return NextResponse.json(
+        { error: "Vous devez avoir au moins 18 ans pour vous inscrire en tant qu'au pair." },
+        { status: 400 }
+      );
+    }
+  }
+
   const normalizedEmail = email.trim().toLowerCase();
 
   let existing;
@@ -99,7 +124,7 @@ export async function POST(request: Request) {
                   status: "PENDING",
                   firstName,
                   lastName,
-                  dateOfBirth: new Date("2000-01-01"),
+                  dateOfBirth: dateOfBirth!,
                   gender: body.gender ?? "",
                   nationality: body.country ?? "",
                   countryOfOrigin: body.country ?? "",

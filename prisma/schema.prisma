@@ -178,6 +178,7 @@ model AuPairProfile {
   availableFrom       DateTime?
   availableTo         DateTime?
   preferredDuration   String?
+  isAvailable         Boolean       @default(true)
 
   isSmoker            Boolean       @default(false)
   healthDeclaration   String?       @db.Text
@@ -189,7 +190,7 @@ model AuPairProfile {
   phoneWhatsapp1      String?
   phoneWhatsapp2      String?
   profilePhotoUrl     String?
-  idDocumentUrl       String?
+  idDocumentUrls      String[]      @default([])
 
   profileViews        Int           @default(0)
   validatedAt         DateTime?
