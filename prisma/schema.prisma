@@ -273,13 +273,16 @@ model Subscription {
 // ─── MESSAGERIE ──────────────────────────────────────────────────────────────
 
 model Message {
-  id         String        @id @default(cuid())
-  senderId   String
-  receiverId String
-  content    String        @db.Text
-  status     MessageStatus @default(SENT)
-  isFlagged  Boolean       @default(false)
-  createdAt  DateTime      @default(now())
+  id             String        @id @default(cuid())
+  senderId       String
+  receiverId     String
+  content        String        @db.Text
+  attachmentUrl  String?
+  attachmentType String?
+  attachmentName String?
+  status         MessageStatus @default(SENT)
+  isFlagged      Boolean       @default(false)
+  createdAt      DateTime      @default(now())
 
   sender   User @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
   receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
@@ -458,4 +461,20 @@ model TicketMessage {
   ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
   @@map("ticket_messages")
+}
+
+// ─── PARAMÈTRES (constantes éditables par l'admin) ───────────────────────────
+
+model AppSettings {
+  id                   String   @id @default("default")
+  languages            String[]
+  educationLevels      String[]
+  durations            String[]
+  reportReasons        String[]
+  subscriptionPriceEur Float    @default(32)
+  subscriptionPriceXof Float    @default(20800)
+  subscriptionDays     Int      @default(30)
+  updatedAt            DateTime @updatedAt
+
+  @@map("app_settings")
 }

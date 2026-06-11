@@ -217,7 +217,7 @@ export default function FamilyProfilePage() {
 
           <div className="fixed bottom-0 left-0 right-0 md:left-64 z-30 bg-white border-t border-gray-100 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] p-4">
             <div className="flex justify-center max-w-3xl mx-auto">
-              <Link href="/dashboard/au-pair/messages" className="sm:w-64">
+              <Link href={`/dashboard/au-pair/messages?userId=${id}`} className="sm:w-64">
                 <Button className="w-full">
                   <MessageCircle className="w-4 h-4 mr-2" />
                   Discuter

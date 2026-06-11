@@ -6,8 +6,8 @@ import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, Filter, MapPin, Languages, Star, Lock, Loader2 } from "lucide-react";
-import { LANGUAGES } from "@/lib/constants";
 import { useCountries } from "@/hooks/useCountries";
+import { useConstants } from "@/hooks/useConstants";
 
 type AuPair = {
   id: string;
@@ -107,6 +107,7 @@ export default function TrouverAuPairPage() {
   const [filterLang, setFilterLang] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const { origin: originCountries } = useCountries();
+  const { languages: LANGUAGES } = useConstants();
 
   useEffect(() => {
     fetch("/api/au-pairs")

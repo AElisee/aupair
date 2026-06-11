@@ -240,7 +240,7 @@ export default function AuPairProfilePage() {
                 <Heart className={`w-4 h-4 mr-2 ${data.isFavorite ? "fill-current" : ""}`} />
                 {data.isFavorite ? "Retirer des favoris" : "Mettre en favoris"}
               </Button>
-              <Link href="/dashboard/famille/messages" className="sm:w-64">
+              <Link href={`/dashboard/famille/messages?userId=${id}`} className="sm:w-64">
                 <Button className="w-full">
                   <MessageCircle className="w-4 h-4 mr-2" />
                   Discuter

@@ -2,7 +2,7 @@
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, X, Eye, Clock, Loader2 } from "lucide-react";
+import { CheckCircle, X, Eye, Clock, Loader2, Flag } from "lucide-react";
 import { useEffect, useState } from "react";
 import ProfileDetailModal from "@/components/admin/ProfileDetailModal";
 
@@ -20,16 +20,35 @@ type PendingProfile = {
   hasId: boolean;
 };
 
+type ReportUser = { id: string; name: string; role: string } | null;
+
+type Report = {
+  id: string;
+  reason: string;
+  description: string | null;
+  isResolved: boolean;
+  createdAt: string;
+  reporter: ReportUser;
+  reported: ReportUser;
+};
+
 export default function ModerationPage() {
   const [profiles, setProfiles] = useState<PendingProfile[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [processingReportId, setProcessingReportId] = useState<string | null>(null);
   const [viewing, setViewing] = useState<{ userId: string; role: "AU_PAIR" | "FAMILLE" } | null>(null);
 
   useEffect(() => {
-    fetch("/api/admin/moderation")
-      .then((res) => res.json())
-      .then((data) => setProfiles(data.profiles ?? []))
+    Promise.all([
+      fetch("/api/admin/moderation").then((res) => res.json()),
+      fetch("/api/reports?resolved=false").then((res) => res.json()),
+    ])
+      .then(([moderationData, reportsData]) => {
+        setProfiles(moderationData.profiles ?? []);
+        setReports(reportsData.reports ?? []);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -46,6 +65,22 @@ export default function ModerationPage() {
       }
     } finally {
       setProcessingId(null);
+    }
+  };
+
+  const handleResolveReport = async (reportId: string) => {
+    setProcessingReportId(reportId);
+    try {
+      const res = await fetch("/api/reports", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reportId, action: "resolve" }),
+      });
+      if (res.ok) {
+        setReports((prev) => prev.filter((r) => r.id !== reportId));
+      }
+    } finally {
+      setProcessingReportId(null);
     }
   };
 
@@ -120,6 +155,57 @@ export default function ModerationPage() {
                       <X className="w-3.5 h-3.5 mr-1" /> Rejeter
                     </Button>
                   </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Signalements */}
+      <div className="space-y-4 mt-8">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-extrabold text-[#1A1A2E]">Signalements</h2>
+          <Badge variant="destructive">{reports.length} signalement(s) ouvert(s)</Badge>
+        </div>
+
+        {loading ? (
+          <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
+            <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
+            <p className="text-gray-500">Chargement...</p>
+          </div>
+        ) : reports.length === 0 ? (
+          <div className="bg-white rounded-2xl p-8 text-center border border-gray-100">
+            <CheckCircle className="w-10 h-10 text-green-500 mx-auto mb-2" />
+            <p className="text-gray-500 text-sm">Aucun signalement en attente.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {reports.map((r) => (
+              <div key={r.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Flag className="w-4 h-4 text-red-500" />
+                      <span className="font-bold text-[#1A1A2E]">{r.reason}</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-2">
+                      <span className="font-semibold">{r.reporter?.name ?? "Utilisateur"}</span> a signalé{" "}
+                      <span className="font-semibold">{r.reported?.name ?? "Utilisateur"}</span>
+                    </p>
+                    {r.description && (
+                      <p className="text-sm text-gray-500 italic mb-2">&laquo; {r.description} &raquo;</p>
+                    )}
+                    <p className="text-xs text-gray-400">{new Date(r.createdAt).toLocaleString("fr-FR")}</p>
+                  </div>
+                  <Button
+                    size="sm"
+                    disabled={processingReportId === r.id}
+                    onClick={() => handleResolveReport(r.id)}
+                    className="bg-green-500 hover:bg-green-600 text-white flex-shrink-0"
+                  >
+                    <CheckCircle className="w-3.5 h-3.5 mr-1" /> Marquer comme traité
+                  </Button>
                 </div>
               </div>
             ))}

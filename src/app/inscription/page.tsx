@@ -4,8 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { Globe, CheckCircle, ArrowRight, ArrowLeft, User, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { EDUCATION_LEVELS, LANGUAGES } from "@/lib/constants";
 import { useCountries } from "@/hooks/useCountries";
+import { useConstants } from "@/hooks/useConstants";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
@@ -25,6 +25,7 @@ function InscriptionContent() {
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { origin: originCountries } = useCountries();
+  const { languages: LANGUAGES, educationLevels: EDUCATION_LEVELS } = useConstants();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const steps = role === "au-pair"

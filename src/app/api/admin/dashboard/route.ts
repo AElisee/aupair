@@ -23,6 +23,7 @@ export async function GET() {
     activeSubscriptions,
     pendingAuPairs,
     pendingFamilies,
+    openReports,
     recentAuPairs,
     recentFamilies,
     recentSubscriptions,
@@ -38,6 +39,7 @@ export async function GET() {
     prisma.subscription.count({ where: { status: "ACTIVE" } }),
     prisma.auPairProfile.count({ where: { status: ProfileStatus.PENDING } }),
     prisma.familyProfile.count({ where: { status: ProfileStatus.PENDING } }),
+    prisma.report.count({ where: { isResolved: false } }),
     prisma.auPairProfile.findMany({
       take: 5,
       orderBy: { createdAt: "desc" },
@@ -109,6 +111,7 @@ export async function GET() {
       revenue30d: formatCurrency(revenueAgg._sum.amount ?? 0, "EUR"),
       activeSubscriptions,
       pendingProfiles,
+      openReports,
     },
     recentUsers,
     recentPayments,

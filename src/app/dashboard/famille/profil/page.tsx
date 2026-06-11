@@ -4,8 +4,8 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { User, Search, MessageCircle, Bell, Settings, Home, Camera, CheckCircle, Loader2, Heart } from "lucide-react";
-import { LANGUAGES } from "@/lib/constants";
 import { useCountries } from "@/hooks/useCountries";
+import { useConstants } from "@/hooks/useConstants";
 
 const navItems = [
   { href: "/dashboard/famille", icon: Home, label: "Tableau de bord" },
@@ -68,6 +68,7 @@ export default function FamilleProfilPage() {
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<Profile>(EMPTY_PROFILE);
   const { origin: originCountries, host: hostCountries } = useCountries();
+  const { languages: LANGUAGES } = useConstants();
   const allCountries = [...originCountries, ...hostCountries];
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoError, setPhotoError] = useState("");

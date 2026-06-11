@@ -584,6 +584,8 @@ Critere de validation :
 
 ## Tache 17 - Creer l'API de messagerie
 
+Statut : Termine (11 juin 2026)
+
 Periode : Jour 15 a Jour 16  
 Priorite : tres haute
 
@@ -620,7 +622,15 @@ Critere de validation :
 - Un au pair sans abonnement recoit une erreur 403.
 - Le fil de messages se recharge correctement.
 
+Notes :
+
+- Implemente : `src/lib/messages.ts`, `src/app/api/messages/route.ts`, `src/app/api/messages/[userId]/route.ts`, `src/app/api/messages/[userId]/read/route.ts`.
+- Le gating "abonnement actif requis pour un au pair" n'est PAS encore applique (decision explicite : a activer plus tard avec la Tache 16/abonnement).
+- Le blocage via `Block` (envoi impossible entre utilisateurs bloques) est implemente et teste.
+
 ## Tache 18 - Brancher l'UI messages
+
+Statut : Termine (11 juin 2026)
 
 Periode : Jour 16 a Jour 17  
 Priorite : haute
@@ -648,7 +658,20 @@ Critere de validation :
 - Le message apparait apres envoi.
 - Le gating abonnement est visible et respecte.
 
+Notes :
+
+- Implemente : `src/components/messages/MessagesPanel.tsx` (composant partage), pages au-pair et famille, polling 5s, lien "Discuter" depuis les fiches profil.
+- Le gating abonnement reste a faire (cf. note Tache 17).
+
+### Extensions ajoutees (hors plan initial, demande utilisateur du 11 juin 2026)
+
+- **Badge messages non lus dans la sidebar** : `src/app/api/messages/unread-count/route.ts` + `src/components/layout/DashboardLayout.tsx` (polling 5s, badge orange synchronise sans rechargement de page). Verifie via Playwright.
+- **Upload photo/document dans la conversation** : `src/app/api/messages/upload/route.ts` (bucket Supabase `message-attachments`, images jusqu'a 5 Mo, pdf/doc/docx jusqu'a 10 Mo) + rendu des pieces jointes dans `MessagesPanel.tsx` (apercu image inline, chip telechargement pour les documents). Champs `attachmentUrl`/`attachmentType`/`attachmentName` ajoutes au modele `Message`.
+- **Bloquant restant** : `SUPABASE_SERVICE_ROLE_KEY` dans `.env` est en realite une copie de la cle `anon` (meme JWT, `"role":"anon"`), ce qui fait echouer toute operation Supabase Storage avec une erreur RLS ("new row violates row-level security policy"). Impacte aussi potentiellement l'upload de photo de profil. A corriger : recuperer la vraie cle `service_role` dans Supabase (Project Settings > API) et remplacer la valeur dans `.env`. Le bucket `message-attachments` a ete cree manuellement en attendant (insertion directe dans `storage.buckets`).
+
 ## Tache 19 - Ajouter favoris, signalements et blocages
+
+Statut : Termine (11 juin 2026)
 
 Periode : Jour 18  
 Priorite : moyenne
@@ -676,6 +699,15 @@ Critere de validation :
 - Un utilisateur peut ajouter/retirer un favori.
 - Un signalement apparait dans l'admin.
 - Un utilisateur bloque ne peut plus envoyer de message.
+
+Notes :
+
+- Favoris : `src/app/api/favorites/route.ts` etait deja implemente (Tache precedente sur les profils) - GET/POST/DELETE operationnels pour les familles.
+- Signalements : `src/app/api/reports/route.ts` cree (POST pour signaler, GET/PATCH reserves a l'admin via `requireAdminSession()`). Constante `REPORT_REASONS` ajoutee dans `src/lib/constants.ts`.
+- Blocages : `src/app/api/blocks/route.ts` cree (GET/POST/DELETE, table `Block`). Le champ `blockedByMe` est expose par `src/app/api/messages/[userId]/route.ts` pour piloter le bouton Bloquer/Debloquer.
+- UI : boutons "Signaler" (modale avec motif + description) et "Bloquer/Debloquer" ajoutes dans l'en-tete de conversation de `src/components/messages/MessagesPanel.tsx`.
+- Admin : section "Signalements" ajoutee a `/admin/moderation` (liste + bouton "Marquer comme traite"), KPI `openReports` + bandeau d'alerte ajoutes au tableau de bord admin (`src/app/api/admin/dashboard/route.ts`, `src/app/admin/page.tsx`).
+- Verification end-to-end realisee via API (signalement, blocage/deblocage, refus d'envoi de message a un utilisateur bloque) et via Playwright (modale de signalement, section admin, resolution d'un signalement).
 
 ---
 

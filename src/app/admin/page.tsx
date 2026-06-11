@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
-import { Users, DollarSign, Shield, AlertTriangle, UserPlus, Loader2 } from "lucide-react";
+import { Users, DollarSign, Shield, AlertTriangle, UserPlus, Loader2, Flag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 
@@ -13,6 +13,7 @@ type DashboardData = {
     revenue30d: string;
     activeSubscriptions: number;
     pendingProfiles: number;
+    openReports: number;
   };
   recentUsers: {
     id: string;
@@ -62,6 +63,7 @@ export default function AdminPage() {
     { icon: UserPlus, label: "Inscriptions (30j)", value: String(kpis.signups30d), change: kpis.signupsChange, color: "text-green-600", bg: "bg-green-50" },
     { icon: DollarSign, label: "Revenus (30j)", value: kpis.revenue30d, change: `${kpis.activeSubscriptions} abonnements actifs`, color: "text-[#E87722]", bg: "bg-[#FFF3E0]" },
     { icon: Shield, label: "Profils en attente", value: String(kpis.pendingProfiles), change: "À valider", color: "text-red-600", bg: "bg-red-50" },
+    { icon: Flag, label: "Signalements ouverts", value: String(kpis.openReports), change: "À traiter", color: "text-amber-600", bg: "bg-amber-50" },
   ];
 
   return (
@@ -100,6 +102,22 @@ export default function AdminPage() {
             <Link href="/admin/moderation">
               <button className="bg-amber-600 text-white text-xs px-3 py-1.5 rounded-lg font-semibold hover:bg-amber-700 transition-colors">
                 Modérer
+              </button>
+            </Link>
+          </div>
+        )}
+
+        {/* Alerte signalements */}
+        {kpis.openReports > 0 && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center gap-3">
+            <Flag className="w-5 h-5 text-red-600 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="font-semibold text-red-800 text-sm">{kpis.openReports} signalement(s) en attente de traitement</p>
+              <p className="text-xs text-red-600">Examinez les signalements des utilisateurs.</p>
+            </div>
+            <Link href="/admin/moderation">
+              <button className="bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg font-semibold hover:bg-red-700 transition-colors">
+                Voir
               </button>
             </Link>
           </div>

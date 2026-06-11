@@ -23,9 +23,9 @@ export default function Navbar() {
 
   const profileUrl = session
     ? session.user.role === "AU_PAIR"
-      ? "/dashboard/au-pair/profil"
+      ? "/dashboard/au-pair"
       : session.user.role === "FAMILLE"
-        ? "/dashboard/famille/profil"
+        ? "/dashboard/famille"
         : getDefaultRedirectForRole(session.user.role)
     : "/connexion";
 
@@ -81,9 +81,7 @@ export default function Navbar() {
               </Button>
             ) : (
               <Link href="/inscription">
-                <Button size="sm">
-                  {t("S'inscrire", "Sign up")}
-                </Button>
+                <Button size="sm">{t("S'inscrire", "Sign up")}</Button>
               </Link>
             )}
           </div>
@@ -125,12 +123,18 @@ export default function Navbar() {
               </Button>
             </Link>
             {session ? (
-              <Button size="sm" className="flex-1 w-full" onClick={() => signOut({ callbackUrl: "/" })}>
+              <Button
+                size="sm"
+                className="flex-1 w-full"
+                onClick={() => signOut({ callbackUrl: "/" })}
+              >
                 {t("Se déconnecter", "Log out")}
               </Button>
             ) : (
               <Link href="/inscription" className="flex-1">
-                <Button size="sm" className="w-full">{t("S'inscrire", "Sign up")}</Button>
+                <Button size="sm" className="w-full">
+                  {t("S'inscrire", "Sign up")}
+                </Button>
               </Link>
             )}
           </div>

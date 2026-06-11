@@ -1,0 +1,68 @@
+import { NextResponse } from "next/server";
+import { requireAdminSession } from "@/lib/admin";
+import { getAppSettings, updateAppSettings, type AppSettingsInput } from "@/lib/settings";
+
+export async function GET() {
+  const session = await requireAdminSession();
+  if (!session) {
+    return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  }
+
+  const settings = await getAppSettings();
+  return NextResponse.json({ settings });
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((v) => typeof v === "string");
+}
+
+export async function PUT(req: Request) {
+  const session = await requireAdminSession();
+  if (!session) {
+    return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  }
+
+  const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
+  if (!body) {
+    return NextResponse.json({ error: "Corps de requête invalide" }, { status: 400 });
+  }
+
+  const data: AppSettingsInput = {};
+
+  for (const key of ["languages", "educationLevels", "durations", "reportReasons"] as const) {
+    if (key in body) {
+      const value = body[key];
+      if (!isStringArray(value) || value.some((v) => !v.trim())) {
+        return NextResponse.json({ error: `Le champ "${key}" doit être une liste de textes non vides.` }, { status: 400 });
+      }
+      data[key] = value.map((v) => v.trim());
+    }
+  }
+
+  if ("subscriptionPriceEur" in body) {
+    const value = body.subscriptionPriceEur;
+    if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+      return NextResponse.json({ error: "Le prix de l'abonnement (EUR) est invalide." }, { status: 400 });
+    }
+    data.subscriptionPriceEur = value;
+  }
+
+  if ("subscriptionPriceXof" in body) {
+    const value = body.subscriptionPriceXof;
+    if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+      return NextResponse.json({ error: "Le prix de l'abonnement (XOF) est invalide." }, { status: 400 });
+    }
+    data.subscriptionPriceXof = value;
+  }
+
+  if ("subscriptionDays" in body) {
+    const value = body.subscriptionDays;
+    if (typeof value !== "number" || !Number.isInteger(value) || value <= 0) {
+      return NextResponse.json({ error: "La durée de l'abonnement (jours) est invalide." }, { status: 400 });
+    }
+    data.subscriptionDays = value;
+  }
+
+  const settings = await updateAppSettings(data);
+  return NextResponse.json({ settings });
+}
