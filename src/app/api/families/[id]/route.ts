@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ProfileStatus } from "@/generated/prisma/client";
+import { registerProfileView } from "@/lib/profile-views";
 
 export async function GET(
   req: Request,
@@ -26,12 +27,11 @@ export async function GET(
     return NextResponse.json({ error: "Profil introuvable" }, { status: 404 });
   }
 
-  if (profile.userId !== session.user.id) {
-    await prisma.familyProfile.update({
-      where: { id: profile.id },
-      data: { profileViews: { increment: 1 } },
-    });
-  }
+  await registerProfileView({
+    viewerId: session.user.id,
+    profileUserId: profile.userId,
+    profileRole: "FAMILLE",
+  });
 
   return NextResponse.json({
     name: profile.user.name ?? "Famille",

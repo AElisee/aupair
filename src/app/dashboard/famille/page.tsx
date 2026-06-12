@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+const VIEWS_POLL_INTERVAL_MS = 5000;
+
 const navItems = [
   { href: "/dashboard/famille", icon: Home, label: "Tableau de bord" },
   { href: "/dashboard/famille/profil", icon: User, label: "Mon profil" },
@@ -76,6 +78,24 @@ export default function FamilleDashboard() {
       });
     return () => {
       cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchViews = () => {
+      fetch("/api/profile/views-count")
+        .then((res) => (res.ok ? res.json() : null))
+        .then((json) => {
+          if (json && !cancelled) {
+            setData((prev) => (prev ? { ...prev, profileViews: json.views } : prev));
+          }
+        });
+    };
+    const interval = setInterval(fetchViews, VIEWS_POLL_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
     };
   }, []);
 

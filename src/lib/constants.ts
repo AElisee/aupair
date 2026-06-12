@@ -31,3 +31,11 @@ export const REPORT_REASONS = [
   "Contenu inapproprié",
   "Autre",
 ];
+
+export const CONTACT_SUBJECTS: Record<string, string> = {
+  inscription: "Inscription / Compte",
+  paiement: "Paiement / Abonnement",
+  profil: "Mon profil",
+  signalement: "Signalement",
+  autre: "Autre",
+};

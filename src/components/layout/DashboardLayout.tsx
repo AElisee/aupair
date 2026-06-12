@@ -19,6 +19,7 @@ interface DashboardLayoutProps {
 }
 
 const UNREAD_POLL_INTERVAL_MS = 5000;
+const UNREAD_NOTIFICATIONS_POLL_INTERVAL_MS = 5000;
 
 function SidebarContent({
   navItems,
@@ -28,6 +29,7 @@ function SidebarContent({
   role,
   favoritesCount,
   unreadMessages,
+  unreadNotifications,
   onNavigate,
   onClose,
 }: {
@@ -38,6 +40,7 @@ function SidebarContent({
   role: "au-pair" | "famille";
   favoritesCount: number;
   unreadMessages: number;
+  unreadNotifications: number;
   onNavigate?: () => void;
   onClose?: () => void;
 }) {
@@ -105,6 +108,11 @@ function SidebarContent({
                   {unreadMessages}
                 </span>
               )}
+              {item.href.endsWith("/notifications") && unreadNotifications > 0 && (
+                <span className="ml-auto bg-[#E87722] text-white text-xs font-bold rounded-full px-2 py-0.5 min-w-5 text-center">
+                  {unreadNotifications}
+                </span>
+              )}
               {isActive && <ChevronRight className="w-3 h-3 ml-auto" />}
             </Link>
           );
@@ -130,6 +138,7 @@ export default function DashboardLayout({ children, navItems, role, userName }: 
   const [photoUrl, setPhotoUrl] = useState("");
   const [favoritesCount, setFavoritesCount] = useState(0);
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [prevPathname, setPrevPathname] = useState(pathname);
 
@@ -174,6 +183,23 @@ export default function DashboardLayout({ children, navItems, role, userName }: 
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    const fetchUnreadNotifications = () => {
+      fetch("/api/notifications/unread-count")
+        .then((res) => (res.ok ? res.json() : null))
+        .then((json) => {
+          if (json && !cancelled) setUnreadNotifications(json.count ?? 0);
+        });
+    };
+    fetchUnreadNotifications();
+    const interval = setInterval(fetchUnreadNotifications, UNREAD_NOTIFICATIONS_POLL_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
+
   // Empêche le scroll du fond quand le menu mobile est ouvert
   useEffect(() => {
     document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
@@ -194,6 +220,7 @@ export default function DashboardLayout({ children, navItems, role, userName }: 
           role={role}
           favoritesCount={favoritesCount}
           unreadMessages={unreadMessages}
+          unreadNotifications={unreadNotifications}
         />
       </aside>
 
@@ -220,6 +247,7 @@ export default function DashboardLayout({ children, navItems, role, userName }: 
           role={role}
           favoritesCount={favoritesCount}
           unreadMessages={unreadMessages}
+          unreadNotifications={unreadNotifications}
           onNavigate={() => setMobileMenuOpen(false)}
           onClose={() => setMobileMenuOpen(false)}
         />

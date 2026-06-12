@@ -9,7 +9,13 @@ export async function GET() {
   }
 
   const settings = await getAppSettings();
-  return NextResponse.json({ settings });
+  const { resendApiKey, ...rest } = settings;
+  return NextResponse.json({
+    settings: {
+      ...rest,
+      resendApiKeyConfigured: !!resendApiKey,
+    },
+  });
 }
 
 function isStringArray(value: unknown): value is string[] {
@@ -63,6 +69,50 @@ export async function PUT(req: Request) {
     data.subscriptionDays = value;
   }
 
+  for (const key of ["notifyProfileViewEnabled", "notifyWeeklyViewsDigestEnabled"] as const) {
+    if (key in body) {
+      const value = body[key];
+      if (typeof value !== "boolean") {
+        return NextResponse.json({ error: `Le champ "${key}" doit être un booléen.` }, { status: 400 });
+      }
+      data[key] = value;
+    }
+  }
+
+  // resendApiKey : une valeur vide efface la clé, "in body" mais non vide la met à jour.
+  // Une valeur absente ne touche pas la clé existante (évite d'écraser un secret par accident).
+  if ("resendApiKey" in body) {
+    const value = body.resendApiKey;
+    if (typeof value !== "string") {
+      return NextResponse.json({ error: `Le champ "resendApiKey" doit être une chaîne.` }, { status: 400 });
+    }
+    data.resendApiKey = value.trim() === "" ? null : value.trim();
+  }
+
+  if ("emailFrom" in body) {
+    const value = body.emailFrom;
+    if (typeof value !== "string") {
+      return NextResponse.json({ error: `Le champ "emailFrom" doit être une chaîne.` }, { status: 400 });
+    }
+    const trimmed = value.trim();
+    const EMAIL = /[^\s<>]+@[^\s<>]+\.[^\s<>]+/;
+    const isValid =
+      !trimmed || EMAIL.test(trimmed) && (!trimmed.includes("<") || new RegExp(`^[^<>]+<${EMAIL.source}>$`).test(trimmed));
+    if (!isValid) {
+      return NextResponse.json(
+        { error: `Le champ "emailFrom" doit être une adresse email, ex: "AuPair A.EU <contact@domaine.com>".` },
+        { status: 400 }
+      );
+    }
+    data.emailFrom = trimmed === "" ? null : trimmed;
+  }
+
   const settings = await updateAppSettings(data);
-  return NextResponse.json({ settings });
+  const { resendApiKey, ...rest } = settings;
+  return NextResponse.json({
+    settings: {
+      ...rest,
+      resendApiKeyConfigured: !!resendApiKey,
+    },
+  });
 }

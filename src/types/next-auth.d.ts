@@ -17,5 +17,7 @@ declare module "next-auth/jwt" {
   interface JWT {
     id?: string;
     role?: string;
+    /** Timestamp (ms) de `User.passwordChangedAt` au moment de l'émission/rafraîchissement du token. */
+    pwdAt?: number;
   }
 }

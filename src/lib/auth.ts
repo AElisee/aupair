@@ -50,16 +50,57 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: user.name,
           image: user.image,
           role: user.role,
+          passwordChangedAt: user.passwordChangedAt,
         };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.role = (user as { role?: string }).role;
         token.id = user.id;
+        const passwordChangedAt = (
+          user as { passwordChangedAt?: Date | string | null }
+        ).passwordChangedAt;
+        token.pwdAt = passwordChangedAt
+          ? new Date(passwordChangedAt).getTime()
+          : 0;
+        return token;
       }
+
+      if (!token.id) return token;
+
+      // Après un changement de mot de passe, le client appelle update() pour
+      // resynchroniser pwdAt et garder sa propre session active.
+      if (trigger === "update") {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id },
+          select: { passwordChangedAt: true },
+        });
+        token.pwdAt = dbUser?.passwordChangedAt?.getTime() ?? 0;
+        return token;
+      }
+
+      // Invalide les tokens émis avant le dernier changement de mot de passe
+      // (déconnexion des autres sessions) ou si le compte a été désactivé.
+      const dbUser = await prisma.user.findUnique({
+        where: { id: token.id },
+        select: { passwordChangedAt: true, isActive: true },
+      });
+
+      if (!dbUser || !dbUser.isActive) {
+        delete token.id;
+        delete token.role;
+        return token;
+      }
+
+      const dbPwdAt = dbUser.passwordChangedAt?.getTime() ?? 0;
+      if (dbPwdAt > (token.pwdAt ?? 0)) {
+        delete token.id;
+        delete token.role;
+      }
+
       return token;
     },
     async session({ session, token }) {

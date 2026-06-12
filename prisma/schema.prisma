@@ -81,17 +81,18 @@ enum CountryType {
 // ─── USER ────────────────────────────────────────────────────────────────────
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  emailVerified DateTime?
-  password      String?
-  name          String?
-  image         String?
-  role          UserRole  @default(AU_PAIR)
-  isVerified    Boolean   @default(false)
-  isActive      Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                String    @id @default(cuid())
+  email             String    @unique
+  emailVerified     DateTime?
+  password          String?
+  passwordChangedAt DateTime?
+  name              String?
+  image             String?
+  role              UserRole  @default(AU_PAIR)
+  isVerified        Boolean   @default(false)
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   accounts         Account[]
   sessions         Session[]
@@ -108,6 +109,9 @@ model User {
   notifications    Notification[]
   blockedUsers     Block[]        @relation("Blocker")
   blockedBy        Block[]        @relation("Blocked")
+  profileViewsMade     ProfileView[] @relation("ProfileViewViewer")
+  profileViewsReceived ProfileView[] @relation("ProfileViewTarget")
+  passwordResetTokens  PasswordResetToken[]
 
   @@map("users")
 }
@@ -150,6 +154,21 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map("verification_tokens")
+}
+
+// ─── RÉINITIALISATION DE MOT DE PASSE ────────────────────────────────────────
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
 }
 
 // ─── PROFIL AU PAIR ──────────────────────────────────────────────────────────
@@ -431,11 +450,29 @@ model Notification {
   @@map("notifications")
 }
 
+// ─── VUES DE PROFIL ──────────────────────────────────────────────────────────
+
+model ProfileView {
+  id            String   @id @default(cuid())
+  viewerId      String
+  profileUserId String
+  weekKey       String
+  lastViewedAt  DateTime @default(now())
+
+  viewer      User @relation("ProfileViewViewer", fields: [viewerId], references: [id], onDelete: Cascade)
+  profileUser User @relation("ProfileViewTarget", fields: [profileUserId], references: [id], onDelete: Cascade)
+
+  @@unique([viewerId, profileUserId])
+  @@map("profile_views")
+}
+
 // ─── TICKETS SUPPORT ─────────────────────────────────────────────────────────
 
 model Ticket {
   id          String         @id @default(cuid())
-  userId      String
+  userId      String?
+  guestName   String?
+  guestEmail  String?
   subject     String
   description String         @db.Text
   status      TicketStatus   @default(OPEN)
@@ -446,7 +483,7 @@ model Ticket {
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("tickets")
 }
@@ -475,6 +512,14 @@ model AppSettings {
   subscriptionPriceEur Float    @default(32)
   subscriptionPriceXof Float    @default(20800)
   subscriptionDays     Int      @default(30)
+
+  notifyProfileViewEnabled       Boolean @default(true)
+  notifyWeeklyViewsDigestEnabled Boolean @default(true)
+
+  // Configuration de l'envoi d'emails (Resend) — éditable par l'admin, jamais stockée en .env
+  resendApiKey String?
+  emailFrom    String?
+
   updatedAt            DateTime @updatedAt
 
   @@map("app_settings")

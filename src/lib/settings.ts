@@ -19,6 +19,10 @@ const DEFAULT_SETTINGS = {
   subscriptionPriceEur: SUBSCRIPTION_PRICE_EUR,
   subscriptionPriceXof: SUBSCRIPTION_PRICE_XOF,
   subscriptionDays: SUBSCRIPTION_DAYS,
+  notifyProfileViewEnabled: true,
+  notifyWeeklyViewsDigestEnabled: true,
+  resendApiKey: null as string | null,
+  emailFrom: null as string | null,
 };
 
 /** Récupère les constantes éditables (crée la ligne avec les valeurs par défaut si elle n'existe pas encore). */
@@ -38,6 +42,10 @@ export interface AppSettingsInput {
   subscriptionPriceEur?: number;
   subscriptionPriceXof?: number;
   subscriptionDays?: number;
+  notifyProfileViewEnabled?: boolean;
+  notifyWeeklyViewsDigestEnabled?: boolean;
+  resendApiKey?: string | null;
+  emailFrom?: string | null;
 }
 
 export async function updateAppSettings(data: AppSettingsInput) {

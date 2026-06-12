@@ -141,8 +141,17 @@ GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET
 FACEBOOK_CLIENT_ID / FACEBOOK_CLIENT_SECRET
 STRIPE_SECRET_KEY / NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY / STRIPE_WEBHOOK_SECRET
 CINETPAY_API_KEY / CINETPAY_SITE_ID
-RESEND_API_KEY / RESEND_FROM_EMAIL
 NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY
 NEXT_PUBLIC_APP_URL
 ADMIN_EMAIL / ADMIN_PASSWORD / ADMIN_NAME (optional — seeds an ADMIN account on `npm run dev`)
+CRON_SECRET (optional — if set, `/api/cron/weekly-profile-views` requires `Authorization: Bearer ${CRON_SECRET}`)
 ```
+
+### Email (Resend)
+
+Resend credentials (`resendApiKey`, `emailFrom`) are **not** environment variables —
+they're admin-configurable settings stored on `AppSettings` (`app_settings` table),
+edited at `/admin/parametres/email` via `/api/admin/constants`. `src/lib/mail.ts`'s
+`sendMail()` loads them from `getAppSettings()` on every call and logs a clear
+`[mail]` error (never throws) if either is missing or Resend rejects the send.
+See `docs/email-resend.md` for setup, local testing, and production deployment.
