@@ -107,13 +107,13 @@ function ConnexionForm() {
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
           {/* Logo mobile */}
-          <div className="lg:hidden flex items-center gap-2 font-bold text-xl mb-8">
+          {/* <div className="lg:hidden flex items-center gap-2 font-bold text-xl mb-8">
             <div className="w-8 h-8 bg-[#E87722] rounded-full flex items-center justify-center">
               <Globe className="w-5 h-5 text-white" />
             </div>
             <span className="text-[#1A1A2E]">AuPair</span>
             <span className="text-[#E87722]">A.EU</span>
-          </div>
+          </div> */}
 
           <h1 className="text-2xl font-extrabold text-[#1A1A2E] mb-2">
             Connexion
