@@ -184,13 +184,13 @@ export default function FamilleDashboard() {
 
         {/* Au pairs suggérés */}
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between gap-2 flex-wrap mb-4">
             <h3 className="font-bold text-[#1A1A2E]">
               Au pairs suggérés pour vous
             </h3>
             <Link
               href="/dashboard/famille/recherche"
-              className="text-[#E87722] text-sm font-semibold"
+              className="text-[#E87722] text-sm font-semibold whitespace-nowrap"
             >
               Voir tous →
             </Link>
@@ -206,9 +206,9 @@ export default function FamilleDashboard() {
                 <Link
                   key={ap.id}
                   href={`/dashboard/famille/au-pair/${ap.id}`}
-                  className="flex items-center justify-between p-3 bg-[#F5F5F5] rounded-xl hover:bg-[#FFF3E0] transition-colors"
+                  className="flex items-center justify-between gap-2 p-3 bg-[#F5F5F5] rounded-xl hover:bg-[#FFF3E0] transition-colors"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div className="w-10 h-10 bg-[#E87722] rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden shrink-0">
                       {ap.profilePhotoUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -221,16 +221,16 @@ export default function FamilleDashboard() {
                         ap.firstName.charAt(0)
                       )}
                     </div>
-                    <div>
-                      <p className="font-semibold text-[#1A1A2E] text-sm">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-[#1A1A2E] text-sm truncate">
                         {ap.firstName}, {ap.age} ans
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-500 truncate">
                         {ap.flag} {ap.country} · {ap.languages.join(", ")}
                       </p>
                     </div>
                   </div>
-                  <Badge variant="success">{ap.experience} ans exp.</Badge>
+                  <Badge variant="success" className="shrink-0">{ap.experience} ans exp.</Badge>
                 </Link>
               ))}
             </div>

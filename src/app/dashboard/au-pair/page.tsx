@@ -316,13 +316,13 @@ export default function AuPairDashboard() {
 
         {/* Suggestions familles */}
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between gap-2 flex-wrap mb-4">
             <h3 className="font-bold text-[#1A1A2E]">
               Familles suggérées pour vous
             </h3>
             <Link
               href="/dashboard/au-pair/recherche"
-              className="text-[#E87722] text-sm font-semibold"
+              className="text-[#E87722] text-sm font-semibold whitespace-nowrap"
             >
               Voir toutes →
             </Link>
@@ -338,21 +338,21 @@ export default function AuPairDashboard() {
                 <Link
                   key={f.id}
                   href={`/dashboard/au-pair/famille/${f.id}`}
-                  className="flex items-center justify-between p-3 bg-[#F5F5F5] rounded-xl hover:bg-[#FFF3E0] transition-colors"
+                  className="flex items-center justify-between gap-2 p-3 bg-[#F5F5F5] rounded-xl hover:bg-[#FFF3E0] transition-colors"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="text-sm">{f.flag}</div>
-                    <div>
-                      <p className="font-semibold text-[#1A1A2E] text-sm">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="text-sm shrink-0">{f.flag}</div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-[#1A1A2E] text-sm truncate">
                         {f.name}
                       </p>
                       <p className="text-xs text-gray-500 flex items-center gap-1">
-                        <MapPin className="w-3 h-3" />
-                        {f.city}, {f.country}
+                        <MapPin className="w-3 h-3 shrink-0" />
+                        <span className="truncate">{f.city}, {f.country}</span>
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right shrink-0">
                     <p className="text-sm font-bold text-[#E87722]">
                       {f.pocketMoney}€/mois
                     </p>
