@@ -845,13 +845,13 @@ export default function AuPairProfilPage() {
               <label className="block text-sm font-semibold text-gray-700 mb-1">
                 Numéro WhatsApp principal
               </label>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <select
                   value={profile.phoneCountryCode}
                   onChange={(e) =>
                     setProfile({ ...profile, phoneCountryCode: e.target.value })
                   }
-                  className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
+                  className="w-full sm:w-auto min-w-0 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
                 >
                   {allCountries.map((c) => (
                     <option key={c.name} value={c.dialCode}>
@@ -865,7 +865,7 @@ export default function AuPairProfilPage() {
                   onChange={(e) =>
                     setProfile({ ...profile, phoneNumber: e.target.value })
                   }
-                  className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
+                  className="w-full sm:flex-1 min-w-0 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
                   placeholder="6XX XXX XXX"
                 />
               </div>
@@ -874,7 +874,7 @@ export default function AuPairProfilPage() {
               <label className="block text-sm font-semibold text-gray-700 mb-1">
                 Numéro WhatsApp secondaire (optionnel)
               </label>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <select
                   value={profile.phoneCountryCode2}
                   onChange={(e) =>
@@ -883,7 +883,7 @@ export default function AuPairProfilPage() {
                       phoneCountryCode2: e.target.value,
                     })
                   }
-                  className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
+                  className="w-full sm:w-auto min-w-0 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
                 >
                   {allCountries.map((c) => (
                     <option key={c.name} value={c.dialCode}>
@@ -897,7 +897,7 @@ export default function AuPairProfilPage() {
                   onChange={(e) =>
                     setProfile({ ...profile, phoneNumber2: e.target.value })
                   }
-                  className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
+                  className="w-full sm:flex-1 min-w-0 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
                   placeholder="6XX XXX XXX"
                 />
               </div>

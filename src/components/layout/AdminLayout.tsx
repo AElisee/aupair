@@ -144,7 +144,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar desktop */}
-      <aside className="hidden md:flex flex-col w-60 bg-[#1A1A2E] min-h-screen fixed left-0 top-0 z-40">
+      <aside className="hidden md:flex flex-col w-60 bg-[#1A1A2E] h-screen fixed left-0 top-0 z-40">
         <SidebarContent
           pathname={pathname}
           isSettingsActive={isSettingsActive}

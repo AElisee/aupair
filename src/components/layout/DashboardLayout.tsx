@@ -230,7 +230,7 @@ export default function DashboardLayout({ children, navItems, role, userName }: 
   return (
     <div className="min-h-screen bg-[#F5F5F5] flex">
       {/* Sidebar desktop */}
-      <aside className="hidden md:flex flex-col w-64 bg-[#1A1A2E] min-h-screen fixed left-0 top-0 z-40">
+      <aside className="hidden md:flex flex-col w-64 bg-[#1A1A2E] h-screen fixed left-0 top-0 z-40">
         <SidebarContent
           navItems={navItems}
           pathname={pathname}
