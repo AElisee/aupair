@@ -3,12 +3,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getAppSettings } from "@/lib/settings";
 
-/** Active un abonnement de test (sans paiement réel) — disponible uniquement hors production. */
+/** Active un abonnement de test (sans paiement réel). */
 export async function POST() {
-  if (process.env.NODE_ENV === "production") {
-    return NextResponse.json({ error: "Non disponible en production" }, { status: 403 });
-  }
-
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });

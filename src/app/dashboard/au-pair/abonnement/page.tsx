@@ -211,16 +211,14 @@ function AbonnementContent() {
                   Payer par carte bancaire ({formatCurrency(priceEur, "EUR")})
                 </button>
               </div>
-              {process.env.NODE_ENV !== "production" && (
-                <button
-                  onClick={handleDevActivate}
-                  disabled={payingMethod !== null}
-                  className="w-full flex items-center justify-center gap-2 mt-3 border border-white/30 hover:bg-white/10 disabled:opacity-60 rounded-xl p-2.5 text-xs font-medium transition-colors text-white/80"
-                >
-                  {payingMethod === "dev" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-                  Activer l&apos;abonnement (test, sans paiement)
-                </button>
-              )}
+              <button
+                onClick={handleDevActivate}
+                disabled={payingMethod !== null}
+                className="w-full flex items-center justify-center gap-2 mt-3 border border-white/30 hover:bg-white/10 disabled:opacity-60 rounded-xl p-2.5 text-xs font-medium transition-colors text-white/80"
+              >
+                {payingMethod === "dev" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                Activer l&apos;abonnement (test, sans paiement)
+              </button>
             </div>
 
             {/* Inclus dans l'abonnement */}
