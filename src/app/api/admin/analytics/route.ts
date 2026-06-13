@@ -35,6 +35,7 @@ export async function GET() {
     auPairStatusGroups,
     familyStatusGroups,
     topOriginCountries,
+    topHostCountries,
     flagMap,
   ] = await Promise.all([
     prisma.user.findMany({ where: { createdAt: { gte: since } }, select: { createdAt: true, role: true } }),
@@ -50,6 +51,12 @@ export async function GET() {
       orderBy: { _count: { countryOfOrigin: "desc" } },
       take: 5,
     }),
+    prisma.familyProfile.groupBy({
+      by: ["country"],
+      _count: { _all: true },
+      orderBy: { _count: { country: "desc" } },
+      take: 5,
+    }),
     getCountryFlagMap(),
   ]);
 
@@ -57,7 +64,8 @@ export async function GET() {
 
   const signupsByMonth = months.map(({ key, label }) => ({
     month: label,
-    count: users.filter((u) => monthKey(u.createdAt) === key).length,
+    auPair: users.filter((u) => monthKey(u.createdAt) === key && u.role === "AU_PAIR").length,
+    famille: users.filter((u) => monthKey(u.createdAt) === key && u.role === "FAMILLE").length,
   }));
 
   const revenueByMonth = months.map(({ key, label }) => ({
@@ -79,11 +87,18 @@ export async function GET() {
     count: c._count._all,
   }));
 
+  const topFamilyCountries = topHostCountries.map((c) => ({
+    country: c.country,
+    flag: flagMap[c.country] ?? "",
+    count: c._count._all,
+  }));
+
   return NextResponse.json({
     signupsByMonth,
     revenueByMonth,
     auPairStatus: profileStatusCounts(auPairStatusGroups),
     familyStatus: profileStatusCounts(familyStatusGroups),
     topCountries,
+    topFamilyCountries,
   });
 }
