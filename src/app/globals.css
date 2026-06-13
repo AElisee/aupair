@@ -78,6 +78,13 @@ body {
   overscroll-behavior-y: none;
 }
 
+/* Curseur main sur tous les éléments cliquables */
+button:not(:disabled),
+[role="button"],
+a[href] {
+  cursor: pointer;
+}
+
 /* Scrollbar personnalisée */
 ::-webkit-scrollbar {
   width: 6px;

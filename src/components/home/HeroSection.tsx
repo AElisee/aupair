@@ -41,12 +41,12 @@ export default function HeroSection() {
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-14">
           <Link href="/trouver-famille">
-            <Button size="lg" className="text-base px-8 py-6 text-lg shadow-lg shadow-[#E87722]/30">
+            <Button size="lg" className="whitespace-normal text-center text-base px-6 sm:px-8 py-6 sm:text-lg shadow-lg shadow-[#E87722]/30">
               🏡 {t("Trouver une famille d'accueil", "Find a host family")}
             </Button>
           </Link>
           <Link href="/trouver-au-pair">
-            <Button variant="outline" size="lg" className="text-base px-8 py-6 text-lg border-white text-white hover:bg-white hover:text-[#1A1A2E]">
+            <Button variant="outline" size="lg" className="whitespace-normal text-center text-base px-6 sm:px-8 py-6 sm:text-lg border-white text-white hover:bg-white hover:text-[#1A1A2E]">
               👤 {t("Trouver un au pair", "Find an au pair")}
             </Button>
           </Link>

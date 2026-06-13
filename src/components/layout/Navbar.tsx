@@ -117,7 +117,7 @@ export default function Navbar() {
               <Globe className="w-4 h-4" />
               {lang === "fr" ? "EN" : "FR"}
             </button>
-            <Link href={profileUrl} className="flex-1">
+            <Link href={profileUrl} className="flex-1" onClick={() => setIsOpen(false)}>
               <Button variant="outline" size="sm" className="w-full">
                 {session ? (session.user.role === "ADMIN" ? "Admin" : t("Profil", "Profile")) : t("Connexion", "Login")}
               </Button>
@@ -126,12 +126,15 @@ export default function Navbar() {
               <Button
                 size="sm"
                 className="flex-1 w-full"
-                onClick={() => signOut({ callbackUrl: "/" })}
+                onClick={() => {
+                  setIsOpen(false);
+                  signOut({ callbackUrl: "/" });
+                }}
               >
                 {t("Se déconnecter", "Log out")}
               </Button>
             ) : (
-              <Link href="/inscription" className="flex-1">
+              <Link href="/inscription" className="flex-1" onClick={() => setIsOpen(false)}>
                 <Button size="sm" className="w-full">
                   {t("S'inscrire", "Sign up")}
                 </Button>
