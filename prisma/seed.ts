@@ -4,7 +4,12 @@ import bcrypt from "bcryptjs";
 // Charge .env / .env.local exactement comme Next.js (gère l'échappement \$ des mots de passe)
 loadEnvConfig(process.cwd());
 
-const DEFAULT_COUNTRIES: { name: string; flag: string; dialCode: string; type: "ORIGIN" | "HOST" }[] = [
+const DEFAULT_COUNTRIES: {
+  name: string;
+  flag: string;
+  dialCode: string;
+  type: "ORIGIN" | "HOST";
+}[] = [
   { name: "Bénin", flag: "🇧🇯", dialCode: "+229", type: "ORIGIN" },
   { name: "Burkina Faso", flag: "🇧🇫", dialCode: "+226", type: "ORIGIN" },
   { name: "Cameroun", flag: "🇨🇲", dialCode: "+237", type: "ORIGIN" },
@@ -12,7 +17,7 @@ const DEFAULT_COUNTRIES: { name: string; flag: string; dialCode: string; type: "
   { name: "Côte d'Ivoire", flag: "🇨🇮", dialCode: "+225", type: "ORIGIN" },
   { name: "Gabon", flag: "🇬🇦", dialCode: "+241", type: "ORIGIN" },
   { name: "Ghana", flag: "🇬🇭", dialCode: "+233", type: "ORIGIN" },
-  { name: "Koweït", flag: "🇰🇼", dialCode: "+965", type: "ORIGIN" },
+  // { name: "Koweït", flag: "🇰🇼", dialCode: "+965", type: "ORIGIN" },
   { name: "Madagascar", flag: "🇲🇬", dialCode: "+261", type: "ORIGIN" },
   { name: "Mali", flag: "🇲🇱", dialCode: "+223", type: "ORIGIN" },
   { name: "Maroc", flag: "🇲🇦", dialCode: "+212", type: "ORIGIN" },
@@ -35,7 +40,9 @@ async function main() {
   const name = process.env.ADMIN_NAME || "Administrateur";
 
   if (!email || !password) {
-    console.log("[seed] ADMIN_EMAIL / ADMIN_PASSWORD non définis dans .env — aucun compte admin créé.");
+    console.log(
+      "[seed] ADMIN_EMAIL / ADMIN_PASSWORD non définis dans .env — aucun compte admin créé.",
+    );
   } else {
     const normalizedEmail = email.trim().toLowerCase();
     const hashedPassword = await bcrypt.hash(password, 10);

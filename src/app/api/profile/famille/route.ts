@@ -31,6 +31,7 @@ export async function GET() {
     city: profile.city,
     address: profile.address ?? "",
     maritalStatus: profile.maritalStatus,
+    parentsAges: profile.parentsAges.join(", "),
     numberOfKids: profile.numberOfKids,
     kidsAges: profile.kidsAges.join(", "),
     auPairTasks: profile.auPairTasks ?? "",
@@ -70,6 +71,11 @@ export async function PUT(request: Request) {
     .map((s) => parseInt(s.trim(), 10))
     .filter((n) => Number.isFinite(n));
 
+  const parentsAges = String(body.parentsAges ?? "")
+    .split(",")
+    .map((s) => parseInt(s.trim(), 10))
+    .filter((n) => Number.isFinite(n));
+
   const toIntOrNull = (value: unknown): number | null => {
     if (value === "" || value === null || value === undefined) return null;
     const n = parseInt(String(value), 10);
@@ -95,6 +101,7 @@ export async function PUT(request: Request) {
           city: String(body.city ?? ""),
           address: body.address ? String(body.address) : null,
           maritalStatus: String(body.maritalStatus ?? "MARRIED") as "MARRIED" | "SINGLE" | "DIVORCED" | "OTHER",
+          parentsAges,
           numberOfKids: toIntOrNull(body.numberOfKids) ?? 0,
           kidsAges,
           auPairTasks: body.auPairTasks ? String(body.auPairTasks) : null,

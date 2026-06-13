@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
+import { SubscriptionLockCard } from "@/components/dashboard/SubscriptionLock";
 import {
   ArrowLeft, Loader2, Phone, Languages, Users, Wallet,
   Home, User, Search, MessageCircle, Bell, CreditCard, Settings, CheckCircle, X,
@@ -28,26 +29,27 @@ const MARITAL_LABELS: Record<string, string> = {
 };
 
 type FamilyProfile = {
+  locked: boolean;
   name: string;
   familyPhotoUrl: string;
   country: string;
   city: string;
-  address: string | null;
-  maritalStatus: string;
-  parentsAges: number[];
   numberOfKids: number;
   kidsAges: number[];
-  auPairTasks: string | null;
   hoursPerWeek: number | null;
   pocketMoney: number | null;
-  accommodation: string | null;
-  mealsProvided: boolean;
-  description: string | null;
-  phoneWhatsapp: string | null;
-  preferredGender: string | null;
-  preferredAgeMin: number | null;
-  preferredAgeMax: number | null;
-  preferredLanguages: string[];
+  address?: string | null;
+  maritalStatus?: string;
+  parentsAges?: number[];
+  auPairTasks?: string | null;
+  accommodation?: string | null;
+  mealsProvided?: boolean;
+  description?: string | null;
+  phoneWhatsapp?: string | null;
+  preferredGender?: string | null;
+  preferredAgeMin?: number | null;
+  preferredAgeMax?: number | null;
+  preferredLanguages?: string[];
 };
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
@@ -155,62 +157,71 @@ export default function FamilyProfilePage() {
 
             {/* Colonne droite : détails */}
             <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <h2 className="font-bold text-[#1A1A2E] mb-3">Informations générales</h2>
-                <div className="grid grid-cols-2 gap-4">
-                  <Field label="Pays" value={data.country} />
-                  <Field label="Ville" value={data.city} />
-                  <Field label="Adresse" value={data.address} />
-                  <Field label="Situation familiale" value={MARITAL_LABELS[data.maritalStatus] ?? data.maritalStatus} />
-                  <Field label="Âge des parents" value={data.parentsAges.length > 0 ? data.parentsAges.join(", ") + " ans" : null} />
-                </div>
-              </div>
-
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <h2 className="font-bold text-[#1A1A2E] mb-3">Enfants & quotidien</h2>
-                <div className="grid grid-cols-2 gap-4">
-                  <Field label="Nombre d'enfants" value={data.numberOfKids} />
-                  <Field label="Âge des enfants" value={data.kidsAges.length > 0 ? data.kidsAges.join(", ") + " ans" : null} />
-                  <Field label="Heures par semaine" value={data.hoursPerWeek != null ? `${data.hoursPerWeek}h` : null} />
-                  <Field label="Argent de poche" value={data.pocketMoney != null ? `${data.pocketMoney}€/mois` : null} />
-                  <Field label="Logement proposé" value={data.accommodation} />
-                  <Field label="Repas fournis" value={<YesNo value={data.mealsProvided} />} />
-                </div>
-                {data.auPairTasks && (
-                  <div className="mt-3">
-                    <Field label="Tâches confiées à l'au pair" value={<span className="whitespace-pre-wrap">{data.auPairTasks}</span>} />
+              {data.locked ? (
+                <SubscriptionLockCard
+                  title="Profil complet réservé aux abonnés"
+                  message="Abonnez-vous pour consulter le profil complet de cette famille et accéder à ses coordonnées."
+                />
+              ) : (
+                <>
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                    <h2 className="font-bold text-[#1A1A2E] mb-3">Informations générales</h2>
+                    <div className="grid grid-cols-2 gap-4">
+                      <Field label="Pays" value={data.country} />
+                      <Field label="Ville" value={data.city} />
+                      <Field label="Adresse" value={data.address ?? null} />
+                      <Field label="Situation familiale" value={data.maritalStatus ? (MARITAL_LABELS[data.maritalStatus] ?? data.maritalStatus) : null} />
+                      <Field label="Âge des parents" value={data.parentsAges && data.parentsAges.length > 0 ? data.parentsAges.join(", ") + " ans" : null} />
+                    </div>
                   </div>
-                )}
-              </div>
 
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <h2 className="font-bold text-[#1A1A2E] mb-3">Préférences pour l'au pair</h2>
-                <div className="grid grid-cols-2 gap-4">
-                  <Field label="Genre préféré" value={data.preferredGender} />
-                  <Field
-                    label="Tranche d'âge préférée"
-                    value={
-                      data.preferredAgeMin != null || data.preferredAgeMax != null
-                        ? `${data.preferredAgeMin ?? "—"} - ${data.preferredAgeMax ?? "—"} ans`
-                        : null
-                    }
-                  />
-                  <Field label="Langues souhaitées" value={data.preferredLanguages.join(", ")} />
-                </div>
-              </div>
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                    <h2 className="font-bold text-[#1A1A2E] mb-3">Enfants & quotidien</h2>
+                    <div className="grid grid-cols-2 gap-4">
+                      <Field label="Nombre d'enfants" value={data.numberOfKids} />
+                      <Field label="Âge des enfants" value={data.kidsAges.length > 0 ? data.kidsAges.join(", ") + " ans" : null} />
+                      <Field label="Heures par semaine" value={data.hoursPerWeek != null ? `${data.hoursPerWeek}h` : null} />
+                      <Field label="Argent de poche" value={data.pocketMoney != null ? `${data.pocketMoney}€/mois` : null} />
+                      <Field label="Logement proposé" value={data.accommodation ?? null} />
+                      <Field label="Repas fournis" value={<YesNo value={!!data.mealsProvided} />} />
+                    </div>
+                    {data.auPairTasks && (
+                      <div className="mt-3">
+                        <Field label="Tâches confiées à l'au pair" value={<span className="whitespace-pre-wrap">{data.auPairTasks}</span>} />
+                      </div>
+                    )}
+                  </div>
 
-              {data.description && (
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                  <h2 className="font-bold text-[#1A1A2E] mb-3">Présentation</h2>
-                  <Field label="Description" value={<span className="whitespace-pre-wrap">{data.description}</span>} />
-                </div>
-              )}
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                    <h2 className="font-bold text-[#1A1A2E] mb-3">Préférences pour l'au pair</h2>
+                    <div className="grid grid-cols-2 gap-4">
+                      <Field label="Genre préféré" value={data.preferredGender ?? null} />
+                      <Field
+                        label="Tranche d'âge préférée"
+                        value={
+                          data.preferredAgeMin != null || data.preferredAgeMax != null
+                            ? `${data.preferredAgeMin ?? "—"} - ${data.preferredAgeMax ?? "—"} ans`
+                            : null
+                        }
+                      />
+                      <Field label="Langues souhaitées" value={data.preferredLanguages?.join(", ") ?? null} />
+                    </div>
+                  </div>
 
-              {data.phoneWhatsapp && (
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                  <h2 className="font-bold text-[#1A1A2E] mb-3">Contact</h2>
-                  <Field label="WhatsApp" value={<span className="inline-flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-[#E87722]" /> {data.phoneWhatsapp}</span>} />
-                </div>
+                  {data.description && (
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                      <h2 className="font-bold text-[#1A1A2E] mb-3">Présentation</h2>
+                      <Field label="Description" value={<span className="whitespace-pre-wrap">{data.description}</span>} />
+                    </div>
+                  )}
+
+                  {data.phoneWhatsapp && (
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                      <h2 className="font-bold text-[#1A1A2E] mb-3">Contact</h2>
+                      <Field label="WhatsApp" value={<span className="inline-flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-[#E87722]" /> {data.phoneWhatsapp}</span>} />
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>

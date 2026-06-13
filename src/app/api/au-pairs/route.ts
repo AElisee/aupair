@@ -10,7 +10,10 @@ export async function GET() {
 
   const [profiles, flagMap, favorites] = await Promise.all([
     prisma.auPairProfile.findMany({
-      where: { status: ProfileStatus.ACTIVE },
+      where: {
+        status: ProfileStatus.ACTIVE,
+        user: { subscriptions: { some: { status: "ACTIVE", expiresAt: { gt: new Date() } } } },
+      },
       orderBy: { createdAt: "desc" },
     }),
     getCountryFlagMap(),

@@ -39,6 +39,7 @@ type Profile = {
   firstName: string; lastName: string;
   country: string; city: string; address: string;
   maritalStatus: string;
+  parentsAges: string;
   numberOfKids: number; kidsAges: string;
   auPairTasks: string; hoursPerWeek: string; pocketMoney: string;
   accommodation: string; mealsProvided: boolean;
@@ -54,6 +55,7 @@ const EMPTY_PROFILE: Profile = {
   firstName: "", lastName: "",
   country: "", city: "", address: "",
   maritalStatus: "MARRIED",
+  parentsAges: "",
   numberOfKids: 0, kidsAges: "",
   auPairTasks: "", hoursPerWeek: "", pocketMoney: "",
   accommodation: "", mealsProvided: true,
@@ -243,6 +245,12 @@ export default function FamilleProfilPage() {
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
                 {MARITAL_STATUSES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
               </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Âge des parents</label>
+              <input type="text" value={profile.parentsAges} onChange={e => setProfile({ ...profile, parentsAges: e.target.value })}
+                placeholder="ex : 35, 38"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]" />
             </div>
           </div>
         </div>

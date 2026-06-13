@@ -21,7 +21,11 @@ export async function GET(
 
   const [profile, favorite] = await Promise.all([
     prisma.auPairProfile.findFirst({
-      where: { userId: id, status: ProfileStatus.ACTIVE },
+      where: {
+        userId: id,
+        status: ProfileStatus.ACTIVE,
+        user: { subscriptions: { some: { status: "ACTIVE", expiresAt: { gt: new Date() } } } },
+      },
     }),
     prisma.favorite.findUnique({
       where: { userId_targetId: { userId: session.user.id, targetId: id } },

@@ -14,6 +14,7 @@ import {
   Flag,
   CreditCard,
   CheckCircle,
+  ListChecks,
 } from "lucide-react";
 
 interface Settings {
@@ -24,6 +25,7 @@ interface Settings {
   subscriptionPriceEur: number;
   subscriptionPriceXof: number;
   subscriptionDays: number;
+  subscriptionFeatures: string[];
 }
 
 function EditableList({
@@ -263,6 +265,15 @@ export default function AdminConstantesPage() {
             </div>
           </div>
         </div>
+
+        <EditableList
+          title="Avantages de l'abonnement"
+          icon={<ListChecks className="w-4 h-4 text-[#E87722]" />}
+          items={settings.subscriptionFeatures}
+          onChange={(subscriptionFeatures) =>
+            setSettings({ ...settings, subscriptionFeatures })
+          }
+        />
       </div>
     </AdminLayout>
   );

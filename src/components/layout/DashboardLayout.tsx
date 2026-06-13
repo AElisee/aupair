@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { Globe, LogOut, ChevronRight, Menu, X } from "lucide-react";
+import { PendingValidationGate } from "@/components/dashboard/PendingValidationGate";
 
 interface NavItem {
   href: string;
@@ -136,6 +137,7 @@ function SidebarContent({
 export default function DashboardLayout({ children, navItems, role, userName }: DashboardLayoutProps) {
   const pathname = usePathname();
   const [photoUrl, setPhotoUrl] = useState("");
+  const [profileStatus, setProfileStatus] = useState<string | null | undefined>(undefined);
   const [favoritesCount, setFavoritesCount] = useState(0);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
@@ -153,7 +155,12 @@ export default function DashboardLayout({ children, navItems, role, userName }: 
     fetch(endpoint)
       .then((res) => (res.ok ? res.json() : null))
       .then((json) => {
-        if (json) setPhotoUrl(json.profilePhotoUrl || json.familyPhotoUrl || "");
+        if (json) {
+          setPhotoUrl(json.profilePhotoUrl || json.familyPhotoUrl || "");
+          setProfileStatus(json.status ?? null);
+        } else {
+          setProfileStatus(null);
+        }
       });
   }, [role]);
 
@@ -207,6 +214,18 @@ export default function DashboardLayout({ children, navItems, role, userName }: 
       document.body.style.overflow = "";
     };
   }, [mobileMenuOpen]);
+
+  if (profileStatus === undefined) {
+    return (
+      <div className="min-h-screen bg-[#F5F5F5] flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-[#E87722] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (profileStatus === "PENDING") {
+    return <PendingValidationGate role={role} />;
+  }
 
   return (
     <div className="min-h-screen bg-[#F5F5F5] flex">

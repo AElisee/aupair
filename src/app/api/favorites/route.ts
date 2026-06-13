@@ -23,7 +23,11 @@ export async function GET() {
 
   const [profiles, flagMap] = await Promise.all([
     prisma.auPairProfile.findMany({
-      where: { userId: { in: targetIds }, status: ProfileStatus.ACTIVE },
+      where: {
+        userId: { in: targetIds },
+        status: ProfileStatus.ACTIVE,
+        user: { subscriptions: { some: { status: "ACTIVE", expiresAt: { gt: new Date() } } } },
+      },
     }),
     getCountryFlagMap(),
   ]);

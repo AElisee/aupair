@@ -34,6 +34,7 @@ export async function GET() {
       priceEur: settings.subscriptionPriceEur,
       priceXof: settings.subscriptionPriceXof,
       days: settings.subscriptionDays,
+      features: settings.subscriptionFeatures,
     },
   });
 }

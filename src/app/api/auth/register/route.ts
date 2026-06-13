@@ -19,6 +19,7 @@ type RegisterBody = {
   // Famille
   city?: string;
   numberOfKids?: string;
+  hostCountry?: string;
 };
 
 /** Convertit "5+" / "3" en entier, 0 par défaut. */
@@ -57,6 +58,12 @@ export async function POST(request: Request) {
   if (role === "au-pair" && body.gender !== "Femme" && body.gender !== "Homme") {
     return NextResponse.json(
       { error: "Le genre est obligatoire." },
+      { status: 400 }
+    );
+  }
+  if (role === "famille" && !body.hostCountry) {
+    return NextResponse.json(
+      { error: "Le pays d'accueil est obligatoire." },
       { status: 400 }
     );
   }
@@ -139,7 +146,7 @@ export async function POST(request: Request) {
               familyProfile: {
                 create: {
                   status: "PENDING",
-                  country: "",
+                  country: body.hostCountry ?? "",
                   city: body.city ?? "",
                   maritalStatus: "MARRIED",
                   numberOfKids: parseKids(body.numberOfKids),

@@ -21,11 +21,11 @@ function InscriptionContent() {
     firstName: "", lastName: "", email: "", password: "",
     country: "", gender: "", dateOfBirth: "", languages: [] as string[],
     educationLevel: "", experience: "",
-    city: "", numberOfKids: "",
+    city: "", numberOfKids: "", hostCountry: "",
   });
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const { origin: originCountries } = useCountries();
+  const { origin: originCountries, host: hostCountries } = useCountries();
   const { languages: LANGUAGES, educationLevels: EDUCATION_LEVELS } = useConstants();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -62,6 +62,7 @@ function InscriptionContent() {
           experience: form.experience,
           city: form.city,
           numberOfKids: form.numberOfKids,
+          hostCountry: form.hostCountry,
         }),
       });
 
@@ -102,10 +103,10 @@ function InscriptionContent() {
           <p className="text-gray-500 mb-6">
             {role === "au-pair"
               ? "Votre profil est en cours de vérification. Vous recevrez un email dans les 24-48h."
-              : "Votre profil famille est créé. Vous pouvez dès maintenant parcourir les au pairs !"}
+              : "Votre profil famille est en cours de vérification. Vous recevrez un email dans les 24-48h."}
           </p>
-          <Link href="/connexion">
-            <Button size="lg">Accéder à mon espace</Button>
+          <Link href={role === "au-pair" ? "/trouver-famille" : "/trouver-au-pair"}>
+            <Button size="lg">{role === "au-pair" ? "Consulter les familles d'accueil" : "Consulter les au pairs"}</Button>
           </Link>
         </div>
       </div>
@@ -281,6 +282,14 @@ function InscriptionContent() {
             <div>
               <h2 className="text-xl font-extrabold text-[#1A1A2E] mb-6">Votre profil famille</h2>
               <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Pays d&apos;accueil *</label>
+                  <select value={form.hostCountry} onChange={e => setForm({ ...form, hostCountry: e.target.value })}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
+                    <option value="">Sélectionner un pays</option>
+                    {hostCountries.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+                  </select>
+                </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Ville *</label>
                   <input type="text" value={form.city} onChange={e => setForm({ ...form, city: e.target.value })}

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { supabaseAdmin } from "@/lib/supabase";
 import { isBlockedEitherWay } from "@/lib/messages";
+import { hasActiveSubscription } from "@/lib/subscription";
 
 const BUCKET = "message-attachments";
 
@@ -38,6 +39,13 @@ export async function POST(req: Request) {
   }
   if (receiverId === myId) {
     return NextResponse.json({ error: "Vous ne pouvez pas vous envoyer un message à vous-même" }, { status: 400 });
+  }
+
+  if (session.user.role === "AU_PAIR" && !(await hasActiveSubscription(myId))) {
+    return NextResponse.json(
+      { error: "Un abonnement actif est requis pour envoyer des messages.", code: "SUBSCRIPTION_REQUIRED" },
+      { status: 403 }
+    );
   }
 
   const typeInfo = ALLOWED_TYPES[file.type];

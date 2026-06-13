@@ -7,6 +7,7 @@ import {
   SUBSCRIPTION_PRICE_EUR,
   SUBSCRIPTION_PRICE_XOF,
   SUBSCRIPTION_DAYS,
+  SUBSCRIPTION_FEATURES,
 } from "./constants";
 
 const SETTINGS_ID = "default";
@@ -19,6 +20,7 @@ const DEFAULT_SETTINGS = {
   subscriptionPriceEur: SUBSCRIPTION_PRICE_EUR,
   subscriptionPriceXof: SUBSCRIPTION_PRICE_XOF,
   subscriptionDays: SUBSCRIPTION_DAYS,
+  subscriptionFeatures: SUBSCRIPTION_FEATURES,
   notifyProfileViewEnabled: true,
   notifyWeeklyViewsDigestEnabled: true,
   resendApiKey: null as string | null,
@@ -42,6 +44,7 @@ export interface AppSettingsInput {
   subscriptionPriceEur?: number;
   subscriptionPriceXof?: number;
   subscriptionDays?: number;
+  subscriptionFeatures?: string[];
   notifyProfileViewEnabled?: boolean;
   notifyWeeklyViewsDigestEnabled?: boolean;
   resendApiKey?: string | null;

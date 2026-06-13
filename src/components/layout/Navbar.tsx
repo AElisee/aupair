@@ -70,7 +70,7 @@ export default function Navbar() {
             <Link href={profileUrl}>
               <Button variant="ghost" size="sm">
                 <User className="w-4 h-4" />
-                {session ? t("Profil", "Profile") : t("Connexion", "Login")}
+                {session ? (session.user.role === "ADMIN" ? "Admin" : t("Profil", "Profile")) : t("Connexion", "Login")}
               </Button>
             </Link>
 
@@ -119,7 +119,7 @@ export default function Navbar() {
             </button>
             <Link href={profileUrl} className="flex-1">
               <Button variant="outline" size="sm" className="w-full">
-                {session ? t("Profil", "Profile") : t("Connexion", "Login")}
+                {session ? (session.user.role === "ADMIN" ? "Admin" : t("Profil", "Profile")) : t("Connexion", "Login")}
               </Button>
             </Link>
             {session ? (

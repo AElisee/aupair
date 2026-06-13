@@ -7,6 +7,7 @@ import { Search, Send, Loader2, MessageCircle, Ban, Paperclip, FileText, Downloa
 import { Button } from "@/components/ui/button";
 import { formatRelativeDate } from "@/lib/utils";
 import { useConstants } from "@/hooks/useConstants";
+import { SubscriptionBanner } from "@/components/dashboard/SubscriptionLock";
 
 interface ConversationSummary {
   userId: string;
@@ -109,6 +110,7 @@ export default function MessagesPanel() {
   const [uploading, setUploading] = useState(false);
   const [search, setSearch] = useState("");
   const [mobileShowChat, setMobileShowChat] = useState(false);
+  const [subscriptionActive, setSubscriptionActive] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const initialSelectionDone = useRef(false);
@@ -151,6 +153,15 @@ export default function MessagesPanel() {
   useEffect(() => {
     loadConversations();
   }, [loadConversations]);
+
+  useEffect(() => {
+    if (session?.user?.role !== "AU_PAIR") return;
+    fetch("/api/subscription")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (json) setSubscriptionActive(Boolean(json.active));
+      });
+  }, [session?.user?.role]);
 
   // Sélection initiale : conversation passée en query (?userId=) ou première de la liste
   useEffect(() => {
@@ -516,6 +527,8 @@ export default function MessagesPanel() {
                     <Ban className="w-4 h-4" />
                     Vous ne pouvez pas échanger de messages avec cet utilisateur.
                   </div>
+                ) : session?.user?.role === "AU_PAIR" && !subscriptionActive ? (
+                  <SubscriptionBanner message="Abonnez-vous pour envoyer des messages aux familles." />
                 ) : (
                   <>
                     {sendError && <p className="text-xs text-red-500 mb-2">{sendError}</p>}

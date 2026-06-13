@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ProfileStatus } from "@/generated/prisma/client";
 import { registerProfileView } from "@/lib/profile-views";
+import { hasActiveSubscription } from "@/lib/subscription";
 
 export async function GET(
   req: Request,
@@ -33,7 +34,24 @@ export async function GET(
     profileRole: "FAMILLE",
   });
 
+  const subscribed = await hasActiveSubscription(session.user.id);
+
+  if (!subscribed) {
+    return NextResponse.json({
+      locked: true,
+      name: profile.user.name ?? "Famille",
+      familyPhotoUrl: profile.familyPhotoUrl ?? "",
+      country: profile.country,
+      city: profile.city,
+      numberOfKids: profile.numberOfKids,
+      kidsAges: profile.kidsAges,
+      hoursPerWeek: profile.hoursPerWeek,
+      pocketMoney: profile.pocketMoney,
+    });
+  }
+
   return NextResponse.json({
+    locked: false,
     name: profile.user.name ?? "Famille",
     familyPhotoUrl: profile.familyPhotoUrl ?? "",
     country: profile.country,

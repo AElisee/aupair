@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { SubscriptionBanner } from "@/components/dashboard/SubscriptionLock";
 import {
   User,
   Search,
@@ -175,6 +176,11 @@ export default function AuPairDashboard() {
             Voici un résumé de votre activité sur AuPair A.EU
           </p>
         </div>
+
+        {/* Abonnement inactif */}
+        {data && !subscriptionActive && (
+          <SubscriptionBanner message="Abonnez-vous pour profiter de tous les avantages : profil visible par les familles, messagerie, coordonnées des familles, favoris..." />
+        )}
 
         {/* Disponibilité */}
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center justify-between gap-4 flex-wrap">

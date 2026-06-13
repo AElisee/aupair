@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Smartphone, CreditCard, Globe, ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
+import { getAppSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "Tarifs — AuPair A.EU",
@@ -27,19 +28,24 @@ const familyFeatures = [
   "Support standard",
 ];
 
-const paymentMethods = [
-  { icon: Smartphone, name: "Mobile Money", desc: "Orange Money, MTN MoMo, Wave, Moov Money — 20 800 FCFA", countries: "🇨🇲 🇨🇮 🇲🇱 🇧🇯 🇹🇬 🇬🇭 🇸🇳" },
-  { icon: CreditCard, name: "Carte bancaire", desc: "Visa, Mastercard — 32€ via Stripe", countries: "🌍 Tous pays" },
-  { icon: Globe, name: "PayPal", desc: "Paiement PayPal sécurisé — 32€", countries: "🌍 Tous pays" },
-];
-
 const faqs = [
   { q: "Y a-t-il un remboursement possible ?", a: "Non, conformément à nos CGV, les abonnements ne sont pas remboursables. L'abonnement est activé dès la validation du paiement." },
   { q: "L'abonnement se renouvelle-t-il automatiquement ?", a: "Non. L'abonnement ne se renouvelle pas automatiquement. Vous recevrez un rappel 7 jours, 3 jours et 1 jour avant expiration." },
   { q: "Pourquoi les familles s'inscrivent-elles gratuitement ?", a: "Nous croyons que les familles d'accueil doivent avoir accès aux profils librement. C'est l'au pair qui investit dans son projet de vie à l'étranger." },
 ];
 
-export default function TarifsPage() {
+export default async function TarifsPage() {
+  const settings = await getAppSettings();
+  const priceEur = settings.subscriptionPriceEur;
+  const priceXof = settings.subscriptionPriceXof.toLocaleString("fr-FR");
+  const days = settings.subscriptionDays;
+
+  const paymentMethods = [
+    { icon: Smartphone, name: "Mobile Money", desc: `Orange Money, MTN MoMo, Wave, Moov Money — ${priceXof} FCFA`, countries: "🇨🇲 🇨🇮 🇲🇱 🇧🇯 🇹🇬 🇬🇭 🇸🇳" },
+    { icon: CreditCard, name: "Carte bancaire", desc: `Visa, Mastercard — ${priceEur}€ via Stripe`, countries: "🌍 Tous pays" },
+    { icon: Globe, name: "PayPal", desc: `Paiement PayPal sécurisé — ${priceEur}€`, countries: "🌍 Tous pays" },
+  ];
+
   return (
     <div className="py-20">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -57,9 +63,9 @@ export default function TarifsPage() {
               <span className="bg-[#E87722] text-white text-xs font-bold px-4 py-1.5 rounded-full">POUR LES AU PAIRS</span>
             </div>
             <div className="text-center mb-8">
-              <div className="text-5xl font-extrabold text-[#1A1A2E] mb-1">32€</div>
-              <div className="text-gray-500">= 20 800 FCFA</div>
-              <div className="text-sm text-gray-400 mt-1">pour 30 jours</div>
+              <div className="text-5xl font-extrabold text-[#1A1A2E] mb-1">{priceEur}€</div>
+              <div className="text-gray-500">= {priceXof} FCFA</div>
+              <div className="text-sm text-gray-400 mt-1">pour {days} jours</div>
             </div>
             <ul className="space-y-3 mb-8">
               {auPairFeatures.map((f) => (

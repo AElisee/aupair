@@ -11,6 +11,15 @@ export const SUBSCRIPTION_PRICE_EUR = 32;
 export const SUBSCRIPTION_PRICE_XOF = 20800;
 export const SUBSCRIPTION_DAYS = 30;
 
+export const SUBSCRIPTION_FEATURES = [
+  "Profil visible par toutes les familles d'accueil",
+  "Messagerie illimitée avec les familles",
+  "Accès aux coordonnées des familles",
+  "Système de favoris",
+  "Notifications de nouveaux profils correspondants",
+  "Support prioritaire",
+];
+
 export const EDUCATION_LEVELS = [
   "Brevet / BEPC",
   "Baccalauréat",

@@ -35,7 +35,7 @@ export async function PUT(req: Request) {
 
   const data: AppSettingsInput = {};
 
-  for (const key of ["languages", "educationLevels", "durations", "reportReasons"] as const) {
+  for (const key of ["languages", "educationLevels", "durations", "reportReasons", "subscriptionFeatures"] as const) {
     if (key in body) {
       const value = body[key];
       if (!isStringArray(value) || value.some((v) => !v.trim())) {

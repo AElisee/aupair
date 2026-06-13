@@ -24,7 +24,7 @@ type SubscriptionData = {
   daysLeft: number;
   amount: number | null;
   currency: "EUR" | "XOF" | "USD" | null;
-  constants: { priceEur: number; priceXof: number; days: number };
+  constants: { priceEur: number; priceXof: number; days: number; features: string[] };
 };
 
 function AbonnementContent() {
@@ -109,6 +109,7 @@ function AbonnementContent() {
   const daysTotal = constants?.days ?? 30;
   const priceEur = constants?.priceEur ?? 32;
   const priceXof = constants?.priceXof ?? 20800;
+  const features = constants?.features ?? [];
 
   return (
     <DashboardLayout navItems={navItems} role="au-pair" userName={session?.user?.name ?? ""}>
@@ -226,14 +227,7 @@ function AbonnementContent() {
             <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
               <h2 className="font-bold text-[#1A1A2E] mb-4">Inclus dans votre abonnement</h2>
               <div className="space-y-3">
-                {[
-                  "Profil visible par toutes les familles d'accueil",
-                  "Messagerie illimitée avec les familles",
-                  "Accès aux coordonnées des familles",
-                  "Système de favoris",
-                  "Notifications de nouveaux profils correspondants",
-                  "Support prioritaire",
-                ].map(f => (
+                {features.map(f => (
                   <div key={f} className="flex items-center gap-3 text-sm text-gray-700">
                     <CheckCircle className="w-4 h-4 text-[#E87722] flex-shrink-0" />
                     {f}
