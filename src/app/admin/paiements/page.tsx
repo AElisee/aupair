@@ -15,6 +15,8 @@ type Payment = {
   invoiceUrl: string | null;
 };
 
+const PAGE_SIZE = 10;
+
 type PaymentsData = {
   kpis: {
     revenueActiveEur: string;
@@ -53,6 +55,7 @@ const statusBadge = (status: Payment["status"]) => {
 export default function PaiementsPage() {
   const [data, setData] = useState<PaymentsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     fetch("/api/admin/payments")
@@ -60,6 +63,13 @@ export default function PaiementsPage() {
       .then((json) => setData(json))
       .finally(() => setLoading(false));
   }, []);
+
+  const totalPages = Math.max(1, Math.ceil((data?.payments.length ?? 0) / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = data?.payments.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  ) ?? [];
 
   return (
     <AdminLayout>
@@ -136,7 +146,7 @@ export default function PaiementsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {data.payments.map((p) => (
+                  {paginated.map((p) => (
                     <tr key={p.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-5 py-3.5">
                         <p className="font-semibold text-[#1A1A2E]">{p.user}</p>
@@ -175,6 +185,43 @@ export default function PaiementsPage() {
               {data.payments.length === 0 && (
                 <div className="p-12 text-center">
                   <p className="text-gray-400">Aucun paiement enregistré.</p>
+                </div>
+              )}
+
+              {data.payments.length > 0 && (
+                <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100">
+                  <div className="text-xs text-gray-500">
+                    {(currentPage - 1) * PAGE_SIZE + 1}–
+                    {Math.min(currentPage * PAGE_SIZE, data.payments.length)} sur{" "}
+                    {data.payments.length}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:border-[#E87722] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Précédent
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (p) => (
+                        <button
+                          key={p}
+                          onClick={() => setPage(p)}
+                          className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${p === currentPage ? "bg-[#E87722] text-white" : "border border-gray-200 text-gray-600 hover:border-[#E87722]"}`}
+                        >
+                          {p}
+                        </button>
+                      ),
+                    )}
+                    <button
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:border-[#E87722] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Suivant
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
