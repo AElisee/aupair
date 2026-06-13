@@ -8,7 +8,7 @@ export function PendingValidationGate({ role }: { role: "au-pair" | "famille" })
   const browseLabel = role === "au-pair" ? "Consulter les familles d'accueil" : "Consulter les au pairs";
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] flex items-center justify-center p-8">
+    <div className="min-h-dvh bg-[#F5F5F5] flex items-center justify-center p-8">
       <div className="text-center max-w-md">
         <div className="flex items-center justify-center gap-2 mb-8">
           <div className="w-8 h-8 bg-[#E87722] rounded-full flex items-center justify-center">

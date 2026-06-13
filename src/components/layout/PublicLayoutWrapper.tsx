@@ -16,7 +16,7 @@ export default function PublicLayoutWrapper({ children }: { children: React.Reac
     <SessionProvider>
       <LanguageProvider>
         {!isPrivate && <Navbar />}
-        <main className={isPrivate ? "min-h-screen" : "flex-1"}>{children}</main>
+        <main className={isPrivate ? "min-h-dvh" : "flex-1"}>{children}</main>
         {!isPrivate && <Footer />}
       </LanguageProvider>
     </SessionProvider>

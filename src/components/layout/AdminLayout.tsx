@@ -142,9 +142,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [mobileMenuOpen]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-dvh bg-gray-50 flex">
       {/* Sidebar desktop */}
-      <aside className="hidden md:flex flex-col w-60 bg-[#1A1A2E] h-screen fixed left-0 top-0 z-40">
+      <aside className="hidden md:flex flex-col w-60 bg-[#1A1A2E] h-dvh fixed left-0 top-0 z-40">
         <SidebarContent
           pathname={pathname}
           isSettingsActive={isSettingsActive}
@@ -178,7 +178,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         />
       </aside>
 
-      <main className="md:ml-60 flex-1 min-h-screen">
+      <main className="md:ml-60 flex-1 min-h-dvh">
         {/* Top bar */}
         <div className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 flex items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-3">

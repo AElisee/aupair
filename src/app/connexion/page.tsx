@@ -75,7 +75,7 @@ function ConnexionForm() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-dvh flex">
       {/* Panneau gauche — déco */}
       <div className="hidden lg:flex flex-1 bg-linear-to-br from-[#1A1A2E] to-[#0f3460] items-center justify-center p-12">
         <div className="text-center text-white max-w-sm">

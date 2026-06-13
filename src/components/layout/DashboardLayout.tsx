@@ -217,7 +217,7 @@ export default function DashboardLayout({ children, navItems, role, userName }: 
 
   if (profileStatus === undefined) {
     return (
-      <div className="min-h-screen bg-[#F5F5F5] flex items-center justify-center">
+      <div className="min-h-dvh bg-[#F5F5F5] flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-[#E87722] border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -228,9 +228,9 @@ export default function DashboardLayout({ children, navItems, role, userName }: 
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] flex">
+    <div className="min-h-dvh bg-[#F5F5F5] flex">
       {/* Sidebar desktop */}
-      <aside className="hidden md:flex flex-col w-64 bg-[#1A1A2E] h-screen fixed left-0 top-0 z-40">
+      <aside className="hidden md:flex flex-col w-64 bg-[#1A1A2E] h-dvh fixed left-0 top-0 z-40">
         <SidebarContent
           navItems={navItems}
           pathname={pathname}
@@ -273,7 +273,7 @@ export default function DashboardLayout({ children, navItems, role, userName }: 
       </aside>
 
       {/* Contenu principal */}
-      <main className="md:ml-64 flex-1 min-h-screen">
+      <main className="md:ml-64 flex-1 min-h-dvh">
         {/* Header mobile */}
         <div className="md:hidden bg-[#1A1A2E] px-4 py-3 flex items-center justify-between sticky top-0 z-30">
           <button

@@ -32,7 +32,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr">
-      <body className="min-h-screen flex flex-col">
+      <body className="min-h-dvh flex flex-col">
         <PublicLayoutWrapper>{children}</PublicLayoutWrapper>
       </body>
     </html>

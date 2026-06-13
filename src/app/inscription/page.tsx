@@ -94,7 +94,7 @@ function InscriptionContent() {
 
   if (done) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-8">
+      <div className="min-h-dvh flex items-center justify-center p-8">
         <div className="text-center max-w-md">
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle className="w-10 h-10 text-green-500" />
@@ -114,7 +114,7 @@ function InscriptionContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] py-12 px-4">
+    <div className="min-h-dvh bg-[#F5F5F5] py-12 px-4">
       <div className="max-w-xl mx-auto">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2 mb-8">
@@ -364,7 +364,7 @@ function InscriptionContent() {
 
 export default function InscriptionPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-4 border-[#E87722] border-t-transparent rounded-full animate-spin" /></div>}>
+    <Suspense fallback={<div className="min-h-dvh flex items-center justify-center"><div className="w-8 h-8 border-4 border-[#E87722] border-t-transparent rounded-full animate-spin" /></div>}>
       <InscriptionContent />
     </Suspense>
   );

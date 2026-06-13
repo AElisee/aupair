@@ -59,7 +59,7 @@ function ReinitialiserMotDePasseForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-8">
+    <div className="min-h-dvh flex items-center justify-center p-8">
       <div className="w-full max-w-md">
         <div className="flex items-center gap-2 font-bold text-xl mb-8">
           <div className="w-8 h-8 bg-[#E87722] rounded-full flex items-center justify-center">
