@@ -28,9 +28,12 @@ export async function proxy(request: NextRequest) {
   if (!isAuthRequired && !isAdminOnly && !isGuestOnly) return NextResponse.next();
 
   // Décode le JWT NextAuth sans requête DB (compatible Edge runtime)
+  // secureCookie doit correspondre au cookie posé par NextAuth : en prod
+  // (HTTPS), le cookie est préfixé "__Secure-", sinon getToken ne le trouve pas.
   const token = await getToken({
     req: request,
     secret: process.env.AUTH_SECRET,
+    secureCookie: process.env.NODE_ENV === "production",
   });
 
   // ── Déjà authentifié → on bloque l'accès aux pages réservées aux invités ───

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { Globe, LayoutDashboard, Users, Shield, DollarSign, BarChart2, FileText, HelpCircle, Mail, LogOut, Bell, Settings, ChevronDown, SlidersHorizontal, Menu, X, Send } from "lucide-react";
 
 const navItems = [
@@ -107,7 +108,10 @@ function SidebarContent({
       </nav>
 
       <div className="p-3 border-t border-white/10">
-        <button className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-400 hover:bg-white/10 hover:text-white w-full transition-all">
+        <button
+          onClick={() => signOut({ callbackUrl: "/connexion" })}
+          className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-400 hover:bg-white/10 hover:text-white w-full transition-all"
+        >
           <LogOut className="w-4 h-4" />
           Déconnexion
         </button>
