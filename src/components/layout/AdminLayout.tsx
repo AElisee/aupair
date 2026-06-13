@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { Globe, LayoutDashboard, Users, Shield, DollarSign, BarChart2, FileText, HelpCircle, Mail, LogOut, Bell, Settings, ChevronDown, SlidersHorizontal, Menu, X, Send } from "lucide-react";
+import { Globe, LayoutDashboard, Users, Shield, DollarSign, BarChart2, FileText, HelpCircle, Mail, LogOut, Bell, Settings, ChevronDown, SlidersHorizontal, Menu, X, Send, CreditCard } from "lucide-react";
 
 const navItems = [
   { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
@@ -24,6 +24,7 @@ const settingsNav = {
     { href: "/admin/parametres/constantes", icon: SlidersHorizontal, label: "Constantes" },
     { href: "/admin/parametres/notifications", icon: Bell, label: "Notifications" },
     { href: "/admin/parametres/email", icon: Send, label: "Email" },
+    { href: "/admin/parametres/stripe", icon: CreditCard, label: "Stripe" },
   ],
 };
 

@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
+import { getAppSettings } from "@/lib/settings";
 
 export async function POST(req: Request) {
-  if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
+  const settings = await getAppSettings();
+
+  if (!settings.stripeSecretKey || !settings.stripeWebhookSecret) {
     return NextResponse.json({ error: "Stripe n'est pas configuré." }, { status: 503 });
   }
 
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  const stripe = new Stripe(settings.stripeSecretKey);
   const body = await req.text();
   const signature = req.headers.get("stripe-signature");
 
@@ -17,7 +20,7 @@ export async function POST(req: Request) {
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET);
+    event = stripe.webhooks.constructEvent(body, signature, settings.stripeWebhookSecret);
   } catch {
     return NextResponse.json({ error: "Signature invalide" }, { status: 400 });
   }

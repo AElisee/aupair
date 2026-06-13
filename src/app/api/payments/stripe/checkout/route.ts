@@ -9,12 +9,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   }
 
-  if (!process.env.STRIPE_SECRET_KEY) {
+  const settings = await getAppSettings();
+
+  if (!settings.stripeSecretKey) {
     return NextResponse.json({ error: "Le paiement par carte n'est pas encore configuré." }, { status: 503 });
   }
 
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-  const settings = await getAppSettings();
+  const stripe = new Stripe(settings.stripeSecretKey);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(req.url).origin;
 
   const checkoutSession = await stripe.checkout.sessions.create({

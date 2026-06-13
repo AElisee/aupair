@@ -521,6 +521,10 @@ model AppSettings {
   resendApiKey String?
   emailFrom    String?
 
+  // Configuration des paiements Stripe — éditable par l'admin, jamais stockée en .env
+  stripeSecretKey     String?
+  stripeWebhookSecret String?
+
   updatedAt            DateTime @updatedAt
 
   @@map("app_settings")

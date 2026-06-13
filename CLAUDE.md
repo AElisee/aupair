@@ -15,7 +15,7 @@ AuPair A.EU — Première plateforme mondiale dédiée aux au pairs africains. M
 - **Auth**: NextAuth.js v5 (beta) — Google + Facebook OAuth + credentials, JWT strategy
 - **Hosting**: Vercel
 
-Not yet integrated: Supabase Realtime (messaging), Stripe + CinetPay (payments), Resend (emails), Supabase Storage (photo uploads).
+Not yet integrated: Supabase Realtime (messaging), CinetPay (payments), Resend (emails), Supabase Storage (photo uploads). Stripe (card payments) is integrated and admin-configurable, see below.
 
 ## Commands
 
@@ -139,7 +139,7 @@ DATABASE_URL
 NEXTAUTH_URL / NEXTAUTH_SECRET
 GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET
 FACEBOOK_CLIENT_ID / FACEBOOK_CLIENT_SECRET
-STRIPE_SECRET_KEY / NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY / STRIPE_WEBHOOK_SECRET
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY (publishable key only — not currently used by any code, kept for a future Stripe Elements integration)
 CINETPAY_API_KEY / CINETPAY_SITE_ID
 NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY
 NEXT_PUBLIC_APP_URL
@@ -155,3 +155,11 @@ edited at `/admin/parametres/email` via `/api/admin/constants`. `src/lib/mail.ts
 `sendMail()` loads them from `getAppSettings()` on every call and logs a clear
 `[mail]` error (never throws) if either is missing or Resend rejects the send.
 See `docs/email-resend.md` for setup, local testing, and production deployment.
+
+### Payments (Stripe)
+
+`stripeSecretKey` and `stripeWebhookSecret` are **not** environment variables —
+they're admin-configurable settings stored on `AppSettings` (`app_settings` table),
+edited at `/admin/parametres/stripe` via `/api/admin/constants`. Both
+`/api/payments/stripe/checkout` and `/api/webhooks/stripe` load them from
+`getAppSettings()` on every request and return `503` if either is missing.

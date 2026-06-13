@@ -9,11 +9,13 @@ export async function GET() {
   }
 
   const settings = await getAppSettings();
-  const { resendApiKey, ...rest } = settings;
+  const { resendApiKey, stripeSecretKey, stripeWebhookSecret, ...rest } = settings;
   return NextResponse.json({
     settings: {
       ...rest,
       resendApiKeyConfigured: !!resendApiKey,
+      stripeSecretKeyConfigured: !!stripeSecretKey,
+      stripeWebhookSecretConfigured: !!stripeWebhookSecret,
     },
   });
 }
@@ -107,12 +109,32 @@ export async function PUT(req: Request) {
     data.emailFrom = trimmed === "" ? null : trimmed;
   }
 
+  // stripeSecretKey / stripeWebhookSecret : même logique que resendApiKey —
+  // une valeur vide efface la clé, une valeur absente ne la modifie pas.
+  if ("stripeSecretKey" in body) {
+    const value = body.stripeSecretKey;
+    if (typeof value !== "string") {
+      return NextResponse.json({ error: `Le champ "stripeSecretKey" doit être une chaîne.` }, { status: 400 });
+    }
+    data.stripeSecretKey = value.trim() === "" ? null : value.trim();
+  }
+
+  if ("stripeWebhookSecret" in body) {
+    const value = body.stripeWebhookSecret;
+    if (typeof value !== "string") {
+      return NextResponse.json({ error: `Le champ "stripeWebhookSecret" doit être une chaîne.` }, { status: 400 });
+    }
+    data.stripeWebhookSecret = value.trim() === "" ? null : value.trim();
+  }
+
   const settings = await updateAppSettings(data);
-  const { resendApiKey, ...rest } = settings;
+  const { resendApiKey, stripeSecretKey, stripeWebhookSecret, ...rest } = settings;
   return NextResponse.json({
     settings: {
       ...rest,
       resendApiKeyConfigured: !!resendApiKey,
+      stripeSecretKeyConfigured: !!stripeSecretKey,
+      stripeWebhookSecretConfigured: !!stripeWebhookSecret,
     },
   });
 }
