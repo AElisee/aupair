@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getCountriesByType, getCountryCounts } from "@/lib/countries";
+import { CountryFlag } from "@/components/ui/CountryFlag";
 
 export default async function CountriesSection() {
   const [origin, host, { auPairCounts, familyCounts }] = await Promise.all([
@@ -29,7 +30,7 @@ export default async function CountriesSection() {
                 href={`/trouver-au-pair?pays=${encodeURIComponent(country.name)}`}
                 className="bg-[#FFF3E0] rounded-xl p-4 text-center hover:bg-[#E87722] hover:text-white transition-all duration-200 group cursor-pointer"
               >
-                <div className="text-3xl mb-2">{country.flag}</div>
+                <CountryFlag flag={country.flag} className="h-8 w-auto mx-auto mb-2 rounded shadow-sm" />
                 <div className="text-sm font-semibold text-[#1A1A2E] group-hover:text-white">{country.name}</div>
                 <div className="text-xs text-gray-400 group-hover:text-white/80 mt-1">{country.count} au pairs</div>
               </Link>
@@ -52,7 +53,7 @@ export default async function CountriesSection() {
                 href={`/trouver-famille?pays=${encodeURIComponent(country.name)}`}
                 className="bg-[#1A1A2E] rounded-xl p-4 text-center hover:bg-[#E87722] transition-all duration-200 group cursor-pointer"
               >
-                <div className="text-3xl mb-2">{country.flag}</div>
+                <CountryFlag flag={country.flag} className="h-8 w-auto mx-auto mb-2 rounded shadow-sm" />
                 <div className="text-sm font-semibold text-white">{country.name}</div>
                 <div className="text-xs text-gray-400 group-hover:text-white/80 mt-1">{country.count} familles</div>
               </Link>
