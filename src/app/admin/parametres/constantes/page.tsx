@@ -104,6 +104,8 @@ export default function AdminConstantesPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [heroUploading, setHeroUploading] = useState(false);
+  const [heroError, setHeroError] = useState("");
 
   useEffect(() => {
     fetch("/api/admin/constants")
@@ -135,6 +137,29 @@ export default function AdminConstantesPage() {
       setError("Erreur réseau, veuillez réessayer.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleHeroImageUpload = async (file: File) => {
+    setHeroUploading(true);
+    setHeroError("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/admin/hero-image", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setHeroError(data.error ?? "Échec de l'envoi de l'image.");
+        return;
+      }
+      setSettings((prev) => (prev ? { ...prev, heroImageUrl: data.url } : prev));
+    } catch {
+      setHeroError("Erreur réseau, veuillez réessayer.");
+    } finally {
+      setHeroUploading(false);
     }
   };
 
@@ -276,19 +301,28 @@ export default function AdminConstantesPage() {
           <div className="grid sm:grid-cols-2 gap-4 items-start">
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">
-                URL ou chemin de l&apos;image
+                Image de fond
               </label>
               <input
-                type="text"
-                value={settings.heroImageUrl}
-                onChange={(e) =>
-                  setSettings({ ...settings, heroImageUrl: e.target.value })
-                }
-                placeholder="/jeune_aupair.png"
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleHeroImageUpload(file);
+                  e.target.value = "";
+                }}
+                disabled={heroUploading}
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-[#E87722] file:text-white file:text-sm file:font-medium file:cursor-pointer disabled:opacity-60"
               />
+              {heroUploading && (
+                <p className="text-xs text-gray-400 mt-1 flex items-center gap-1.5">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Envoi en cours...
+                </p>
+              )}
+              {heroError && <p className="text-xs text-red-500 mt-1">{heroError}</p>}
               <p className="text-xs text-gray-400 mt-1">
-                Chemin d&apos;un fichier du dossier <code>public</code> (ex: <code>/jeune_aupair.png</code>) ou URL complète.
+                JPG, PNG ou WEBP, 5 Mo maximum. L&apos;image est enregistrée immédiatement.
               </p>
             </div>
             <div className="rounded-xl overflow-hidden border border-gray-100 aspect-video bg-[#1A1A2E]">
