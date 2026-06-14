@@ -1,11 +1,12 @@
-import { Star } from "lucide-react";
+import { Star, ArrowRight } from "lucide-react";
+import { CountryFlag } from "@/components/ui/CountryFlag";
 
 const testimonials = [
   {
     id: 1,
     name: "Aminata K.",
     role: "Au pair camerounaise en France",
-    country: "🇨🇲→🇫🇷",
+    flags: ["🇨🇲", "🇫🇷"],
     content: "AuPair A.EU m'a permis de trouver une famille formidable à Lyon en seulement 2 semaines. Le processus était simple et l'équipe très réactive. Je recommande à toutes mes sœurs africaines !",
     rating: 5,
   },
@@ -13,7 +14,7 @@ const testimonials = [
     id: 2,
     name: "Famille Dumont",
     role: "Famille d'accueil en Allemagne",
-    country: "🇩🇪",
+    flags: ["🇩🇪"],
     content: "Nous avons trouvé notre au pair ivoirienne via cette plateforme. Elle est fantastique avec nos enfants, parle un français impeccable et s'est intégrée parfaitement à notre famille.",
     rating: 5,
   },
@@ -21,7 +22,7 @@ const testimonials = [
     id: 3,
     name: "Kofi M.",
     role: "Au pair ghanéen en Belgique",
-    country: "🇬🇭→🇧🇪",
+    flags: ["🇬🇭", "🇧🇪"],
     content: "Grâce à AuPair A.EU, j'ai réalisé mon rêve de vivre en Europe. La plateforme est sérieuse, les profils sont vérifiés, et la messagerie est très pratique pour communiquer avec les familles.",
     rating: 5,
   },
@@ -53,7 +54,17 @@ export default function TestimonialsSection() {
                 </div>
                 <div>
                   <p className="font-semibold text-[#1A1A2E] text-sm">{t.name}</p>
-                  <p className="text-xs text-gray-400">{t.country} {t.role}</p>
+                  <div className="flex items-center gap-1 text-xs text-gray-400">
+                    <span className="flex items-center gap-1">
+                      {t.flags.map((flag, i) => (
+                        <span key={i} className="flex items-center gap-1">
+                          {i > 0 && <ArrowRight className="w-3 h-3" />}
+                          <CountryFlag flag={flag} className="h-3 w-auto rounded-sm" />
+                        </span>
+                      ))}
+                    </span>
+                    <span>{t.role}</span>
+                  </div>
                 </div>
               </div>
             </div>
