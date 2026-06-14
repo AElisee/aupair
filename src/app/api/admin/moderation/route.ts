@@ -84,7 +84,8 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 });
   }
 
-  await setProfileStatus(userId, role, statusMap[action], session.user.id as string);
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(req.url).origin;
+  await setProfileStatus(userId, role, statusMap[action], session.user.id as string, baseUrl);
 
   return NextResponse.json({ success: true });
 }

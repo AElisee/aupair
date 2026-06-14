@@ -54,3 +54,24 @@ export function passwordResetEmailHtml(params: {
     <p>— L'équipe AuPair A.EU</p>
   `);
 }
+
+/** Email envoyé lorsqu'un administrateur valide le profil d'un utilisateur. */
+export function accountValidatedEmailHtml(params: {
+  name?: string | null;
+  role: "AU_PAIR" | "FAMILLE";
+  dashboardUrl: string;
+}) {
+  const { name, role, dashboardUrl } = params;
+  const roleLabel = role === "AU_PAIR" ? "au pair" : "famille d'accueil";
+
+  return layout(`
+    <p>Bonjour ${name?.trim() || ""},</p>
+    <p>Bonne nouvelle ! Votre profil ${roleLabel} a été vérifié et validé par notre équipe. Votre compte est maintenant actif et visible sur AuPair A.EU.</p>
+    <div style="text-align:center;margin:28px 0;">
+      <a href="${dashboardUrl}" style="background:${BRAND_COLOR};color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;padding:14px 28px;border-radius:10px;display:inline-block;">
+        Accéder à mon tableau de bord
+      </a>
+    </div>
+    <p>— L'équipe AuPair A.EU</p>
+  `);
+}

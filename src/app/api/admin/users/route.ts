@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdminSession, setProfileStatus } from "@/lib/admin";
+import { requireAdminSession, setProfileStatus, restoreProfile, hardDeleteUser } from "@/lib/admin";
 import { ProfileStatus } from "@/generated/prisma/client";
 import { formatDate } from "@/lib/utils";
 
@@ -65,11 +65,21 @@ export async function PATCH(req: Request) {
   const { userId, role, action } = body as {
     userId?: string;
     role?: "AU_PAIR" | "FAMILLE";
-    action?: "validate" | "hide" | "unhide" | "suspend" | "delete";
+    action?: "validate" | "hide" | "unhide" | "suspend" | "delete" | "restore" | "purge";
   };
 
   if (!userId || !role || !action) {
     return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 });
+  }
+
+  if (action === "purge") {
+    await hardDeleteUser(userId);
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === "restore") {
+    const status = await restoreProfile(userId, role);
+    return NextResponse.json({ success: true, status });
   }
 
   const statusMap = {
@@ -80,7 +90,8 @@ export async function PATCH(req: Request) {
     delete: ProfileStatus.DELETED,
   } as const;
 
-  await setProfileStatus(userId, role, statusMap[action], session.user.id as string);
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(req.url).origin;
+  await setProfileStatus(userId, role, statusMap[action], session.user.id as string, baseUrl);
 
   return NextResponse.json({ success: true });
 }

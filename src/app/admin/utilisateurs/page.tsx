@@ -9,6 +9,7 @@ import {
   Eye,
   EyeOff,
   Trash2,
+  RotateCcw,
   Mail,
   Loader2,
 } from "lucide-react";
@@ -26,18 +27,20 @@ type AdminUser = {
   photoUrl: string;
 };
 
-type Action = "validate" | "hide" | "unhide" | "suspend" | "delete";
+type Action = "validate" | "hide" | "unhide" | "suspend" | "delete" | "restore" | "purge";
 
 const PAGE_SIZE = 10;
 
 export default function UtilisateursPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [view, setView] = useState<"active" | "trash">("active");
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null);
+  const [purgeTarget, setPurgeTarget] = useState<AdminUser | null>(null);
   const [page, setPage] = useState(1);
 
   useEffect(() => {
@@ -56,6 +59,17 @@ export default function UtilisateursPage() {
         body: JSON.stringify({ userId: u.id, role: u.role, action }),
       });
       if (res.ok) {
+        if (action === "purge") {
+          setUsers((prev) => prev.filter((item) => item.id !== u.id));
+          return;
+        }
+        if (action === "restore") {
+          const data = await res.json();
+          setUsers((prev) =>
+            prev.map((item) => (item.id === u.id ? { ...item, status: data.status } : item)),
+          );
+          return;
+        }
         const status = {
           validate: "ACTIVE",
           hide: "HIDDEN",
@@ -63,13 +77,9 @@ export default function UtilisateursPage() {
           suspend: "SUSPENDED",
           delete: "DELETED",
         }[action];
-        if (action === "delete") {
-          setUsers((prev) => prev.filter((item) => item.id !== u.id));
-        } else {
-          setUsers((prev) =>
-            prev.map((item) => (item.id === u.id ? { ...item, status } : item)),
-          );
-        }
+        setUsers((prev) =>
+          prev.map((item) => (item.id === u.id ? { ...item, status } : item)),
+        );
       }
     } finally {
       setProcessingId(null);
@@ -81,6 +91,10 @@ export default function UtilisateursPage() {
       setDeleteTarget(u);
       return;
     }
+    if (action === "purge") {
+      setPurgeTarget(u);
+      return;
+    }
     performAction(u, action);
   };
 
@@ -90,14 +104,28 @@ export default function UtilisateursPage() {
     setDeleteTarget(null);
   };
 
+  const confirmPurge = async () => {
+    if (!purgeTarget) return;
+    await performAction(purgeTarget, "purge");
+    setPurgeTarget(null);
+  };
+
   const filtered = users.filter((u) => {
     const matchSearch =
       u.name.toLowerCase().includes(search.toLowerCase()) ||
       u.email.toLowerCase().includes(search.toLowerCase());
     const matchRole = !filterRole || u.role === filterRole;
+
+    if (view === "trash") {
+      return u.status === "DELETED" && matchSearch && matchRole;
+    }
+    if (u.status === "DELETED") return false;
+
     const matchStatus = !filterStatus || u.status === filterStatus;
     return matchSearch && matchRole && matchStatus;
   });
+
+  const trashCount = users.filter((u) => u.status === "DELETED").length;
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -127,6 +155,38 @@ export default function UtilisateursPage() {
           </div>
         </div>
 
+        {/* Onglets */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              setView("active");
+              setPage(1);
+            }}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+              view === "active" ? "bg-[#1A1A2E] text-white" : "bg-white text-gray-500 border border-gray-200 hover:border-[#E87722]"
+            }`}
+          >
+            Utilisateurs
+          </button>
+          <button
+            onClick={() => {
+              setView("trash");
+              setPage(1);
+            }}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors flex items-center gap-1.5 ${
+              view === "trash" ? "bg-[#1A1A2E] text-white" : "bg-white text-gray-500 border border-gray-200 hover:border-[#E87722]"
+            }`}
+          >
+            <Trash2 className="w-4 h-4" />
+            Corbeille
+            {trashCount > 0 && (
+              <span className={`text-xs rounded-full px-1.5 ${view === "trash" ? "bg-white/20" : "bg-gray-100"}`}>
+                {trashCount}
+              </span>
+            )}
+          </button>
+        </div>
+
         {/* Filtres */}
         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-wrap gap-3">
           <div className="relative flex-1 min-w-48">
@@ -154,21 +214,22 @@ export default function UtilisateursPage() {
             <option value="AU_PAIR">Au pair</option>
             <option value="FAMILLE">Famille</option>
           </select>
-          <select
-            value={filterStatus}
-            onChange={(e) => {
-              setFilterStatus(e.target.value);
-              setPage(1);
-            }}
-            className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none bg-white"
-          >
-            <option value="">Tous les statuts</option>
-            <option value="ACTIVE">Actif</option>
-            <option value="PENDING">En attente</option>
-            <option value="HIDDEN">Masqué</option>
-            <option value="SUSPENDED">Suspendu</option>
-            <option value="DELETED">Supprimé</option>
-          </select>
+          {view === "active" && (
+            <select
+              value={filterStatus}
+              onChange={(e) => {
+                setFilterStatus(e.target.value);
+                setPage(1);
+              }}
+              className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none bg-white"
+            >
+              <option value="">Tous les statuts</option>
+              <option value="ACTIVE">Actif</option>
+              <option value="PENDING">En attente</option>
+              <option value="HIDDEN">Masqué</option>
+              <option value="SUSPENDED">Suspendu</option>
+            </select>
+          )}
         </div>
 
         {/* Tableau */}
@@ -265,49 +326,72 @@ export default function UtilisateursPage() {
                           >
                             <Eye className="w-4 h-4" />
                           </Link>
-                          {u.status === "PENDING" && (
-                            <button
-                              disabled={processingId === u.id}
-                              onClick={() => handleAction(u, "validate")}
-                              className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
-                              title="Valider"
-                            >
-                              <CheckCircle className="w-4 h-4" />
-                            </button>
-                          )}
-                          {u.status === "HIDDEN" ? (
-                            <button
-                              disabled={processingId === u.id}
-                              onClick={() => handleAction(u, "unhide")}
-                              className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
-                              title="Démasquer"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
+                          {view === "trash" ? (
+                            <>
+                              <button
+                                disabled={processingId === u.id}
+                                onClick={() => handleAction(u, "restore")}
+                                className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
+                                title="Restaurer"
+                              >
+                                <RotateCcw className="w-4 h-4" />
+                              </button>
+                              <button
+                                disabled={processingId === u.id}
+                                onClick={() => handleAction(u, "purge")}
+                                className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                                title="Supprimer définitivement"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </>
                           ) : (
-                            <button
-                              disabled={processingId === u.id}
-                              onClick={() => handleAction(u, "hide")}
-                              className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
-                              title="Masquer"
-                            >
-                              <EyeOff className="w-4 h-4" />
-                            </button>
+                            <>
+                              {u.status === "PENDING" && (
+                                <button
+                                  disabled={processingId === u.id}
+                                  onClick={() => handleAction(u, "validate")}
+                                  className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
+                                  title="Valider"
+                                >
+                                  <CheckCircle className="w-4 h-4" />
+                                </button>
+                              )}
+                              {u.status === "HIDDEN" ? (
+                                <button
+                                  disabled={processingId === u.id}
+                                  onClick={() => handleAction(u, "unhide")}
+                                  className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                                  title="Démasquer"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </button>
+                              ) : (
+                                <button
+                                  disabled={processingId === u.id}
+                                  onClick={() => handleAction(u, "hide")}
+                                  className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                                  title="Masquer"
+                                >
+                                  <EyeOff className="w-4 h-4" />
+                                </button>
+                              )}
+                              <button
+                                className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                                title="Envoyer email"
+                              >
+                                <Mail className="w-4 h-4" />
+                              </button>
+                              <button
+                                disabled={processingId === u.id}
+                                onClick={() => handleAction(u, "delete")}
+                                className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                                title="Déplacer vers la corbeille"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </>
                           )}
-                          <button
-                            className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Envoyer email"
-                          >
-                            <Mail className="w-4 h-4" />
-                          </button>
-                          <button
-                            disabled={processingId === u.id}
-                            onClick={() => handleAction(u, "delete")}
-                            className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                            title="Supprimer"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
                         </div>
                       </td>
                     </tr>
@@ -357,20 +441,41 @@ export default function UtilisateursPage() {
 
       {deleteTarget && (
         <ConfirmDialog
-          title="Supprimer ce compte ?"
+          title="Déplacer ce compte vers la corbeille ?"
           description={
             <>
               Le compte de{" "}
               <span className="font-semibold text-[#1A1A2E]">
                 {deleteTarget.name}
               </span>{" "}
-              sera définitivement supprimé. Cette action est irréversible.
+              sera déplacé dans la corbeille et l&apos;utilisateur ne pourra plus se connecter.
+              Vous pourrez le restaurer ou le supprimer définitivement depuis la corbeille.
             </>
           }
-          confirmLabel="Supprimer"
+          confirmLabel="Déplacer vers la corbeille"
           loading={processingId === deleteTarget.id}
           onConfirm={confirmDelete}
           onCancel={() => setDeleteTarget(null)}
+        />
+      )}
+
+      {purgeTarget && (
+        <ConfirmDialog
+          title="Supprimer définitivement ce compte ?"
+          description={
+            <>
+              Le compte de{" "}
+              <span className="font-semibold text-[#1A1A2E]">
+                {purgeTarget.name}
+              </span>{" "}
+              et toutes ses données (profil, messages, abonnements, favoris...) seront
+              définitivement supprimés. Cette action est irréversible.
+            </>
+          }
+          confirmLabel="Supprimer définitivement"
+          loading={processingId === purgeTarget.id}
+          onConfirm={confirmPurge}
+          onCancel={() => setPurgeTarget(null)}
         />
       )}
     </AdminLayout>
