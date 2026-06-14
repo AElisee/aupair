@@ -21,12 +21,15 @@ const DEFAULT_SETTINGS = {
   subscriptionPriceXof: SUBSCRIPTION_PRICE_XOF,
   subscriptionDays: SUBSCRIPTION_DAYS,
   subscriptionFeatures: SUBSCRIPTION_FEATURES,
+  heroImageUrl: "/jeune_aupair.png",
   notifyProfileViewEnabled: true,
   notifyWeeklyViewsDigestEnabled: true,
   resendApiKey: null as string | null,
   emailFrom: null as string | null,
   stripeSecretKey: null as string | null,
   stripeWebhookSecret: null as string | null,
+  cinetpayApiKey: null as string | null,
+  cinetpaySiteId: null as string | null,
 };
 
 /** Récupère les constantes éditables (crée la ligne avec les valeurs par défaut si elle n'existe pas encore). */
@@ -47,12 +50,15 @@ export interface AppSettingsInput {
   subscriptionPriceXof?: number;
   subscriptionDays?: number;
   subscriptionFeatures?: string[];
+  heroImageUrl?: string;
   notifyProfileViewEnabled?: boolean;
   notifyWeeklyViewsDigestEnabled?: boolean;
   resendApiKey?: string | null;
   emailFrom?: string | null;
   stripeSecretKey?: string | null;
   stripeWebhookSecret?: string | null;
+  cinetpayApiKey?: string | null;
+  cinetpaySiteId?: string | null;
 }
 
 export async function updateAppSettings(data: AppSettingsInput) {

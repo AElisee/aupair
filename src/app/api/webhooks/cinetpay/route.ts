@@ -3,7 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { getAppSettings } from "@/lib/settings";
 
 export async function POST(req: Request) {
-  if (!process.env.CINETPAY_API_KEY || !process.env.CINETPAY_SITE_ID) {
+  const settings = await getAppSettings();
+
+  if (!settings.cinetpayApiKey || !settings.cinetpaySiteId) {
     return NextResponse.json({ error: "CinetPay n'est pas configuré." }, { status: 503 });
   }
 
@@ -18,8 +20,8 @@ export async function POST(req: Request) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      apikey: process.env.CINETPAY_API_KEY,
-      site_id: process.env.CINETPAY_SITE_ID,
+      apikey: settings.cinetpayApiKey,
+      site_id: settings.cinetpaySiteId,
       transaction_id: transactionId,
     }),
   });
@@ -34,7 +36,6 @@ export async function POST(req: Request) {
     });
 
     if (!existing) {
-      const settings = await getAppSettings();
       const now = new Date();
       await prisma.subscription.create({
         data: {

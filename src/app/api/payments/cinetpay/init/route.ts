@@ -8,11 +8,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   }
 
-  if (!process.env.CINETPAY_API_KEY || !process.env.CINETPAY_SITE_ID) {
+  const settings = await getAppSettings();
+
+  if (!settings.cinetpayApiKey || !settings.cinetpaySiteId) {
     return NextResponse.json({ error: "Le paiement Mobile Money n'est pas encore configuré." }, { status: 503 });
   }
 
-  const settings = await getAppSettings();
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(req.url).origin;
   const transactionId = `${session.user.id}-${Date.now()}`;
 
@@ -20,8 +21,8 @@ export async function POST(req: Request) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      apikey: process.env.CINETPAY_API_KEY,
-      site_id: process.env.CINETPAY_SITE_ID,
+      apikey: settings.cinetpayApiKey,
+      site_id: settings.cinetpaySiteId,
       transaction_id: transactionId,
       amount: settings.subscriptionPriceXof,
       currency: "XOF",

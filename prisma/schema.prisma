@@ -514,6 +514,9 @@ model AppSettings {
   subscriptionDays     Int      @default(30)
   subscriptionFeatures String[] @default(["Profil visible par toutes les familles d'accueil", "Messagerie illimitée avec les familles", "Accès aux coordonnées des familles", "Système de favoris", "Notifications de nouveaux profils correspondants", "Support prioritaire"])
 
+  // Image de fond de la section héro de la page d'accueil
+  heroImageUrl String @default("/jeune_aupair.png")
+
   notifyProfileViewEnabled       Boolean @default(true)
   notifyWeeklyViewsDigestEnabled Boolean @default(true)
 
@@ -524,6 +527,10 @@ model AppSettings {
   // Configuration des paiements Stripe — éditable par l'admin, jamais stockée en .env
   stripeSecretKey     String?
   stripeWebhookSecret String?
+
+  // Configuration des paiements CinetPay (Mobile Money) — éditable par l'admin, jamais stockée en .env
+  cinetpayApiKey  String?
+  cinetpaySiteId  String?
 
   updatedAt            DateTime @updatedAt
 

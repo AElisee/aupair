@@ -5,11 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Shield, Globe, Users, CheckCircle } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 
-export default function HeroSection() {
+interface HeroSectionProps {
+  heroImageUrl?: string;
+}
+
+export default function HeroSection({ heroImageUrl }: HeroSectionProps) {
   const { t } = useLang();
 
   return (
     <section className="relative min-h-[600px] flex items-center overflow-hidden" style={{ background: "linear-gradient(135deg, #1A1A2E 0%, #16213e 50%, #0f3460 100%)" }}>
+      {heroImageUrl && (
+        <div className="absolute inset-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={heroImageUrl} alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A2E] via-[#1A1A2E]/80 to-[#1A1A2E]/30" />
+        </div>
+      )}
       <div className="absolute top-0 right-0 w-96 h-96 bg-[#E87722] opacity-10 rounded-full blur-3xl" />
       <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#E87722] opacity-5 rounded-full blur-2xl" />
 

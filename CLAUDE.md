@@ -15,7 +15,7 @@ AuPair A.EU — Première plateforme mondiale dédiée aux au pairs africains. M
 - **Auth**: NextAuth.js v5 (beta) — Google + Facebook OAuth + credentials, JWT strategy
 - **Hosting**: Vercel
 
-Not yet integrated: Supabase Realtime (messaging), CinetPay (payments), Resend (emails), Supabase Storage (photo uploads). Stripe (card payments) is integrated and admin-configurable, see below.
+Not yet integrated: Supabase Realtime (messaging), Resend (emails), Supabase Storage (photo uploads). Stripe (card payments) and CinetPay (Mobile Money) are integrated and admin-configurable, see below.
 
 ## Commands
 
@@ -140,7 +140,6 @@ NEXTAUTH_URL / NEXTAUTH_SECRET
 GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET
 FACEBOOK_CLIENT_ID / FACEBOOK_CLIENT_SECRET
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY (publishable key only — not currently used by any code, kept for a future Stripe Elements integration)
-CINETPAY_API_KEY / CINETPAY_SITE_ID
 NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY
 NEXT_PUBLIC_APP_URL
 ADMIN_EMAIL / ADMIN_PASSWORD / ADMIN_NAME (optional — seeds an ADMIN account on `npm run dev`)
@@ -163,3 +162,16 @@ they're admin-configurable settings stored on `AppSettings` (`app_settings` tabl
 edited at `/admin/parametres/stripe` via `/api/admin/constants`. Both
 `/api/payments/stripe/checkout` and `/api/webhooks/stripe` load them from
 `getAppSettings()` on every request and return `503` if either is missing.
+
+### Payments (CinetPay — Mobile Money)
+
+`cinetpayApiKey` and `cinetpaySiteId` are **not** environment variables —
+they're admin-configurable settings stored on `AppSettings` (`app_settings` table),
+edited at `/admin/parametres/cinetpay` via `/api/admin/constants`. Both
+`/api/payments/cinetpay/init` and `/api/webhooks/cinetpay` load them from
+`getAppSettings()` on every request and return `503` if either is missing. The
+`notify_url` sent to CinetPay is `${NEXT_PUBLIC_APP_URL}/api/webhooks/cinetpay`
+(must be publicly reachable — use a tunnel like ngrok for local testing). The
+webhook re-verifies the transaction via CinetPay's `/v2/payment/check` API before
+activating a subscription (never trusts the notify payload directly). CinetPay's
+sandbox/test mode is toggled in the CinetPay dashboard and uses the same API_KEY/SITE_ID.

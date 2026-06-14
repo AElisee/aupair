@@ -9,13 +9,15 @@ export async function GET() {
   }
 
   const settings = await getAppSettings();
-  const { resendApiKey, stripeSecretKey, stripeWebhookSecret, ...rest } = settings;
+  const { resendApiKey, stripeSecretKey, stripeWebhookSecret, cinetpayApiKey, cinetpaySiteId, ...rest } = settings;
   return NextResponse.json({
     settings: {
       ...rest,
       resendApiKeyConfigured: !!resendApiKey,
       stripeSecretKeyConfigured: !!stripeSecretKey,
       stripeWebhookSecretConfigured: !!stripeWebhookSecret,
+      cinetpayApiKeyConfigured: !!cinetpayApiKey,
+      cinetpaySiteIdConfigured: !!cinetpaySiteId,
     },
   });
 }
@@ -69,6 +71,14 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "La durée de l'abonnement (jours) est invalide." }, { status: 400 });
     }
     data.subscriptionDays = value;
+  }
+
+  if ("heroImageUrl" in body) {
+    const value = body.heroImageUrl;
+    if (typeof value !== "string" || !value.trim()) {
+      return NextResponse.json({ error: `Le champ "heroImageUrl" doit être une URL ou un chemin non vide.` }, { status: 400 });
+    }
+    data.heroImageUrl = value.trim();
   }
 
   for (const key of ["notifyProfileViewEnabled", "notifyWeeklyViewsDigestEnabled"] as const) {
@@ -127,14 +137,34 @@ export async function PUT(req: Request) {
     data.stripeWebhookSecret = value.trim() === "" ? null : value.trim();
   }
 
+  // cinetpayApiKey / cinetpaySiteId : même logique que stripeSecretKey —
+  // une valeur vide efface la clé, une valeur absente ne la modifie pas.
+  if ("cinetpayApiKey" in body) {
+    const value = body.cinetpayApiKey;
+    if (typeof value !== "string") {
+      return NextResponse.json({ error: `Le champ "cinetpayApiKey" doit être une chaîne.` }, { status: 400 });
+    }
+    data.cinetpayApiKey = value.trim() === "" ? null : value.trim();
+  }
+
+  if ("cinetpaySiteId" in body) {
+    const value = body.cinetpaySiteId;
+    if (typeof value !== "string") {
+      return NextResponse.json({ error: `Le champ "cinetpaySiteId" doit être une chaîne.` }, { status: 400 });
+    }
+    data.cinetpaySiteId = value.trim() === "" ? null : value.trim();
+  }
+
   const settings = await updateAppSettings(data);
-  const { resendApiKey, stripeSecretKey, stripeWebhookSecret, ...rest } = settings;
+  const { resendApiKey, stripeSecretKey, stripeWebhookSecret, cinetpayApiKey, cinetpaySiteId, ...rest } = settings;
   return NextResponse.json({
     settings: {
       ...rest,
       resendApiKeyConfigured: !!resendApiKey,
       stripeSecretKeyConfigured: !!stripeSecretKey,
       stripeWebhookSecretConfigured: !!stripeWebhookSecret,
+      cinetpayApiKeyConfigured: !!cinetpayApiKey,
+      cinetpaySiteIdConfigured: !!cinetpaySiteId,
     },
   });
 }

@@ -9,6 +9,7 @@ export async function GET() {
     educationLevels: settings.educationLevels,
     durations: settings.durations,
     reportReasons: settings.reportReasons,
+    heroImageUrl: settings.heroImageUrl,
     subscription: {
       priceEur: settings.subscriptionPriceEur,
       priceXof: settings.subscriptionPriceXof,

@@ -15,6 +15,7 @@ import {
   CreditCard,
   CheckCircle,
   ListChecks,
+  Image as ImageIcon,
 } from "lucide-react";
 
 interface Settings {
@@ -26,6 +27,7 @@ interface Settings {
   subscriptionPriceXof: number;
   subscriptionDays: number;
   subscriptionFeatures: string[];
+  heroImageUrl: string;
 }
 
 function EditableList({
@@ -262,6 +264,42 @@ export default function AdminConstantesPage() {
                 }
                 className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
               />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+          <h2 className="font-bold text-[#1A1A2E] mb-4 flex items-center gap-2">
+            <ImageIcon className="w-4 h-4 text-[#E87722]" />
+            Image de fond — Page d&apos;accueil
+          </h2>
+          <div className="grid sm:grid-cols-2 gap-4 items-start">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">
+                URL ou chemin de l&apos;image
+              </label>
+              <input
+                type="text"
+                value={settings.heroImageUrl}
+                onChange={(e) =>
+                  setSettings({ ...settings, heroImageUrl: e.target.value })
+                }
+                placeholder="/jeune_aupair.png"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                Chemin d&apos;un fichier du dossier <code>public</code> (ex: <code>/jeune_aupair.png</code>) ou URL complète.
+              </p>
+            </div>
+            <div className="rounded-xl overflow-hidden border border-gray-100 aspect-video bg-[#1A1A2E]">
+              {settings.heroImageUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={settings.heroImageUrl}
+                  alt="Aperçu image de fond"
+                  className="w-full h-full object-cover"
+                />
+              )}
             </div>
           </div>
         </div>

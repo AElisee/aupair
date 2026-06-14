@@ -5,11 +5,14 @@ import CountriesSection from "@/components/home/CountriesSection";
 import TestimonialsSection from "@/components/home/TestimonialsSection";
 import BlogPreview from "@/components/home/BlogPreview";
 import CtaBanner from "@/components/home/CtaBanner";
+import { getAppSettings } from "@/lib/settings";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const { heroImageUrl } = await getAppSettings();
+
   return (
     <>
-      <HeroSection />
+      <HeroSection heroImageUrl={heroImageUrl} />
       <StatsSection />
       <HowItWorks />
       <CountriesSection />
