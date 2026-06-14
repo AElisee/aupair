@@ -794,6 +794,15 @@ Notes :
 - Ajoute dans cette session : pagination (10 utilisateurs par page) dans `src/app/admin/utilisateurs/page.tsx`, sur le meme modele que `/admin/pays`, avec retour a la page 1 lors d'un changement de recherche/filtre.
 - Pas de route `[id]` dediee : le PATCH utilise `userId` dans le corps de la requete (`/api/admin/users`), fonctionnellement equivalent a la route prevue dans le plan.
 
+### Extension ajoutee (hors plan initial, demande utilisateur du 14 juin 2026) - Corbeille utilisateurs
+
+- Probleme corrige : auparavant, l'action "Supprimer" passait le profil en statut `DELETED` mais l'utilisateur pouvait toujours se connecter, et la ligne reapparaissait dans la liste avec le statut "Supprime" apres actualisation.
+- `setProfileStatus()` (`src/lib/admin.ts`) met desormais aussi `User.isActive = false` lors d'un passage a `DELETED` (soft delete / corbeille) ; `src/lib/auth.ts` bloque deja la connexion des comptes `isActive: false`.
+- Nouvelles fonctions dans `src/lib/admin.ts` : `restoreProfile(userId, role)` (restaure `isActive = true` et remet le statut `ACTIVE` ou `PENDING` selon `validatedAt`) et `hardDeleteUser(userId)` (suppression definitive via `prisma.user.delete`, cascade sur toutes les relations).
+- `src/app/api/admin/users/route.ts` PATCH accepte deux nouvelles actions : `restore` et `purge`.
+- `src/app/admin/utilisateurs/page.tsx` : ajout d'onglets "Utilisateurs" / "Corbeille" (avec badge du nombre d'elements), la vue "Corbeille" liste les comptes `DELETED` avec actions "Restaurer" et "Supprimer definitivement" (confirmation via `ConfirmDialog`), la vue "Utilisateurs" masque desormais les comptes `DELETED`.
+- Verifie par l'utilisateur en local ("tout marche"), commit/push effectues.
+
 ## Tache 22 - Brancher moderation
 
 Statut : Termine (11 juin 2026)
@@ -833,6 +842,13 @@ Notes :
 - UI : boutons "Masquer" et "Suspendre" ajoutes ; "Supprimer" passe par `ConfirmDialog` (irreversible).
 - Verifie que "masquer" retire bien le profil des annuaires : `src/app/api/au-pairs/route.ts` et `src/app/api/families/route.ts` filtrent deja sur `status: ProfileStatus.ACTIVE`, donc les profils `HIDDEN`/`SUSPENDED`/`DELETED` n'apparaissent plus.
 - Pas de route `[profileId]` dediee : le PATCH utilise `userId`/`role` dans le corps de la requete (`/api/admin/moderation`), fonctionnellement equivalent.
+
+### Extension ajoutee (hors plan initial, demande utilisateur du 14 juin 2026) - Email "compte valide"
+
+- Lors d'une premiere validation (`PENDING -> ACTIVE`), `setProfileStatus()` (`src/lib/admin.ts`) envoie desormais un email a l'utilisateur via `sendMail()` avec le template `accountValidatedEmailHtml()` (`src/lib/email-templates.ts`), l'informant que son compte est valide et lui donnant un lien vers son tableau de bord.
+- S'applique aux deux points d'entree qui appellent `setProfileStatus()` : `/api/admin/moderation` (action `validate`) et `/api/admin/users` (action `validate`). Les deux routes calculent `baseUrl` (`NEXT_PUBLIC_APP_URL` ou origine de la requete) pour construire le lien du tableau de bord.
+- L'echec d'envoi (ex. Resend) est logge cote serveur (`console.error`) mais ne bloque jamais la validation du profil — couvre une partie de la liste "Profil valide" de la Tache 29.
+- Verifie par l'utilisateur en local ("tout marche"), commit/push effectues.
 
 ## Tache 23 - Brancher paiements admin
 
@@ -1021,6 +1037,8 @@ Critere de validation :
 
 ## Tache 29 - Ajouter les emails transactionnels
 
+Statut : Partiellement termine (mis a jour le 14 juin 2026)
+
 Periode : Jour 30  
 Priorite : haute
 
@@ -1055,6 +1073,14 @@ Critere de validation :
 
 - Les emails partent en environnement de test.
 - Les erreurs email ne bloquent pas la transaction principale.
+
+Notes :
+
+- `src/lib/mail.ts` (`sendMail()`) deja en place : charge `resendApiKey`/`emailFrom` depuis `AppSettings` (admin-configurable, `/admin/parametres/email`), ne leve jamais d'exception, retourne `{ ok, reason }`.
+- Emails deja implementes : "Mot de passe oublie" (`passwordResetEmailHtml`, Tache 9), "Profil valide" (`accountValidatedEmailHtml`, ajoute le 14 juin 2026 - cf. notes Tache 22), confirmation de contact et reponse de ticket (`src/app/api/contact/route.ts`, `src/app/api/admin/tickets/route.ts`).
+- Restent a faire : "Bienvenue", "Confirmation d'inscription", "Paiement confirme", "Expiration prochaine d'abonnement".
+- **Bloquant production identifie le 12 juin 2026** : `emailFrom` est actuellement configure sur le domaine sandbox Resend (`onboarding@resend.dev`), qui n'autorise l'envoi qu'a l'adresse du proprietaire du compte Resend et avec des quotas tres bas (2/jour, 4/mois observes) — Resend renvoie une erreur 403 `validation_error` pour tout autre destinataire. **Aucun email (reinitialisation de mot de passe, validation de compte, etc.) ne peut donc etre livre a un utilisateur reel pour le moment.**
+- Correction necessaire avant mise en production : verifier un domaine sur resend.com/domains (SPF/DKIM via le DNS du domaine du client), puis mettre a jour `emailFrom` dans `/admin/parametres/email` avec une adresse `@domaine-verifie`. A reporter egalement dans la checklist de la Tache 35 ("Domaine email Resend verifie").
 
 ## Tache 30 - Ajouter l'upload Supabase Storage
 
