@@ -28,17 +28,39 @@ function InscriptionContent() {
   const { origin: originCountries, host: hostCountries } = useCountries();
   const { languages: LANGUAGES, educationLevels: EDUCATION_LEVELS } = useConstants();
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [touched, setTouched] = useState(false);
 
   const steps = role === "au-pair"
     ? ["Mon rôle", "Infos personnelles", "Mon profil", "Confirmation"]
     : ["Mon rôle", "Infos famille", "Mes besoins", "Confirmation"];
 
-  const dobError = (() => {
-    if (step !== 2 || role !== "au-pair") return null;
-    if (!form.dateOfBirth) return "La date de naissance est obligatoire.";
-    if (calculateAge(form.dateOfBirth) < 18) return "Vous devez avoir au moins 18 ans pour vous inscrire.";
-    return null;
+  const requiredErrors = (() => {
+    const errs: Record<string, string> = {};
+    if (step === 1) {
+      if (!form.firstName) errs.firstName = "Le prénom est obligatoire.";
+      if (!form.lastName) errs.lastName = "Le nom est obligatoire.";
+      if (!form.email) errs.email = "L'adresse email est obligatoire.";
+      if (!form.password) errs.password = "Le mot de passe est obligatoire.";
+    } else if (step === 2 && role === "au-pair") {
+      if (!form.country) errs.country = "Le pays d'origine est obligatoire.";
+      if (!form.gender) errs.gender = "Le genre est obligatoire.";
+      if (!form.dateOfBirth) errs.dateOfBirth = "La date de naissance est obligatoire.";
+      else if (calculateAge(form.dateOfBirth) < 18) errs.dateOfBirth = "Vous devez avoir au moins 18 ans pour vous inscrire.";
+      if (form.languages.length === 0) errs.languages = "Sélectionnez au moins une langue.";
+    } else if (step === 2 && role === "famille") {
+      if (!form.hostCountry) errs.hostCountry = "Le pays d'accueil est obligatoire.";
+      if (!form.city) errs.city = "La ville est obligatoire.";
+      if (!form.numberOfKids) errs.numberOfKids = "Le nombre d'enfants est obligatoire.";
+    }
+    return errs;
   })();
+
+  const fieldError = (field: string) => {
+    const err = requiredErrors[field];
+    if (!err) return null;
+    if (field === "dateOfBirth" && form.dateOfBirth) return err;
+    return touched ? err : null;
+  };
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -181,12 +203,14 @@ function InscriptionContent() {
                     <input type="text" value={form.firstName} onChange={e => setForm({ ...form, firstName: e.target.value })}
                       className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
                       placeholder="Marie" />
+                    {fieldError("firstName") && <p className="text-xs text-red-500 mt-1">{fieldError("firstName")}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Nom *</label>
                     <input type="text" value={form.lastName} onChange={e => setForm({ ...form, lastName: e.target.value })}
                       className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
                       placeholder="Dupont" />
+                    {fieldError("lastName") && <p className="text-xs text-red-500 mt-1">{fieldError("lastName")}</p>}
                   </div>
                 </div>
                 <div>
@@ -194,12 +218,14 @@ function InscriptionContent() {
                   <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
                     placeholder="votre@email.com" />
+                  {fieldError("email") && <p className="text-xs text-red-500 mt-1">{fieldError("email")}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Mot de passe *</label>
                   <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
                     placeholder="Minimum 8 caractères" />
+                  {fieldError("password") && <p className="text-xs text-red-500 mt-1">{fieldError("password")}</p>}
                 </div>
               </div>
             </div>
@@ -217,6 +243,7 @@ function InscriptionContent() {
                     <option value="">Sélectionner votre pays</option>
                     {originCountries.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
                   </select>
+                  {fieldError("country") && <p className="text-xs text-red-500 mt-1">{fieldError("country")}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Genre *</label>
@@ -226,12 +253,13 @@ function InscriptionContent() {
                     <option value="Femme">Femme</option>
                     <option value="Homme">Homme</option>
                   </select>
+                  {fieldError("gender") && <p className="text-xs text-red-500 mt-1">{fieldError("gender")}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Date de naissance *</label>
                   <input type="date" value={form.dateOfBirth} onChange={e => setForm({ ...form, dateOfBirth: e.target.value })}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]" />
-                  {dobError && <p className="text-xs text-red-500 mt-1">{dobError}</p>}
+                  {fieldError("dateOfBirth") && <p className="text-xs text-red-500 mt-1">{fieldError("dateOfBirth")}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Langues parlées *</label>
@@ -257,6 +285,7 @@ function InscriptionContent() {
                       </label>
                     ))}
                   </div>
+                  {fieldError("languages") && <p className="text-xs text-red-500 mt-1">{fieldError("languages")}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Niveau d'études</label>
@@ -289,12 +318,14 @@ function InscriptionContent() {
                     <option value="">Sélectionner un pays</option>
                     {hostCountries.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
                   </select>
+                  {fieldError("hostCountry") && <p className="text-xs text-red-500 mt-1">{fieldError("hostCountry")}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Ville *</label>
                   <input type="text" value={form.city} onChange={e => setForm({ ...form, city: e.target.value })}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
                     placeholder="Paris, Lyon, Berlin..." />
+                  {fieldError("city") && <p className="text-xs text-red-500 mt-1">{fieldError("city")}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Nombre d'enfants *</label>
@@ -303,6 +334,7 @@ function InscriptionContent() {
                     <option value="">Sélectionner</option>
                     {["1", "2", "3", "4", "5+"].map(n => <option key={n} value={n}>{n}</option>)}
                   </select>
+                  {fieldError("numberOfKids") && <p className="text-xs text-red-500 mt-1">{fieldError("numberOfKids")}</p>}
                 </div>
               </div>
             </div>
@@ -341,11 +373,15 @@ function InscriptionContent() {
           {/* Navigation */}
           {step > 0 && (
             <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-100">
-              <button onClick={() => setStep(step - 1)} className="flex items-center gap-2 text-gray-500 hover:text-[#1A1A2E] text-sm font-medium">
+              <button onClick={() => { setTouched(false); setStep(step - 1); }} className="flex items-center gap-2 text-gray-500 hover:text-[#1A1A2E] text-sm font-medium">
                 <ArrowLeft className="w-4 h-4" /> Retour
               </button>
               {step < 3 ? (
-                <Button onClick={() => setStep(step + 1)} disabled={!!dobError}>
+                <Button onClick={() => {
+                  if (Object.keys(requiredErrors).length > 0) { setTouched(true); return; }
+                  setTouched(false);
+                  setStep(step + 1);
+                }}>
                   Continuer <ArrowRight className="w-4 h-4" />
                 </Button>
               ) : (
