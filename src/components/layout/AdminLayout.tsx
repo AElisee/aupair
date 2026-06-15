@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { Globe, LayoutDashboard, Users, Shield, DollarSign, BarChart2, FileText, HelpCircle, Mail, LogOut, Bell, Settings, ChevronDown, SlidersHorizontal, Menu, X, Send, CreditCard, Smartphone } from "lucide-react";
@@ -48,9 +49,13 @@ function SidebarContent({
     <>
       <div className="p-5 border-b border-white/10 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2" onClick={onNavigate}>
-          <div className="w-7 h-7 bg-[#E87722] rounded-full flex items-center justify-center">
-            <Globe className="w-4 h-4 text-white" />
-          </div>
+          <Image
+            src="/Logo_au_pair.png"
+            alt="AuPair A.EU"
+            width={56}
+            height={56}
+            className="w-11 h-11 sm:w-14 sm:h-14 object-contain"
+          />
           <span className="text-white font-bold text-sm">AuPair<span className="text-[#E87722]">A.EU</span></span>
           <span className="ml-auto bg-red-500 text-white text-xs px-1.5 py-0.5 rounded font-bold">ADMIN</span>
         </Link>
