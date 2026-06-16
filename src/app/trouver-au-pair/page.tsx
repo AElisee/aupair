@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Search, Filter, MapPin, Languages, Star, Lock, Loader2 } from "lucide-react";
 import { useCountries } from "@/hooks/useCountries";
 import { useConstants } from "@/hooks/useConstants";
+import { CountryFlag } from "@/components/ui/CountryFlag";
 
 type AuPair = {
   id: string;
@@ -66,7 +67,7 @@ function AuPairCard({ ap, isFamily }: { ap: AuPair; isFamily: boolean }) {
           <div>
             <h3 className="font-bold text-[#1A1A2E] text-lg">{ap.firstName}, {ap.age} ans</h3>
             <div className="flex items-center gap-1 text-gray-500 text-sm">
-              <span>{ap.flag}</span>
+              <CountryFlag flag={ap.flag} className="h-4 w-auto rounded-sm" />
               <span>{ap.country}</span>
             </div>
           </div>

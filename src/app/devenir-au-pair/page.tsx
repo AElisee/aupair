@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, Globe, Heart, DollarSign, Home, ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 import { getCountriesByType } from "@/lib/countries";
+import { CountryFlag } from "@/components/ui/CountryFlag";
 
 export const metadata: Metadata = {
   title: "Devenir au pair en Europe — AuPair A.EU",
@@ -110,7 +111,6 @@ export default async function DevenirAuPairPage() {
             <p className="text-gray-500">3 étapes simples pour commencer votre aventure</p>
           </div>
           <div className="relative">
-            <div className="hidden md:block absolute left-1/2 top-8 w-0.5 h-full bg-[#E87722]/20 -translate-x-1/2" />
             <div className="space-y-8">
               {steps.map((s) => (
                 <div key={s.step} className="flex flex-col md:flex-row items-start md:items-center gap-6">
@@ -138,7 +138,7 @@ export default async function DevenirAuPairPage() {
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
             {originCountries.map((c) => (
               <div key={c.name} className="bg-white rounded-xl p-4 text-center shadow-sm hover:shadow-md transition-shadow">
-                <div className="text-3xl mb-2">{c.flag}</div>
+                <CountryFlag flag={c.flag} className="h-8 w-auto rounded-sm mx-auto mb-2" />
                 <div className="text-sm font-medium text-[#1A1A2E]">{c.name}</div>
               </div>
             ))}

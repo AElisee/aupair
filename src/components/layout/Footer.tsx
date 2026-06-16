@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
-import { Globe, Instagram, Facebook, Linkedin, Youtube } from "lucide-react";
+import Image from "next/image";
+import { Instagram, Facebook, Linkedin, Youtube } from "lucide-react";
 
 const hostCountries = ["France", "Allemagne", "Belgique", "Luxembourg", "Suisse", "États-Unis"];
 const aboutLinks = [
@@ -29,10 +30,14 @@ export default function Footer() {
           {/* Marque */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-[#E87722] rounded-full flex items-center justify-center">
-                <Globe className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-white font-bold text-xl">AuPair A.EU</span>
+              <Image
+                src="/Logo_au_pair.png"
+                alt="AuPair A.EU"
+                width={56}
+                height={56}
+                className="w-11 h-11 object-contain"
+              />
+              <span className="text-white font-bold text-xl">AuPair<span className="text-[#E87722]">A.EU</span></span>
             </div>
             <p className="text-sm text-gray-400 leading-relaxed">
               La première plateforme mondiale dédiée aux au pairs africains. Trouvez votre famille d&apos;accueil idéale en Europe.

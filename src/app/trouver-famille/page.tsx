@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Search, Filter, MapPin, Users, Clock, Lock, Loader2 } from "lucide-react";
 import { useCountries } from "@/hooks/useCountries";
 import { useConstants } from "@/hooks/useConstants";
+import { CountryFlag } from "@/components/ui/CountryFlag";
 
 type Family = {
   id: string;
@@ -33,7 +34,7 @@ function FamilyCard({ fam, isAuPair }: { fam: Family; isAuPair: boolean }) {
           <img src={fam.familyPhotoUrl} alt={fam.name} className="absolute inset-0 w-full h-full object-cover object-top" />
         ) : (
           <div className="text-center">
-            <div className="text-4xl mb-1">{fam.flag}</div>
+            <CountryFlag flag={fam.flag} className="h-10 w-auto rounded-sm mx-auto mb-1" />
             <p className="text-white font-bold">{fam.city}</p>
           </div>
         )}
