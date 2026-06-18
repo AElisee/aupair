@@ -2,6 +2,7 @@
 import { Suspense, useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
+import Script from "next/script";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { User, Search, MessageCircle, Bell, CreditCard, Settings, Home, CheckCircle, Clock, Smartphone, Loader2, AlertCircle } from "lucide-react";
@@ -33,7 +34,7 @@ function AbonnementContent() {
 
   const [data, setData] = useState<SubscriptionData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [payingMethod, setPayingMethod] = useState<"card" | "mobile" | "dev" | null>(null);
+  const [payingMethod, setPayingMethod] = useState<"card" | "mobile" | "kkiapay" | "dev" | null>(null);
   const [error, setError] = useState("");
 
   const load = useCallback(() => {
@@ -87,6 +88,69 @@ function AbonnementContent() {
     }
   };
 
+  const handleKkiapay = async () => {
+    setError("");
+    setPayingMethod("kkiapay");
+    try {
+      const res = await fetch("/api/payments/kkiapay/init");
+      const json = await res.json();
+      if (!res.ok) {
+        setError(json.error ?? "Une erreur est survenue.");
+        setPayingMethod(null);
+        return;
+      }
+
+      const { publicKey, amount, sandbox } = json as { publicKey: string; amount: number; sandbox: boolean };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const w = window as any;
+      if (typeof w.openKkiapayWidget !== "function") {
+        setError("Le widget KKiaPay n'est pas encore chargé. Veuillez réessayer.");
+        setPayingMethod(null);
+        return;
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      w.addKkiapayListener("success", async (response: any) => {
+        const transactionId: string = response.transactionId;
+        try {
+          const verifyRes = await fetch("/api/payments/kkiapay/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ transactionId }),
+          });
+          const verifyJson = await verifyRes.json();
+          if (!verifyRes.ok) {
+            setError(verifyJson.error ?? "Paiement reçu mais non vérifié. Contactez le support.");
+          } else {
+            load();
+          }
+        } catch {
+          setError("Erreur lors de la vérification du paiement. Contactez le support.");
+        } finally {
+          setPayingMethod(null);
+        }
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      w.addKkiapayListener("failed", () => {
+        setError("Le paiement KKiaPay a échoué ou a été annulé.");
+        setPayingMethod(null);
+      });
+
+      w.openKkiapayWidget({
+        amount,
+        api_key: publicKey,
+        sandbox,
+        email: session?.user?.email ?? "",
+        name: session?.user?.name ?? "",
+      });
+    } catch {
+      setError("Une erreur est survenue.");
+      setPayingMethod(null);
+    }
+  };
+
   const handleDevActivate = async () => {
     setError("");
     setPayingMethod("dev");
@@ -113,6 +177,7 @@ function AbonnementContent() {
 
   return (
     <DashboardLayout navItems={navItems} role="au-pair" userName={session?.user?.name ?? ""}>
+      <Script src="https://cdn.kkiapay.me/k.js" strategy="lazyOnload" />
       <div className="max-w-2xl space-y-6">
         <h1 className="text-2xl font-extrabold text-[#1A1A2E]">Mon abonnement</h1>
 
@@ -201,6 +266,14 @@ function AbonnementContent() {
                 >
                   {payingMethod === "mobile" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Smartphone className="w-4 h-4" />}
                   Payer par Mobile Money ({formatCurrency(priceXof, "XOF")})
+                </button>
+                <button
+                  onClick={handleKkiapay}
+                  disabled={payingMethod !== null}
+                  className="w-full flex items-center gap-3 bg-white/20 hover:bg-white/30 disabled:opacity-60 rounded-xl p-3 text-sm font-medium transition-colors"
+                >
+                  {payingMethod === "kkiapay" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Smartphone className="w-4 h-4" />}
+                  Payer avec KKiaPay ({formatCurrency(priceXof, "XOF")})
                 </button>
                 <button
                   onClick={handleStripe}

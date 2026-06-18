@@ -9,7 +9,7 @@ export async function GET() {
   }
 
   const settings = await getAppSettings();
-  const { resendApiKey, stripeSecretKey, stripeWebhookSecret, cinetpayApiKey, cinetpaySiteId, ...rest } = settings;
+  const { resendApiKey, stripeSecretKey, stripeWebhookSecret, cinetpayApiKey, cinetpaySiteId, kkiapayPublicKey, kkiapayPrivateKey, ...rest } = settings;
   return NextResponse.json({
     settings: {
       ...rest,
@@ -18,6 +18,8 @@ export async function GET() {
       stripeWebhookSecretConfigured: !!stripeWebhookSecret,
       cinetpayApiKeyConfigured: !!cinetpayApiKey,
       cinetpaySiteIdConfigured: !!cinetpaySiteId,
+      kkiapayPublicKeyConfigured: !!kkiapayPublicKey,
+      kkiapayPrivateKeyConfigured: !!kkiapayPrivateKey,
     },
   });
 }
@@ -155,8 +157,24 @@ export async function PUT(req: Request) {
     data.cinetpaySiteId = value.trim() === "" ? null : value.trim();
   }
 
+  if ("kkiapayPublicKey" in body) {
+    const value = body.kkiapayPublicKey;
+    if (typeof value !== "string") {
+      return NextResponse.json({ error: `Le champ "kkiapayPublicKey" doit être une chaîne.` }, { status: 400 });
+    }
+    data.kkiapayPublicKey = value.trim() === "" ? null : value.trim();
+  }
+
+  if ("kkiapayPrivateKey" in body) {
+    const value = body.kkiapayPrivateKey;
+    if (typeof value !== "string") {
+      return NextResponse.json({ error: `Le champ "kkiapayPrivateKey" doit être une chaîne.` }, { status: 400 });
+    }
+    data.kkiapayPrivateKey = value.trim() === "" ? null : value.trim();
+  }
+
   const settings = await updateAppSettings(data);
-  const { resendApiKey, stripeSecretKey, stripeWebhookSecret, cinetpayApiKey, cinetpaySiteId, ...rest } = settings;
+  const { resendApiKey, stripeSecretKey, stripeWebhookSecret, cinetpayApiKey, cinetpaySiteId, kkiapayPublicKey, kkiapayPrivateKey, ...rest } = settings;
   return NextResponse.json({
     settings: {
       ...rest,
@@ -165,6 +183,8 @@ export async function PUT(req: Request) {
       stripeWebhookSecretConfigured: !!stripeWebhookSecret,
       cinetpayApiKeyConfigured: !!cinetpayApiKey,
       cinetpaySiteIdConfigured: !!cinetpaySiteId,
+      kkiapayPublicKeyConfigured: !!kkiapayPublicKey,
+      kkiapayPrivateKeyConfigured: !!kkiapayPrivateKey,
     },
   });
 }

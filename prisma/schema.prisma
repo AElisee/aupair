@@ -37,6 +37,7 @@ enum PaymentMethod {
   MOBILE_MONEY
   CARD
   PAYPAL
+  KKIAPAY
 }
 
 enum Currency {
@@ -531,6 +532,10 @@ model AppSettings {
   // Configuration des paiements CinetPay (Mobile Money) — éditable par l'admin, jamais stockée en .env
   cinetpayApiKey  String?
   cinetpaySiteId  String?
+
+  // Configuration des paiements KKiaPay (Mobile Money Bénin/Afrique) — éditable par l'admin, jamais stockée en .env
+  kkiapayPublicKey  String?
+  kkiapayPrivateKey String?
 
   updatedAt            DateTime @updatedAt
 

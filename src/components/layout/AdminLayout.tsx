@@ -27,6 +27,7 @@ const settingsNav = {
     { href: "/admin/parametres/email", icon: Send, label: "Email" },
     { href: "/admin/parametres/stripe", icon: CreditCard, label: "Stripe" },
     { href: "/admin/parametres/cinetpay", icon: Smartphone, label: "CinetPay" },
+    { href: "/admin/parametres/kkiapay", icon: Smartphone, label: "KKiaPay" },
   ],
 };
 
