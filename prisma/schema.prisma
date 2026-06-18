@@ -528,6 +528,7 @@ model AppSettings {
   // Configuration des paiements KKiaPay (Mobile Money Bénin/Afrique) — éditable par l'admin, jamais stockée en .env
   kkiapayPublicKey  String?
   kkiapayPrivateKey String?
+  kkiapaySandbox    Boolean @default(true)
 
   updatedAt            DateTime @updatedAt
 

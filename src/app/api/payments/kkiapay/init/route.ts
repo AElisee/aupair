@@ -17,6 +17,6 @@ export async function GET() {
   return NextResponse.json({
     publicKey: settings.kkiapayPublicKey,
     amount: settings.subscriptionPriceXof,
-    sandbox: process.env.NODE_ENV !== "production",
+    sandbox: settings.kkiapaySandbox,
   });
 }

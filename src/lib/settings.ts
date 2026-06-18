@@ -28,6 +28,7 @@ const DEFAULT_SETTINGS = {
   emailFrom: null as string | null,
   kkiapayPublicKey: null as string | null,
   kkiapayPrivateKey: null as string | null,
+  kkiapaySandbox: true,
 };
 
 /** Récupère les constantes éditables (crée la ligne avec les valeurs par défaut si elle n'existe pas encore). */
@@ -55,6 +56,7 @@ export interface AppSettingsInput {
   emailFrom?: string | null;
   kkiapayPublicKey?: string | null;
   kkiapayPrivateKey?: string | null;
+  kkiapaySandbox?: boolean;
 }
 
 export async function updateAppSettings(data: AppSettingsInput) {

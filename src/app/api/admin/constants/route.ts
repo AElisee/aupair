@@ -79,7 +79,7 @@ export async function PUT(req: Request) {
     data.heroImageUrl = value.trim();
   }
 
-  for (const key of ["notifyProfileViewEnabled", "notifyWeeklyViewsDigestEnabled"] as const) {
+  for (const key of ["notifyProfileViewEnabled", "notifyWeeklyViewsDigestEnabled", "kkiapaySandbox"] as const) {
     if (key in body) {
       const value = body[key];
       if (typeof value !== "boolean") {

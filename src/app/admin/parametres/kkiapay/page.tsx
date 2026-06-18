@@ -7,6 +7,7 @@ import { Smartphone, Key, Lock, Loader2, Save, CheckCircle, Trash2, ExternalLink
 interface Settings {
   kkiapayPublicKeyConfigured: boolean;
   kkiapayPrivateKeyConfigured: boolean;
+  kkiapaySandbox: boolean;
 }
 
 export default function AdminKkiapaySettingsPage() {
@@ -68,6 +69,10 @@ export default function AdminKkiapaySettingsPage() {
   const handleRemovePrivateKey = () => {
     if (!confirm("Supprimer la clé privée KKiaPay ? La vérification des paiements ne fonctionnera plus.")) return;
     save({ kkiapayPrivateKey: "" });
+  };
+
+  const handleToggleSandbox = () => {
+    save({ kkiapaySandbox: !settings?.kkiapaySandbox });
   };
 
   if (loading || !settings) {
@@ -185,16 +190,42 @@ export default function AdminKkiapaySettingsPage() {
             </p>
           </div>
 
+          {/* Mode sandbox */}
+          <div className="flex items-center justify-between border border-gray-100 rounded-xl p-3">
+            <div>
+              <p className="font-semibold text-[#1A1A2E] text-sm">Mode sandbox (test)</p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Doit correspondre exactement au mode actif de votre compte KKiaPay (visible sur app.kkiapay.me).
+                Un décalage entre ce réglage et le mode du compte provoque l&apos;erreur « clé API incorrecte ».
+                Désactivez-le quand vous passez en clés/compte de production.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleSandbox}
+              disabled={saving}
+              aria-pressed={settings.kkiapaySandbox}
+              className={`shrink-0 ml-4 w-12 h-7 rounded-full relative transition-colors ${
+                settings.kkiapaySandbox ? "bg-[#E87722]" : "bg-gray-300"
+              } disabled:opacity-60`}
+            >
+              <span
+                className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                  settings.kkiapaySandbox ? "translate-x-5" : ""
+                }`}
+              />
+            </button>
+          </div>
+
           {/* Statut global */}
           <div className="flex items-start gap-2 text-sm text-gray-500 bg-[#FFF3E0] rounded-xl p-3">
             <Smartphone className="w-4 h-4 text-[#E87722] mt-0.5 shrink-0" />
             <p>
               {configured ? (
-                <>KKiaPay est <strong className="text-green-600">opérationnel</strong>. Les utilisateurs peuvent payer par Mobile Money (MTN, Moov, etc.) via le widget KKiaPay.</>
+                <>KKiaPay est <strong className="text-green-600">opérationnel</strong> en mode {settings.kkiapaySandbox ? "sandbox (test)" : "production (paiements réels)"}. Les utilisateurs peuvent payer par Mobile Money (MTN, Moov, etc.) via le widget KKiaPay.</>
               ) : (
                 <>KKiaPay est <strong className="text-red-500">désactivé</strong>. Renseignez les deux clés pour activer le paiement Mobile Money via KKiaPay.</>
               )}
-              {" "}Le mode sandbox s&apos;active depuis le tableau de bord KKiaPay et utilise les mêmes clés.
             </p>
           </div>
 
