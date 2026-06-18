@@ -6,7 +6,7 @@ export async function POST(req: Request) {
   const settings = await getAppSettings();
 
   if (!settings.kkiapayPrivateKey) {
-    return NextResponse.json({ error: "KKiaPay n'est pas configuré." }, { status: 503 });
+    return NextResponse.json({ error: "Le paiement n'est pas configuré." }, { status: 503 });
   }
 
   const body = await req.json();

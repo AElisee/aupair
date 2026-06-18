@@ -19,7 +19,7 @@ export async function POST(req: Request) {
   const settings = await getAppSettings();
 
   if (!settings.kkiapayPrivateKey) {
-    return NextResponse.json({ error: "KKiaPay n'est pas configuré." }, { status: 503 });
+    return NextResponse.json({ error: "Le paiement n'est pas configuré." }, { status: 503 });
   }
 
   const verifyRes = await fetch(
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
   const result = await verifyRes.json();
 
   if (result.status !== "SUCCESS") {
-    return NextResponse.json({ error: "Paiement non confirmé par KKiaPay." }, { status: 402 });
+    return NextResponse.json({ error: "Paiement non confirmé." }, { status: 402 });
   }
 
   const existing = await prisma.subscription.findFirst({

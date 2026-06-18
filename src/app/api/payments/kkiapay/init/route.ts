@@ -11,7 +11,7 @@ export async function GET() {
   const settings = await getAppSettings();
 
   if (!settings.kkiapayPublicKey || !settings.kkiapayPrivateKey) {
-    return NextResponse.json({ error: "Le paiement KKiaPay n'est pas encore configuré." }, { status: 503 });
+    return NextResponse.json({ error: "Le paiement n'est pas encore configuré." }, { status: 503 });
   }
 
   return NextResponse.json({

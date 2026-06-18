@@ -525,14 +525,6 @@ model AppSettings {
   resendApiKey String?
   emailFrom    String?
 
-  // Configuration des paiements Stripe — éditable par l'admin, jamais stockée en .env
-  stripeSecretKey     String?
-  stripeWebhookSecret String?
-
-  // Configuration des paiements CinetPay (Mobile Money) — éditable par l'admin, jamais stockée en .env
-  cinetpayApiKey  String?
-  cinetpaySiteId  String?
-
   // Configuration des paiements KKiaPay (Mobile Money Bénin/Afrique) — éditable par l'admin, jamais stockée en .env
   kkiapayPublicKey  String?
   kkiapayPrivateKey String?

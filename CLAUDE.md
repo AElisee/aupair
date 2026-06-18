@@ -15,7 +15,7 @@ AuPair A.EU — Première plateforme mondiale dédiée aux au pairs africains. M
 - **Auth**: NextAuth.js v5 (beta) — Google + Facebook OAuth + credentials, JWT strategy
 - **Hosting**: Vercel
 
-Not yet integrated: Supabase Realtime (messaging), Resend (emails), Supabase Storage (photo uploads). Stripe (card payments) and CinetPay (Mobile Money) are integrated and admin-configurable, see below.
+Not yet integrated: Supabase Realtime (messaging), Supabase Storage (photo uploads). KKiaPay (Mobile Money) is the only payment provider, integrated and admin-configurable, see below.
 
 ## Commands
 
@@ -139,7 +139,6 @@ DATABASE_URL
 NEXTAUTH_URL / NEXTAUTH_SECRET
 GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET
 FACEBOOK_CLIENT_ID / FACEBOOK_CLIENT_SECRET
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY (publishable key only — not currently used by any code, kept for a future Stripe Elements integration)
 NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY
 NEXT_PUBLIC_APP_URL
 ADMIN_EMAIL / ADMIN_PASSWORD / ADMIN_NAME (optional — seeds an ADMIN account on `npm run dev`)
@@ -155,23 +154,19 @@ edited at `/admin/parametres/email` via `/api/admin/constants`. `src/lib/mail.ts
 `[mail]` error (never throws) if either is missing or Resend rejects the send.
 See `docs/email-resend.md` for setup, local testing, and production deployment.
 
-### Payments (Stripe)
+### Payments (KKiaPay — Mobile Money, the only payment provider)
 
-`stripeSecretKey` and `stripeWebhookSecret` are **not** environment variables —
+`kkiapayPublicKey` and `kkiapayPrivateKey` are **not** environment variables —
 they're admin-configurable settings stored on `AppSettings` (`app_settings` table),
-edited at `/admin/parametres/stripe` via `/api/admin/constants`. Both
-`/api/payments/stripe/checkout` and `/api/webhooks/stripe` load them from
-`getAppSettings()` on every request and return `503` if either is missing.
+edited at `/admin/parametres/kkiapay` via `/api/admin/constants`.
 
-### Payments (CinetPay — Mobile Money)
-
-`cinetpayApiKey` and `cinetpaySiteId` are **not** environment variables —
-they're admin-configurable settings stored on `AppSettings` (`app_settings` table),
-edited at `/admin/parametres/cinetpay` via `/api/admin/constants`. Both
-`/api/payments/cinetpay/init` and `/api/webhooks/cinetpay` load them from
-`getAppSettings()` on every request and return `503` if either is missing. The
-`notify_url` sent to CinetPay is `${NEXT_PUBLIC_APP_URL}/api/webhooks/cinetpay`
-(must be publicly reachable — use a tunnel like ngrok for local testing). The
-webhook re-verifies the transaction via CinetPay's `/v2/payment/check` API before
-activating a subscription (never trusts the notify payload directly). CinetPay's
-sandbox/test mode is toggled in the CinetPay dashboard and uses the same API_KEY/SITE_ID.
+- `GET /api/payments/kkiapay/init` — returns the public key + amount (XOF) for the
+  client-side KKiaPay widget (loaded via `https://cdn.kkiapay.me/k.js` on the
+  subscription page); `503` if not configured.
+- `POST /api/payments/kkiapay/verify` — called by the client after the widget reports
+  success; re-verifies the transaction server-side via KKiaPay's
+  `/api/v1/transactions/{id}/status` API (never trusts the client payload alone)
+  before creating a `Subscription` row.
+- `POST /api/webhooks/kkiapay` — server-to-server notification webhook; does the same
+  re-verification independently, looking up the user by the email passed to KKiaPay
+  at payment time.

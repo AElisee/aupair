@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Script from "next/script";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
-import { User, Search, MessageCircle, Bell, CreditCard, Settings, Home, CheckCircle, Clock, Smartphone, Loader2, AlertCircle } from "lucide-react";
+import { User, Search, MessageCircle, Bell, CreditCard, Settings, Home, CheckCircle, Clock, Wallet, Loader2, AlertCircle } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
 
 const navItems = [
@@ -34,7 +34,7 @@ function AbonnementContent() {
 
   const [data, setData] = useState<SubscriptionData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [payingMethod, setPayingMethod] = useState<"card" | "mobile" | "kkiapay" | "dev" | null>(null);
+  const [payingMethod, setPayingMethod] = useState<"kkiapay" | "dev" | null>(null);
   const [error, setError] = useState("");
 
   const load = useCallback(() => {
@@ -51,42 +51,6 @@ function AbonnementContent() {
   }, [load]);
 
   const paymentStatus = searchParams.get("payment");
-
-  const handleStripe = async () => {
-    setError("");
-    setPayingMethod("card");
-    try {
-      const res = await fetch("/api/payments/stripe/checkout", { method: "POST" });
-      const json = await res.json();
-      if (!res.ok) {
-        setError(json.error ?? "Une erreur est survenue.");
-        return;
-      }
-      window.location.href = json.url;
-    } catch {
-      setError("Une erreur est survenue.");
-    } finally {
-      setPayingMethod(null);
-    }
-  };
-
-  const handleCinetPay = async () => {
-    setError("");
-    setPayingMethod("mobile");
-    try {
-      const res = await fetch("/api/payments/cinetpay/init", { method: "POST" });
-      const json = await res.json();
-      if (!res.ok) {
-        setError(json.error ?? "Une erreur est survenue.");
-        return;
-      }
-      window.location.href = json.url;
-    } catch {
-      setError("Une erreur est survenue.");
-    } finally {
-      setPayingMethod(null);
-    }
-  };
 
   const handleKkiapay = async () => {
     setError("");
@@ -105,7 +69,7 @@ function AbonnementContent() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const w = window as any;
       if (typeof w.openKkiapayWidget !== "function") {
-        setError("Le widget KKiaPay n'est pas encore chargé. Veuillez réessayer.");
+        setError("Le module de paiement n'est pas encore chargé. Veuillez réessayer.");
         setPayingMethod(null);
         return;
       }
@@ -134,7 +98,7 @@ function AbonnementContent() {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       w.addKkiapayListener("failed", () => {
-        setError("Le paiement KKiaPay a échoué ou a été annulé.");
+        setError("Le paiement a échoué ou a été annulé.");
         setPayingMethod(null);
       });
 
@@ -260,28 +224,12 @@ function AbonnementContent() {
               </div>
               <div className="space-y-2">
                 <button
-                  onClick={handleCinetPay}
-                  disabled={payingMethod !== null}
-                  className="w-full flex items-center gap-3 bg-white/20 hover:bg-white/30 disabled:opacity-60 rounded-xl p-3 text-sm font-medium transition-colors"
-                >
-                  {payingMethod === "mobile" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Smartphone className="w-4 h-4" />}
-                  Payer par Mobile Money ({formatCurrency(priceXof, "XOF")})
-                </button>
-                <button
                   onClick={handleKkiapay}
                   disabled={payingMethod !== null}
-                  className="w-full flex items-center gap-3 bg-white/20 hover:bg-white/30 disabled:opacity-60 rounded-xl p-3 text-sm font-medium transition-colors"
+                  className="w-full flex items-center gap-3 bg-[#1A1A2E] hover:bg-[#1A1A2E]/90 disabled:opacity-60 rounded-xl p-3 text-sm font-medium transition-colors text-white"
                 >
-                  {payingMethod === "kkiapay" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Smartphone className="w-4 h-4" />}
-                  Payer avec KKiaPay ({formatCurrency(priceXof, "XOF")})
-                </button>
-                <button
-                  onClick={handleStripe}
-                  disabled={payingMethod !== null}
-                  className="w-full flex items-center gap-3 bg-white/20 hover:bg-white/30 disabled:opacity-60 rounded-xl p-3 text-sm font-medium transition-colors"
-                >
-                  {payingMethod === "card" ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
-                  Payer par carte bancaire ({formatCurrency(priceEur, "EUR")})
+                  {payingMethod === "kkiapay" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wallet className="w-4 h-4" />}
+                  Payer maintenant ({formatCurrency(priceXof, "XOF")})
                 </button>
               </div>
               <button

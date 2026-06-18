@@ -24,7 +24,7 @@ const categories = [
   {
     name: "Paiement",
     items: [
-      { q: "Quels moyens de paiement acceptez-vous ?", a: "Mobile Money (Orange Money, MTN MoMo, Wave, Moov), carte bancaire Visa/Mastercard via Stripe, et PayPal." },
+      { q: "Quels moyens de paiement acceptez-vous ?", a: "Mobile Money via KKiaPay (Orange Money, MTN MoMo, Moov Money, et plus)." },
       { q: "Y a-t-il des remboursements ?", a: "Non. Conformément à nos CGV, aucun remboursement n'est accordé une fois l'abonnement activé." },
       { q: "L'abonnement se renouvelle-t-il automatiquement ?", a: "Non. Vous recevrez des rappels par email à J-7, J-3 et J-1 avant expiration pour vous permettre de renouveler." },
     ],

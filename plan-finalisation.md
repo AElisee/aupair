@@ -2,7 +2,7 @@
 
 Date : 09 juin 2026  
 Objectif : terminer le projet progressivement, en validant chaque fonctionnalite avant de passer a la suivante.  
-Stack recommandee : Next.js API Routes + Prisma + PostgreSQL Supabase + Supabase Storage/Realtime + Stripe + CinetPay + Resend.
+Stack recommandee : Next.js API Routes + Prisma + PostgreSQL Supabase + Supabase Storage/Realtime + KKiaPay + Resend.
 
 ## Methode de travail
 
@@ -93,11 +93,6 @@ Variables a verifier :
 - `GOOGLE_CLIENT_SECRET`
 - `FACEBOOK_CLIENT_ID`
 - `FACEBOOK_CLIENT_SECRET`
-- `STRIPE_SECRET_KEY`
-- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
-- `STRIPE_WEBHOOK_SECRET`
-- `CINETPAY_API_KEY`
-- `CINETPAY_SITE_ID`
 - `RESEND_API_KEY`
 - `RESEND_FROM_EMAIL`
 - `NEXT_PUBLIC_SUPABASE_URL`
@@ -949,91 +944,37 @@ Critere de validation :
 
 # Phase 6 - Paiement, emails, upload
 
-## Tache 26 - Integrer Stripe Checkout
+## Tache 26 - Integrer KKiaPay / Mobile Money (FAIT - remplace Stripe et CinetPay)
 
-Periode : Jour 25 a Jour 26  
+Periode : Jour 25 a Jour 29  
 Priorite : tres haute pour production
 
 Objectif :
 
-- Creer une session Stripe Checkout.
-- Rediriger l'au pair vers Stripe.
-- Gerer retour succes/echec.
+- Permettre le paiement Mobile Money via KKiaPay (seul moyen de paiement retenu).
+- Activer l'abonnement uniquement apres paiement confirme.
 
-Routes API a creer :
+Routes API creees :
 
-- `src/app/api/payments/stripe/checkout/route.ts`
+- `src/app/api/payments/kkiapay/init/route.ts`
+- `src/app/api/payments/kkiapay/verify/route.ts`
+- `src/app/api/webhooks/kkiapay/route.ts`
 
 Fichiers concernes :
 
 - `src/app/dashboard/au-pair/abonnement/page.tsx`
 
-Ressources a utiliser :
+Ressources utilisees :
 
-- Package `stripe`
-- Package `@stripe/stripe-js`
-- Dashboard Stripe
-- Variables `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
-
-Critere de validation :
-
-- Un utilisateur peut ouvrir Checkout.
-- Le montant est correct : 32 EUR.
-- La session contient l'id utilisateur en metadata.
-
-## Tache 27 - Ajouter le webhook Stripe
-
-Periode : Jour 27  
-Priorite : tres haute pour production
-
-Objectif :
-
-- Activer l'abonnement uniquement apres paiement confirme.
-
-Route API a creer :
-
-- `src/app/api/webhooks/stripe/route.ts`
-
-Ressources a utiliser :
-
-- `stripe.webhooks.constructEvent`
-- Variable `STRIPE_WEBHOOK_SECRET`
+- Widget client KKiaPay (`https://cdn.kkiapay.me/k.js`)
+- Cles `kkiapayPublicKey` / `kkiapayPrivateKey`, stockees dans `AppSettings` et editables via `/admin/parametres/kkiapay`
 - Prisma `Subscription`
 
 Critere de validation :
 
-- Un paiement reussi cree un abonnement actif de 30 jours.
-- Un paiement echoue n'active rien.
-- Le webhook est idempotent.
-
-## Tache 28 - Integrer CinetPay / Mobile Money
-
-Periode : Jour 28 a Jour 29  
-Priorite : haute pour Cote d'Ivoire
-
-Objectif :
-
-- Permettre le paiement Mobile Money.
-- Gerer notification/callback CinetPay.
-
-Routes API a creer :
-
-- `src/app/api/payments/cinetpay/init/route.ts`
-- `src/app/api/webhooks/cinetpay/route.ts`
-
-Ressources a utiliser :
-
-- Compte marchand CinetPay
-- `CINETPAY_API_KEY`
-- `CINETPAY_SITE_ID`
-- Prisma `Subscription`
-- Montant recommande local : 21 000 FCFA
-
-Critere de validation :
-
-- Un paiement Mobile Money peut etre initie.
-- La notification active l'abonnement.
-- Le montant XOF est stocke correctement.
+- Un paiement Mobile Money peut etre initie depuis la page abonnement.
+- Le paiement est re-verifie cote serveur (jamais confiance au payload client seul) avant d'activer l'abonnement.
+- Le montant XOF est stocke correctement et l'abonnement dure 30 jours.
 
 ## Tache 29 - Ajouter les emails transactionnels
 
@@ -1261,8 +1202,7 @@ Ressources a utiliser :
 
 - Vercel
 - Supabase production
-- Stripe production
-- CinetPay production
+- KKiaPay production
 - Resend domaine verifie
 - Nom de domaine client
 
@@ -1270,7 +1210,7 @@ Checklist :
 
 - Variables production configurees.
 - `NEXTAUTH_URL` pointe vers le domaine final.
-- Webhooks Stripe et CinetPay pointent vers le domaine final.
+- Webhook KKiaPay pointe vers le domaine final.
 - Supabase Storage configure.
 - Domaine email Resend verifie.
 - `npm run build` passe.
@@ -1297,8 +1237,7 @@ Critere de validation :
 10. Implementer messagerie.
 11. Brancher admin.
 12. Brancher contact.
-13. Integrer Stripe.
-14. Integrer CinetPay.
+13. Integrer KKiaPay.
 15. Ajouter emails.
 16. Ajouter upload.
 17. Ajouter pages legales.

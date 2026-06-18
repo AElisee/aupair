@@ -26,10 +26,6 @@ const DEFAULT_SETTINGS = {
   notifyWeeklyViewsDigestEnabled: true,
   resendApiKey: null as string | null,
   emailFrom: null as string | null,
-  stripeSecretKey: null as string | null,
-  stripeWebhookSecret: null as string | null,
-  cinetpayApiKey: null as string | null,
-  cinetpaySiteId: null as string | null,
   kkiapayPublicKey: null as string | null,
   kkiapayPrivateKey: null as string | null,
 };
@@ -57,10 +53,6 @@ export interface AppSettingsInput {
   notifyWeeklyViewsDigestEnabled?: boolean;
   resendApiKey?: string | null;
   emailFrom?: string | null;
-  stripeSecretKey?: string | null;
-  stripeWebhookSecret?: string | null;
-  cinetpayApiKey?: string | null;
-  cinetpaySiteId?: string | null;
   kkiapayPublicKey?: string | null;
   kkiapayPrivateKey?: string | null;
 }

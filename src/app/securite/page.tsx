@@ -8,7 +8,7 @@ const standards = [
   { icon: Eye, title: "Modération de la messagerie", desc: "Notre IA analyse les messages pour détecter les contenus inappropriés, le harcèlement et les tentatives d'arnaque." },
   { icon: Lock, title: "Données chiffrées", desc: "Toutes vos données sont chiffrées en transit (HTTPS/TLS) et au repos. Nous respectons les standards RGPD." },
   { icon: AlertTriangle, title: "Signalement & suspension", desc: "Chaque utilisateur peut signaler un profil ou un message. Les comptes signalés sont examinés sous 24h." },
-  { icon: Shield, title: "Paiements sécurisés", desc: "Les paiements sont traités par Stripe (PCI DSS Level 1) et CinetPay. Aucune donnée bancaire n'est stockée sur nos serveurs." },
+  { icon: Shield, title: "Paiements sécurisés", desc: "Les paiements sont traités par KKiaPay. Aucune donnée bancaire n'est stockée sur nos serveurs." },
   { icon: CheckCircle, title: "Conformité RGPD", desc: "Vous avez le droit d'accéder, modifier ou supprimer vos données à tout moment. Contactez rgpd@aupair-aeu.com." },
 ];
 

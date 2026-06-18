@@ -9,15 +9,11 @@ export async function GET() {
   }
 
   const settings = await getAppSettings();
-  const { resendApiKey, stripeSecretKey, stripeWebhookSecret, cinetpayApiKey, cinetpaySiteId, kkiapayPublicKey, kkiapayPrivateKey, ...rest } = settings;
+  const { resendApiKey, kkiapayPublicKey, kkiapayPrivateKey, ...rest } = settings;
   return NextResponse.json({
     settings: {
       ...rest,
       resendApiKeyConfigured: !!resendApiKey,
-      stripeSecretKeyConfigured: !!stripeSecretKey,
-      stripeWebhookSecretConfigured: !!stripeWebhookSecret,
-      cinetpayApiKeyConfigured: !!cinetpayApiKey,
-      cinetpaySiteIdConfigured: !!cinetpaySiteId,
       kkiapayPublicKeyConfigured: !!kkiapayPublicKey,
       kkiapayPrivateKeyConfigured: !!kkiapayPrivateKey,
     },
@@ -121,42 +117,6 @@ export async function PUT(req: Request) {
     data.emailFrom = trimmed === "" ? null : trimmed;
   }
 
-  // stripeSecretKey / stripeWebhookSecret : même logique que resendApiKey —
-  // une valeur vide efface la clé, une valeur absente ne la modifie pas.
-  if ("stripeSecretKey" in body) {
-    const value = body.stripeSecretKey;
-    if (typeof value !== "string") {
-      return NextResponse.json({ error: `Le champ "stripeSecretKey" doit être une chaîne.` }, { status: 400 });
-    }
-    data.stripeSecretKey = value.trim() === "" ? null : value.trim();
-  }
-
-  if ("stripeWebhookSecret" in body) {
-    const value = body.stripeWebhookSecret;
-    if (typeof value !== "string") {
-      return NextResponse.json({ error: `Le champ "stripeWebhookSecret" doit être une chaîne.` }, { status: 400 });
-    }
-    data.stripeWebhookSecret = value.trim() === "" ? null : value.trim();
-  }
-
-  // cinetpayApiKey / cinetpaySiteId : même logique que stripeSecretKey —
-  // une valeur vide efface la clé, une valeur absente ne la modifie pas.
-  if ("cinetpayApiKey" in body) {
-    const value = body.cinetpayApiKey;
-    if (typeof value !== "string") {
-      return NextResponse.json({ error: `Le champ "cinetpayApiKey" doit être une chaîne.` }, { status: 400 });
-    }
-    data.cinetpayApiKey = value.trim() === "" ? null : value.trim();
-  }
-
-  if ("cinetpaySiteId" in body) {
-    const value = body.cinetpaySiteId;
-    if (typeof value !== "string") {
-      return NextResponse.json({ error: `Le champ "cinetpaySiteId" doit être une chaîne.` }, { status: 400 });
-    }
-    data.cinetpaySiteId = value.trim() === "" ? null : value.trim();
-  }
-
   if ("kkiapayPublicKey" in body) {
     const value = body.kkiapayPublicKey;
     if (typeof value !== "string") {
@@ -174,15 +134,11 @@ export async function PUT(req: Request) {
   }
 
   const settings = await updateAppSettings(data);
-  const { resendApiKey, stripeSecretKey, stripeWebhookSecret, cinetpayApiKey, cinetpaySiteId, kkiapayPublicKey, kkiapayPrivateKey, ...rest } = settings;
+  const { resendApiKey, kkiapayPublicKey, kkiapayPrivateKey, ...rest } = settings;
   return NextResponse.json({
     settings: {
       ...rest,
       resendApiKeyConfigured: !!resendApiKey,
-      stripeSecretKeyConfigured: !!stripeSecretKey,
-      stripeWebhookSecretConfigured: !!stripeWebhookSecret,
-      cinetpayApiKeyConfigured: !!cinetpayApiKey,
-      cinetpaySiteIdConfigured: !!cinetpaySiteId,
       kkiapayPublicKeyConfigured: !!kkiapayPublicKey,
       kkiapayPrivateKeyConfigured: !!kkiapayPrivateKey,
     },

@@ -162,7 +162,7 @@
 </ul>
 
 <h3>Modèle économique</h3>
-<p>Abonnement <strong>32 € / 30 jours</strong> côté au pair pour débloquer la messagerie. Inscription <strong>gratuite</strong> côté famille. Paiement prévu par carte bancaire / PayPal (Stripe) et Mobile Money (CinetPay) pour le marché africain.</p>
+<p>Abonnement <strong>32 € / 30 jours</strong> côté au pair pour débloquer la messagerie. Inscription <strong>gratuite</strong> côté famille. Paiement prévu par Mobile Money (KKiaPay) pour le marché africain.</p>
 
 <h3>Objectif de la mission de reprise</h3>
 <div class="callout">
@@ -179,7 +179,7 @@
   <tr><td>Base de données</td><td>PostgreSQL</td><td>Supabase en production</td></tr>
   <tr><td>Authentification</td><td>NextAuth.js v5 (beta)</td><td>Google + Facebook OAuth + Credentials</td></tr>
   <tr><td>Messagerie</td><td>Supabase Realtime <span class="muted">(prévu)</span></td><td>Polling REST en première étape</td></tr>
-  <tr><td>Paiement</td><td>Stripe + CinetPay <span class="muted">(prévu)</span></td><td>CB/PayPal + Mobile Money</td></tr>
+  <tr><td>Paiement</td><td>KKiaPay <span class="muted">(prévu)</span></td><td>Mobile Money</td></tr>
   <tr><td>Emails</td><td>Resend <span class="muted">(prévu)</span></td><td>Emails transactionnels</td></tr>
   <tr><td>Stockage fichiers</td><td>Supabase Storage <span class="muted">(prévu)</span></td><td>Photos de profil, documents</td></tr>
   <tr><td>Hébergement</td><td>Vercel</td><td>Build avec <code>prisma generate</code> en postinstall</td></tr>
@@ -301,7 +301,7 @@
   <tr><td>Données dynamiques (Prisma)</td><td><span class="badge b-todo">À FAIRE</span></td><td>Toutes les pages utilisent des tableaux <code>mock*</code> en dur</td></tr>
   <tr><td>API métier (profils, messages…)</td><td><span class="badge b-todo">À FAIRE</span></td><td>Dossier <code>/api</code> quasi vide</td></tr>
   <tr><td>Messagerie fonctionnelle</td><td><span class="badge b-todo">À FAIRE</span></td><td>UI statique, pas de persistance ni gating réel</td></tr>
-  <tr><td>Paiement (Stripe / CinetPay)</td><td><span class="badge b-todo">À FAIRE</span></td><td>Packages installés, zéro intégration ; cités uniquement dans les textes</td></tr>
+  <tr><td>Paiement (KKiaPay)</td><td><span class="badge b-todo">À FAIRE</span></td><td>Package installé, zéro intégration ; cité uniquement dans les textes</td></tr>
   <tr><td>Emails (Resend)</td><td><span class="badge b-todo">À FAIRE</span></td><td>Package installé, jamais utilisé</td></tr>
   <tr><td>Upload photos (Supabase Storage)</td><td><span class="badge b-todo">À FAIRE</span></td><td>Bouton décoratif non fonctionnel</td></tr>
   <tr><td>Dashboard famille (sous-pages)</td><td><span class="badge b-todo">À FAIRE</span></td><td>5 sous-pages liées dans la nav mais inexistantes</td></tr>
@@ -327,7 +327,7 @@
   <li><strong>Remplacement des données mock</strong> — convertir annuaires, dashboards, blog et FAQ en lectures Prisma réelles.</li>
   <li><strong>API métier</strong> — profils (CRUD), messages, abonnement, contact, actions admin.</li>
   <li><strong>Messagerie</strong> — persistance + gating abonnement (côté serveur), puis temps réel.</li>
-  <li><strong>Paiement</strong> — Stripe Checkout + webhook, CinetPay Mobile Money.</li>
+  <li><strong>Paiement</strong> — KKiaPay Mobile Money (init + webhook).</li>
   <li><strong>Emails transactionnels</strong> — Resend (bienvenue, confirmation, rappels d'expiration).</li>
   <li><strong>Upload de fichiers</strong> — Supabase Storage (photos de profil, pièces d'identité).</li>
   <li><strong>Pages légales</strong> — compléter CGU, CGV, confidentialité, cookies.</li>
@@ -403,7 +403,7 @@
 <div class="phase-head">Phase 7 — Paiement réel &amp; emails (post-MVP)</div>
 <div class="phase-body">
 <ul>
-  <li>Stripe Checkout + webhook (<code>/api/webhooks/stripe</code>) ; CinetPay pour le Mobile Money.</li>
+  <li>KKiaPay pour le Mobile Money (<code>/api/payments/kkiapay</code> + <code>/api/webhooks/kkiapay</code>).</li>
   <li>Resend : emails transactionnels (bienvenue, confirmation d'abonnement, rappels d'expiration).</li>
 </ul>
 </div>
@@ -437,8 +437,7 @@ npx playwright test</code></pre>
   <tr><td><code>NEXTAUTH_URL</code> / <code>NEXTAUTH_SECRET</code></td><td>NextAuth — secret à régénérer pour la prod</td></tr>
   <tr><td><code>GOOGLE_CLIENT_ID/SECRET</code></td><td>OAuth Google</td></tr>
   <tr><td><code>FACEBOOK_CLIENT_ID/SECRET</code></td><td>OAuth Facebook</td></tr>
-  <tr><td><code>STRIPE_SECRET_KEY</code> / <code>NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code> / <code>STRIPE_WEBHOOK_SECRET</code></td><td>Paiement Stripe</td></tr>
-  <tr><td><code>CINETPAY_API_KEY</code> / <code>CINETPAY_SITE_ID</code></td><td>Paiement Mobile Money</td></tr>
+  <tr><td>(géré via <code>AppSettings</code>, pas en .env)</td><td>Paiement KKiaPay — <code>kkiapayPublicKey</code> / <code>kkiapayPrivateKey</code></td></tr>
   <tr><td><code>RESEND_API_KEY</code> / <code>RESEND_FROM_EMAIL</code></td><td>Emails transactionnels</td></tr>
   <tr><td><code>NEXT_PUBLIC_SUPABASE_URL</code> / <code>..._ANON_KEY</code> / <code>SUPABASE_SERVICE_ROLE_KEY</code></td><td>Realtime + Storage</td></tr>
 </table>
