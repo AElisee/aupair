@@ -172,6 +172,16 @@ model PasswordResetToken {
   @@map("password_reset_tokens")
 }
 
+// ─── RATE LIMITING ────────────────────────────────────────────────────────────
+
+model RateLimitEntry {
+  key         String   @id
+  count       Int      @default(1)
+  windowStart DateTime @default(now())
+
+  @@map("rate_limit_entries")
+}
+
 // ─── PROFIL AU PAIR ──────────────────────────────────────────────────────────
 
 model AuPairProfile {

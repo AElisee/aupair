@@ -5,6 +5,10 @@ import FacebookProvider from "next-auth/providers/facebook";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
+import { checkRateLimit, resetRateLimit } from "./rate-limit";
+
+const LOGIN_MAX_ATTEMPTS = 5;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -29,6 +33,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!credentials?.email || !credentials?.password) return null;
 
         const normalizedEmail = (credentials.email as string).trim().toLowerCase();
+        const rateLimitKey = `login:${normalizedEmail}`;
+
+        const { allowed } = await checkRateLimit(rateLimitKey, LOGIN_MAX_ATTEMPTS, LOGIN_WINDOW_MS);
+        if (!allowed) return null;
 
         const user = await prisma.user.findUnique({
           where: { email: normalizedEmail },
@@ -43,6 +51,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!isValid) return null;
         if (!user.isActive) return null;
+
+        await resetRateLimit(rateLimitKey);
 
         return {
           id: user.id,

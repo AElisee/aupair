@@ -3,8 +3,12 @@ import { prisma } from "@/lib/prisma";
 import { sendMail } from "@/lib/mail";
 import { generateResetToken, RESET_TOKEN_TTL_MS } from "@/lib/password-reset";
 import { passwordResetEmailHtml } from "@/lib/email-templates";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const WINDOW_MS = 60 * 60 * 1000;
+const MAX_PER_EMAIL = 3;
+const MAX_PER_IP = 10;
 
 export async function POST(request: Request) {
   let body: { email?: string };
@@ -17,6 +21,17 @@ export async function POST(request: Request) {
   const email = body.email?.trim().toLowerCase() ?? "";
   if (!EMAIL_REGEX.test(email)) {
     return NextResponse.json({ error: "Adresse email invalide." }, { status: 400 });
+  }
+
+  const ip = getClientIp(request);
+  const [emailLimit, ipLimit] = await Promise.all([
+    checkRateLimit(`forgot-password:email:${email}`, MAX_PER_EMAIL, WINDOW_MS),
+    checkRateLimit(`forgot-password:ip:${ip}`, MAX_PER_IP, WINDOW_MS),
+  ]);
+  if (!emailLimit.allowed || !ipLimit.allowed) {
+    console.log(`[forgot-password] Limite de débit atteinte pour "${email}" (ip=${ip}).`);
+    // Réponse identique au cas normal — n'expose jamais l'état du rate limit à l'appelant.
+    return NextResponse.json({ ok: true });
   }
 
   console.log(`[forgot-password] Demande de réinitialisation reçue pour "${email}".`);
