@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Globe, Mail, ArrowLeft, CheckCircle, Loader2 } from "lucide-react";
+import Image from "next/image";
+import { Mail, ArrowLeft, CheckCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function MotDePasseOubliePage() {
@@ -41,9 +42,13 @@ export default function MotDePasseOubliePage() {
     <div className="min-h-dvh flex items-center justify-center p-8">
       <div className="w-full max-w-md">
         <div className="flex items-center gap-2 font-bold text-xl mb-8">
-          <div className="w-8 h-8 bg-[#E87722] rounded-full flex items-center justify-center">
-            <Globe className="w-5 h-5 text-white" />
-          </div>
+          <Image
+            src="/Logo_au_pair.png"
+            alt="AuPair A.EU"
+            width={32}
+            height={32}
+            className="w-8 h-8 object-contain"
+          />
           <span className="text-[#1A1A2E]">AuPair</span>
           <span className="text-[#E87722]">A.EU</span>
         </div>

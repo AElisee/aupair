@@ -34,7 +34,7 @@ function AbonnementContent() {
 
   const [data, setData] = useState<SubscriptionData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [payingMethod, setPayingMethod] = useState<"kkiapay" | "dev" | null>(null);
+  const [payingMethod, setPayingMethod] = useState<"kkiapay" | null>(null);
   const [error, setError] = useState("");
 
   const load = useCallback(() => {
@@ -111,24 +111,6 @@ function AbonnementContent() {
       });
     } catch {
       setError("Une erreur est survenue.");
-      setPayingMethod(null);
-    }
-  };
-
-  const handleDevActivate = async () => {
-    setError("");
-    setPayingMethod("dev");
-    try {
-      const res = await fetch("/api/subscription/dev-activate", { method: "POST" });
-      const json = await res.json();
-      if (!res.ok) {
-        setError(json.error ?? "Une erreur est survenue.");
-        return;
-      }
-      load();
-    } catch {
-      setError("Une erreur est survenue.");
-    } finally {
       setPayingMethod(null);
     }
   };
@@ -232,14 +214,6 @@ function AbonnementContent() {
                   Payer maintenant ({formatCurrency(priceXof, "XOF")})
                 </button>
               </div>
-              <button
-                onClick={handleDevActivate}
-                disabled={payingMethod !== null}
-                className="w-full flex items-center justify-center gap-2 mt-3 border border-white/30 hover:bg-white/10 disabled:opacity-60 rounded-xl p-2.5 text-xs font-medium transition-colors text-white/80"
-              >
-                {payingMethod === "dev" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-                Activer l&apos;abonnement (test, sans paiement)
-              </button>
             </div>
 
             {/* Inclus dans l'abonnement */}
