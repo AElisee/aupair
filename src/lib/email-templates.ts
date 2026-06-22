@@ -2,13 +2,14 @@
 
 const BRAND_COLOR = "#E87722";
 const DARK_COLOR = "#1A1A2E";
+const LOGO_URL = `${process.env.NEXT_PUBLIC_APP_URL ?? "https://www.aupairaeu.com"}/logo-email.png`;
 
 function layout(content: string) {
   return `
     <div style="background-color:#F5F5F5;padding:32px 16px;font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
       <div style="max-width:480px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #eee;">
-        <div style="background:${DARK_COLOR};padding:20px 24px;">
-          <span style="color:#ffffff;font-size:18px;font-weight:800;">AuPair <span style="color:${BRAND_COLOR};">A.EU</span></span>
+        <div style="background:${DARK_COLOR};padding:20px 24px;text-align:center;">
+          <img src="${LOGO_URL}" alt="AuPair A.EU" height="32" style="height:32px;display:inline-block;" />
         </div>
         <div style="padding:32px 24px;color:#333333;font-size:14px;line-height:1.6;">
           ${content}
