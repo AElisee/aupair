@@ -3,7 +3,8 @@
 import { Suspense, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Globe, Eye, EyeOff, Mail, Lock } from "lucide-react";
+import Image from "next/image";
+import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   getSafeCallbackUrl,
@@ -80,7 +81,13 @@ function ConnexionForm() {
       <div className="hidden lg:flex flex-1 bg-linear-to-br from-[#1A1A2E] to-[#0f3460] items-center justify-center p-12">
         <div className="text-center text-white max-w-sm">
           <div className="w-20 h-20 bg-[#E87722] rounded-full flex items-center justify-center mx-auto mb-6">
-            <Globe className="w-10 h-10 text-white" />
+            <Image
+              src="/Logo_au_pair.png"
+              alt="AuPair A.EU"
+              width={48}
+              height={48}
+              className="w-12 h-12 object-contain"
+            />
           </div>
           <h2 className="text-3xl font-extrabold mb-4">
             Bienvenue sur AuPair A.EU
@@ -108,9 +115,7 @@ function ConnexionForm() {
         <div className="w-full max-w-md">
           {/* Logo mobile */}
           {/* <div className="lg:hidden flex items-center gap-2 font-bold text-xl mb-8">
-            <div className="w-8 h-8 bg-[#E87722] rounded-full flex items-center justify-center">
-              <Globe className="w-5 h-5 text-white" />
-            </div>
+            <Image src="/Logo_au_pair.png" alt="AuPair A.EU" width={32} height={32} className="w-8 h-8 object-contain" />
             <span className="text-[#1A1A2E]">AuPair</span>
             <span className="text-[#E87722]">A.EU</span>
           </div> */}
