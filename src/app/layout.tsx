@@ -10,6 +10,10 @@ export const metadata: Metadata = {
   description: "La première plateforme mondiale dédiée aux au pairs africains. Connectez-vous avec des familles en France, Allemagne, Belgique, Luxembourg, Suisse et aux États-Unis.",
   keywords: ["au pair africain", "famille accueil", "au pair Cameroun", "au pair France", "jeune au pair"],
   authors: [{ name: "BODOU SERVICE" }],
+  icons: {
+    icon: "/icons/icon.png",
+    apple: "/icons/apple-icon.png",
+  },
   openGraph: {
     type: "website",
     locale: "fr_FR",
