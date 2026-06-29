@@ -1,8 +1,9 @@
 import { loadEnvConfig } from "@next/env";
 import { defineConfig } from "prisma/config";
 
-// Charge .env / .env.local exactement comme Next.js (gère l'échappement \$ des mots de passe)
-loadEnvConfig(process.cwd());
+// En dev (ou sans NODE_ENV), force le chargement de .env (pas .env.production).
+// Sur Vercel, NODE_ENV=production → .env.production est chargé correctement.
+loadEnvConfig(process.cwd(), process.env.NODE_ENV !== "production");
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
