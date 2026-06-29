@@ -80,13 +80,13 @@ function ConnexionForm() {
       {/* Panneau gauche — déco */}
       <div className="hidden lg:flex flex-1 bg-linear-to-br from-[#1A1A2E] to-[#0f3460] items-center justify-center p-12">
         <div className="text-center text-white max-w-sm">
-          <div className="w-20 h-20 bg-[#E87722] rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="w-20 h-20 flex items-center justify-center mx-auto mb-6">
             <Image
               src="/Logo_au_pair.png"
               alt="AuPair A.EU"
-              width={48}
-              height={48}
-              className="w-12 h-12 object-contain"
+              width={80}
+              height={80}
+              className="w-20 h-20 object-contain"
             />
           </div>
           <h2 className="text-3xl font-extrabold mb-4">

@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Globe, CheckCircle, ArrowRight, ArrowLeft, User, Home } from "lucide-react";
+import {
+  Globe,
+  CheckCircle,
+  ArrowRight,
+  ArrowLeft,
+  User,
+  Home,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCountries } from "@/hooks/useCountries";
 import { useConstants } from "@/hooks/useConstants";
@@ -18,21 +25,32 @@ function InscriptionContent() {
   const [step, setStep] = useState(defaultRole ? 1 : 0);
   const [role, setRole] = useState<Role>(defaultRole);
   const [form, setForm] = useState({
-    firstName: "", lastName: "", email: "", password: "",
-    country: "", gender: "", dateOfBirth: "", languages: [] as string[],
-    educationLevel: "", experience: "",
-    city: "", numberOfKids: "", hostCountry: "",
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    country: "",
+    gender: "",
+    dateOfBirth: "",
+    languages: [] as string[],
+    educationLevel: "",
+    experience: "",
+    city: "",
+    numberOfKids: "",
+    hostCountry: "",
   });
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { origin: originCountries, host: hostCountries } = useCountries();
-  const { languages: LANGUAGES, educationLevels: EDUCATION_LEVELS } = useConstants();
+  const { languages: LANGUAGES, educationLevels: EDUCATION_LEVELS } =
+    useConstants();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
 
-  const steps = role === "au-pair"
-    ? ["Mon rôle", "Infos personnelles", "Mon profil", "Confirmation"]
-    : ["Mon rôle", "Infos famille", "Mes besoins", "Confirmation"];
+  const steps =
+    role === "au-pair"
+      ? ["Mon rôle", "Infos personnelles", "Mon profil", "Confirmation"]
+      : ["Mon rôle", "Infos famille", "Mes besoins", "Confirmation"];
 
   const requiredErrors = (() => {
     const errs: Record<string, string> = {};
@@ -44,13 +62,19 @@ function InscriptionContent() {
     } else if (step === 2 && role === "au-pair") {
       if (!form.country) errs.country = "Le pays d'origine est obligatoire.";
       if (!form.gender) errs.gender = "Le genre est obligatoire.";
-      if (!form.dateOfBirth) errs.dateOfBirth = "La date de naissance est obligatoire.";
-      else if (calculateAge(form.dateOfBirth) < 18) errs.dateOfBirth = "Vous devez avoir au moins 18 ans pour vous inscrire.";
-      if (form.languages.length === 0) errs.languages = "Sélectionnez au moins une langue.";
+      if (!form.dateOfBirth)
+        errs.dateOfBirth = "La date de naissance est obligatoire.";
+      else if (calculateAge(form.dateOfBirth) < 18)
+        errs.dateOfBirth =
+          "Vous devez avoir au moins 18 ans pour vous inscrire.";
+      if (form.languages.length === 0)
+        errs.languages = "Sélectionnez au moins une langue.";
     } else if (step === 2 && role === "famille") {
-      if (!form.hostCountry) errs.hostCountry = "Le pays d'accueil est obligatoire.";
+      if (!form.hostCountry)
+        errs.hostCountry = "Le pays d'accueil est obligatoire.";
       if (!form.city) errs.city = "La ville est obligatoire.";
-      if (!form.numberOfKids) errs.numberOfKids = "Le nombre d'enfants est obligatoire.";
+      if (!form.numberOfKids)
+        errs.numberOfKids = "Le nombre d'enfants est obligatoire.";
     }
     return errs;
   })();
@@ -103,7 +127,9 @@ function InscriptionContent() {
       });
 
       if (signInResult?.error) {
-        setSubmitError("Compte créé, mais connexion automatique échouée. Connectez-vous via la page de connexion.");
+        setSubmitError(
+          "Compte créé, mais connexion automatique échouée. Connectez-vous via la page de connexion.",
+        );
       }
 
       setDone(true);
@@ -121,14 +147,22 @@ function InscriptionContent() {
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle className="w-10 h-10 text-green-500" />
           </div>
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E] mb-3">Inscription réussie !</h1>
+          <h1 className="text-2xl font-extrabold text-[#1A1A2E] mb-3">
+            Inscription réussie !
+          </h1>
           <p className="text-gray-500 mb-6">
             {role === "au-pair"
               ? "Votre profil est en cours de vérification. Vous recevrez un email dans les 24-48h."
               : "Votre profil famille est en cours de vérification. Vous recevrez un email dans les 24-48h."}
           </p>
-          <Link href={role === "au-pair" ? "/trouver-famille" : "/trouver-au-pair"}>
-            <Button size="lg">{role === "au-pair" ? "Consulter les familles d'accueil" : "Consulter les au pairs"}</Button>
+          <Link
+            href={role === "au-pair" ? "/trouver-famille" : "/trouver-au-pair"}
+          >
+            <Button size="lg">
+              {role === "au-pair"
+                ? "Consulter les familles d'accueil"
+                : "Consulter les au pairs"}
+            </Button>
           </Link>
         </div>
       </div>
@@ -143,7 +177,9 @@ function InscriptionContent() {
           <div className="w-8 h-8 bg-[#E87722] rounded-full flex items-center justify-center">
             <Globe className="w-5 h-5 text-white" />
           </div>
-          <span className="font-bold text-xl text-[#1A1A2E]">AuPair<span className="text-[#E87722]">A.EU</span></span>
+          <span className="font-bold text-xl text-[#1A1A2E]">
+            AuPair<span className="text-[#E87722]">A.EU</span>
+          </span>
         </div>
 
         {/* Stepper */}
@@ -151,13 +187,21 @@ function InscriptionContent() {
           <div className="flex items-center justify-between mb-8">
             {steps.map((s, i) => (
               <div key={s} className="flex items-center">
-                <div className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold transition-all ${
-                  i < step ? "bg-[#E87722] text-white" : i === step ? "bg-[#E87722] text-white ring-4 ring-[#E87722]/20" : "bg-gray-200 text-gray-500"
-                }`}>
+                <div
+                  className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold transition-all ${
+                    i < step
+                      ? "bg-[#E87722] text-white"
+                      : i === step
+                        ? "bg-[#E87722] text-white ring-4 ring-[#E87722]/20"
+                        : "bg-gray-200 text-gray-500"
+                  }`}
+                >
                   {i < step ? <CheckCircle className="w-4 h-4" /> : i + 1}
                 </div>
                 {i < steps.length - 1 && (
-                  <div className={`h-0.5 w-8 sm:w-16 mx-1 transition-all ${i < step ? "bg-[#E87722]" : "bg-gray-200"}`} />
+                  <div
+                    className={`h-0.5 w-8 sm:w-16 mx-1 transition-all ${i < step ? "bg-[#E87722]" : "bg-gray-200"}`}
+                  />
                 )}
               </div>
             ))}
@@ -168,26 +212,56 @@ function InscriptionContent() {
           {/* Étape 0 : Choix du rôle */}
           {step === 0 && (
             <div>
-              <h1 className="text-2xl font-extrabold text-[#1A1A2E] mb-2">Créer un compte</h1>
+              <h1 className="text-2xl font-extrabold text-[#1A1A2E] mb-2">
+                Créer un compte
+              </h1>
               <p className="text-gray-500 mb-8">Vous êtes...</p>
               <div className="grid sm:grid-cols-2 gap-4">
-                <button onClick={() => { setRole("au-pair"); setStep(1); }}
-                  className="border-2 border-gray-200 hover:border-[#E87722] rounded-2xl p-6 text-left transition-all group">
+                <button
+                  onClick={() => {
+                    setRole("au-pair");
+                    setStep(1);
+                  }}
+                  className="border-2 border-gray-200 hover:border-[#E87722] rounded-2xl p-6 text-left transition-all group"
+                >
                   <User className="w-8 h-8 text-[#E87722] mb-3" />
-                  <h3 className="font-bold text-[#1A1A2E] text-lg mb-1">Au pair</h3>
-                  <p className="text-gray-500 text-sm">Je cherche une famille d'accueil en Europe</p>
-                  <p className="text-[#E87722] text-xs font-semibold mt-2">32€ / 30 jours</p>
+                  <h3 className="font-bold text-[#1A1A2E] text-lg mb-1">
+                    Au pair
+                  </h3>
+                  <p className="text-gray-500 text-sm">
+                    Je cherche une famille d'accueil en Europe
+                  </p>
+                  <p className="text-[#E87722] text-xs font-semibold mt-2">
+                    32€ / 30 jours
+                  </p>
                 </button>
-                <button onClick={() => { setRole("famille"); setStep(1); }}
-                  className="border-2 border-gray-200 hover:border-[#1A1A2E] rounded-2xl p-6 text-left transition-all">
+                <button
+                  onClick={() => {
+                    setRole("famille");
+                    setStep(1);
+                  }}
+                  className="border-2 border-gray-200 hover:border-[#1A1A2E] rounded-2xl p-6 text-left transition-all"
+                >
                   <Home className="w-8 h-8 text-[#1A1A2E] mb-3" />
-                  <h3 className="font-bold text-[#1A1A2E] text-lg mb-1">Famille d'accueil</h3>
-                  <p className="text-gray-500 text-sm">Je cherche un au pair africain qualifié</p>
-                  <p className="text-green-600 text-xs font-semibold mt-2">Inscription gratuite</p>
+                  <h3 className="font-bold text-[#1A1A2E] text-lg mb-1">
+                    Famille d'accueil
+                  </h3>
+                  <p className="text-gray-500 text-sm">
+                    Je cherche un au pair africain qualifié
+                  </p>
+                  <p className="text-green-600 text-xs font-semibold mt-2">
+                    Inscription gratuite
+                  </p>
                 </button>
               </div>
               <p className="text-center text-sm text-gray-500 mt-6">
-                Déjà inscrit ? <Link href="/connexion" className="text-[#E87722] font-semibold">Se connecter</Link>
+                Déjà inscrit ?{" "}
+                <Link
+                  href="/connexion"
+                  className="text-[#E87722] font-semibold"
+                >
+                  Se connecter
+                </Link>
               </p>
             </div>
           )}
@@ -195,37 +269,87 @@ function InscriptionContent() {
           {/* Étape 1 : Infos de base */}
           {step === 1 && (
             <div>
-              <h2 className="text-xl font-extrabold text-[#1A1A2E] mb-6">Informations de base</h2>
+              <h2 className="text-xl font-extrabold text-[#1A1A2E] mb-6">
+                Informations de base
+              </h2>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Prénom *</label>
-                    <input type="text" value={form.firstName} onChange={e => setForm({ ...form, firstName: e.target.value })}
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Prénom *
+                    </label>
+                    <input
+                      type="text"
+                      value={form.firstName}
+                      onChange={(e) =>
+                        setForm({ ...form, firstName: e.target.value })
+                      }
                       className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
-                      placeholder="Marie" />
-                    {fieldError("firstName") && <p className="text-xs text-red-500 mt-1">{fieldError("firstName")}</p>}
+                      placeholder="Marie"
+                    />
+                    {fieldError("firstName") && (
+                      <p className="text-xs text-red-500 mt-1">
+                        {fieldError("firstName")}
+                      </p>
+                    )}
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Nom *</label>
-                    <input type="text" value={form.lastName} onChange={e => setForm({ ...form, lastName: e.target.value })}
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Nom *
+                    </label>
+                    <input
+                      type="text"
+                      value={form.lastName}
+                      onChange={(e) =>
+                        setForm({ ...form, lastName: e.target.value })
+                      }
                       className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
-                      placeholder="Dupont" />
-                    {fieldError("lastName") && <p className="text-xs text-red-500 mt-1">{fieldError("lastName")}</p>}
+                      placeholder="Dupont"
+                    />
+                    {fieldError("lastName") && (
+                      <p className="text-xs text-red-500 mt-1">
+                        {fieldError("lastName")}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Adresse email *</label>
-                  <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Adresse email *
+                  </label>
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) =>
+                      setForm({ ...form, email: e.target.value })
+                    }
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
-                    placeholder="votre@email.com" />
-                  {fieldError("email") && <p className="text-xs text-red-500 mt-1">{fieldError("email")}</p>}
+                    placeholder="votre@email.com"
+                  />
+                  {fieldError("email") && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {fieldError("email")}
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Mot de passe *</label>
-                  <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Mot de passe *
+                  </label>
+                  <input
+                    type="password"
+                    value={form.password}
+                    onChange={(e) =>
+                      setForm({ ...form, password: e.target.value })
+                    }
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
-                    placeholder="Minimum 8 caractères" />
-                  {fieldError("password") && <p className="text-xs text-red-500 mt-1">{fieldError("password")}</p>}
+                    placeholder="Minimum 8 caractères"
+                  />
+                  {fieldError("password") && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {fieldError("password")}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -234,73 +358,153 @@ function InscriptionContent() {
           {/* Étape 2 : Profil spécifique */}
           {step === 2 && role === "au-pair" && (
             <div>
-              <h2 className="text-xl font-extrabold text-[#1A1A2E] mb-6">Votre profil au pair</h2>
+              <h2 className="text-xl font-extrabold text-[#1A1A2E] mb-6">
+                Votre profil au pair
+              </h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Pays d'origine *</label>
-                  <select value={form.country} onChange={e => setForm({ ...form, country: e.target.value })}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Pays d'origine *
+                  </label>
+                  <select
+                    value={form.country}
+                    onChange={(e) =>
+                      setForm({ ...form, country: e.target.value })
+                    }
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
+                  >
                     <option value="">Sélectionner votre pays</option>
-                    {originCountries.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+                    {originCountries.map((c) => (
+                      <option key={c.name} value={c.name}>
+                        {c.name}
+                      </option>
+                    ))}
                   </select>
-                  {fieldError("country") && <p className="text-xs text-red-500 mt-1">{fieldError("country")}</p>}
+                  {fieldError("country") && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {fieldError("country")}
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Genre *</label>
-                  <select value={form.gender} onChange={e => setForm({ ...form, gender: e.target.value })}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Genre *
+                  </label>
+                  <select
+                    value={form.gender}
+                    onChange={(e) =>
+                      setForm({ ...form, gender: e.target.value })
+                    }
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
+                  >
                     <option value="">Sélectionner</option>
                     <option value="Femme">Femme</option>
                     <option value="Homme">Homme</option>
                   </select>
-                  {fieldError("gender") && <p className="text-xs text-red-500 mt-1">{fieldError("gender")}</p>}
+                  {fieldError("gender") && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {fieldError("gender")}
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Date de naissance *</label>
-                  <input type="date" value={form.dateOfBirth} onChange={e => setForm({ ...form, dateOfBirth: e.target.value })}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]" />
-                  {fieldError("dateOfBirth") && <p className="text-xs text-red-500 mt-1">{fieldError("dateOfBirth")}</p>}
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Date de naissance *
+                  </label>
+                  <input
+                    type="date"
+                    value={form.dateOfBirth}
+                    onChange={(e) =>
+                      setForm({ ...form, dateOfBirth: e.target.value })
+                    }
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
+                  />
+                  {fieldError("dateOfBirth") && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {fieldError("dateOfBirth")}
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Langues parlées *</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Langues parlées *
+                  </label>
                   <div className="grid grid-cols-2 gap-2">
-                    {LANGUAGES.map(lang => (
-                      <label key={lang} className={`flex items-center gap-2 border rounded-xl px-3 py-2 cursor-pointer text-sm transition-all ${
-                        form.languages.includes(lang)
-                          ? "border-[#E87722] bg-[#FFF3E0] text-[#E87722] font-semibold"
-                          : "border-gray-200 text-gray-700 hover:border-[#E87722]"
-                      }`}>
+                    {LANGUAGES.map((lang) => (
+                      <label
+                        key={lang}
+                        className={`flex items-center gap-2 border rounded-xl px-3 py-2 cursor-pointer text-sm transition-all ${
+                          form.languages.includes(lang)
+                            ? "border-[#E87722] bg-[#FFF3E0] text-[#E87722] font-semibold"
+                            : "border-gray-200 text-gray-700 hover:border-[#E87722]"
+                        }`}
+                      >
                         <input
                           type="checkbox"
                           className="sr-only"
                           checked={form.languages.includes(lang)}
-                          onChange={e => setForm({
-                            ...form,
-                            languages: e.target.checked
-                              ? [...form.languages, lang]
-                              : form.languages.filter(l => l !== lang),
-                          })}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              languages: e.target.checked
+                                ? [...form.languages, lang]
+                                : form.languages.filter((l) => l !== lang),
+                            })
+                          }
                         />
                         {lang}
                       </label>
                     ))}
                   </div>
-                  {fieldError("languages") && <p className="text-xs text-red-500 mt-1">{fieldError("languages")}</p>}
+                  {fieldError("languages") && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {fieldError("languages")}
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Niveau d'études</label>
-                  <select value={form.educationLevel} onChange={e => setForm({ ...form, educationLevel: e.target.value })}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Niveau d'études
+                  </label>
+                  <select
+                    value={form.educationLevel}
+                    onChange={(e) =>
+                      setForm({ ...form, educationLevel: e.target.value })
+                    }
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
+                  >
                     <option value="">Sélectionner</option>
-                    {EDUCATION_LEVELS.map(e => <option key={e} value={e}>{e}</option>)}
+                    {EDUCATION_LEVELS.map((e) => (
+                      <option key={e} value={e}>
+                        {e}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Années d'expérience avec les enfants</label>
-                  <select value={form.experience} onChange={e => setForm({ ...form, experience: e.target.value })}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Années d'expérience avec les enfants
+                  </label>
+                  <select
+                    value={form.experience}
+                    onChange={(e) =>
+                      setForm({ ...form, experience: e.target.value })
+                    }
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
+                  >
                     <option value="">Sélectionner</option>
-                    {["Moins d'1 an", "1 an", "2 ans", "3 ans", "4 ans", "5 ans et plus"].map(v => <option key={v} value={v}>{v}</option>)}
+                    {[
+                      "Moins d'1 an",
+                      "1 an",
+                      "2 ans",
+                      "3 ans",
+                      "4 ans",
+                      "5 ans et plus",
+                    ].map((v) => (
+                      <option key={v} value={v}>
+                        {v}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -309,32 +513,74 @@ function InscriptionContent() {
 
           {step === 2 && role === "famille" && (
             <div>
-              <h2 className="text-xl font-extrabold text-[#1A1A2E] mb-6">Votre profil famille</h2>
+              <h2 className="text-xl font-extrabold text-[#1A1A2E] mb-6">
+                Votre profil famille
+              </h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Pays d&apos;accueil *</label>
-                  <select value={form.hostCountry} onChange={e => setForm({ ...form, hostCountry: e.target.value })}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Pays d&apos;accueil *
+                  </label>
+                  <select
+                    value={form.hostCountry}
+                    onChange={(e) =>
+                      setForm({ ...form, hostCountry: e.target.value })
+                    }
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
+                  >
                     <option value="">Sélectionner un pays</option>
-                    {hostCountries.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+                    {hostCountries.map((c) => (
+                      <option key={c.name} value={c.name}>
+                        {c.name}
+                      </option>
+                    ))}
                   </select>
-                  {fieldError("hostCountry") && <p className="text-xs text-red-500 mt-1">{fieldError("hostCountry")}</p>}
+                  {fieldError("hostCountry") && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {fieldError("hostCountry")}
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Ville *</label>
-                  <input type="text" value={form.city} onChange={e => setForm({ ...form, city: e.target.value })}
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Ville *
+                  </label>
+                  <input
+                    type="text"
+                    value={form.city}
+                    onChange={(e) => setForm({ ...form, city: e.target.value })}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
-                    placeholder="Paris, Lyon, Berlin..." />
-                  {fieldError("city") && <p className="text-xs text-red-500 mt-1">{fieldError("city")}</p>}
+                    placeholder="Paris, Lyon, Berlin..."
+                  />
+                  {fieldError("city") && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {fieldError("city")}
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Nombre d'enfants *</label>
-                  <select value={form.numberOfKids} onChange={e => setForm({ ...form, numberOfKids: e.target.value })}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Nombre d'enfants *
+                  </label>
+                  <select
+                    value={form.numberOfKids}
+                    onChange={(e) =>
+                      setForm({ ...form, numberOfKids: e.target.value })
+                    }
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
+                  >
                     <option value="">Sélectionner</option>
-                    {["1", "2", "3", "4", "5+"].map(n => <option key={n} value={n}>{n}</option>)}
+                    {["1", "2", "3", "4", "5+"].map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
                   </select>
-                  {fieldError("numberOfKids") && <p className="text-xs text-red-500 mt-1">{fieldError("numberOfKids")}</p>}
+                  {fieldError("numberOfKids") && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {fieldError("numberOfKids")}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -346,16 +592,27 @@ function InscriptionContent() {
               <div className="w-16 h-16 bg-[#FFF3E0] rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-8 h-8 text-[#E87722]" />
               </div>
-              <h2 className="text-xl font-extrabold text-[#1A1A2E] mb-2">Tout est prêt !</h2>
+              <h2 className="text-xl font-extrabold text-[#1A1A2E] mb-2">
+                Tout est prêt !
+              </h2>
               <p className="text-gray-500 mb-6 text-sm">
                 {role === "au-pair"
                   ? "En cliquant sur 'Créer mon compte', votre profil sera soumis à vérification. Vous recevrez un email de confirmation."
                   : "En cliquant sur 'Créer mon compte', votre profil famille sera immédiatement actif."}
               </p>
               <div className="bg-gray-50 rounded-xl p-4 text-left mb-6 space-y-2 text-sm">
-                <p><span className="font-semibold text-gray-600">Nom :</span> {form.firstName} {form.lastName}</p>
-                <p><span className="font-semibold text-gray-600">Email :</span> {form.email}</p>
-                <p><span className="font-semibold text-gray-600">Rôle :</span> {role === "au-pair" ? "Au pair" : "Famille d'accueil"}</p>
+                <p>
+                  <span className="font-semibold text-gray-600">Nom :</span>{" "}
+                  {form.firstName} {form.lastName}
+                </p>
+                <p>
+                  <span className="font-semibold text-gray-600">Email :</span>{" "}
+                  {form.email}
+                </p>
+                <p>
+                  <span className="font-semibold text-gray-600">Rôle :</span>{" "}
+                  {role === "au-pair" ? "Au pair" : "Famille d'accueil"}
+                </p>
               </div>
               {submitError && (
                 <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
@@ -364,8 +621,17 @@ function InscriptionContent() {
               )}
               <p className="text-xs text-gray-400 mb-4">
                 En créant un compte, vous acceptez nos{" "}
-                <Link href="/cgu" className="text-[#E87722] underline">CGU</Link> et notre{" "}
-                <Link href="/confidentialite" className="text-[#E87722] underline">politique de confidentialité</Link>.
+                <Link href="/cgu" className="text-[#E87722] underline">
+                  CGU
+                </Link>{" "}
+                et notre{" "}
+                <Link
+                  href="/confidentialite"
+                  className="text-[#E87722] underline"
+                >
+                  politique de confidentialité
+                </Link>
+                .
               </p>
             </div>
           )}
@@ -373,15 +639,26 @@ function InscriptionContent() {
           {/* Navigation */}
           {step > 0 && (
             <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-100">
-              <button onClick={() => { setTouched(false); setStep(step - 1); }} className="flex items-center gap-2 text-gray-500 hover:text-[#1A1A2E] text-sm font-medium">
+              <button
+                onClick={() => {
+                  setTouched(false);
+                  setStep(step - 1);
+                }}
+                className="flex items-center gap-2 text-gray-500 hover:text-[#1A1A2E] text-sm font-medium"
+              >
                 <ArrowLeft className="w-4 h-4" /> Retour
               </button>
               {step < 3 ? (
-                <Button onClick={() => {
-                  if (Object.keys(requiredErrors).length > 0) { setTouched(true); return; }
-                  setTouched(false);
-                  setStep(step + 1);
-                }}>
+                <Button
+                  onClick={() => {
+                    if (Object.keys(requiredErrors).length > 0) {
+                      setTouched(true);
+                      return;
+                    }
+                    setTouched(false);
+                    setStep(step + 1);
+                  }}
+                >
                   Continuer <ArrowRight className="w-4 h-4" />
                 </Button>
               ) : (
@@ -400,7 +677,13 @@ function InscriptionContent() {
 
 export default function InscriptionPage() {
   return (
-    <Suspense fallback={<div className="min-h-dvh flex items-center justify-center"><div className="w-8 h-8 border-4 border-[#E87722] border-t-transparent rounded-full animate-spin" /></div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-dvh flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-[#E87722] border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
       <InscriptionContent />
     </Suspense>
   );
