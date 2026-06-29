@@ -273,7 +273,7 @@ function InscriptionContent() {
                 Informations de base
               </h2>
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">
                       Prénom *
