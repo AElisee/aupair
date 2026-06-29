@@ -9,7 +9,7 @@ import { Globe, LayoutDashboard, Users, Shield, DollarSign, BarChart2, FileText,
 const navItems = [
   { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/admin/utilisateurs", icon: Users, label: "Utilisateurs" },
-  { href: "/admin/moderation", icon: Shield, label: "Modération" },
+  { href: "/admin/moderation", icon: Shield, label: "Modération", badge: true },
   { href: "/admin/paiements", icon: DollarSign, label: "Paiements" },
   { href: "/admin/pays", icon: Globe, label: "Pays" },
   { href: "/admin/analytics", icon: BarChart2, label: "Analytics" },
@@ -34,6 +34,7 @@ function SidebarContent({
   pathname,
   isSettingsActive,
   settingsOpen,
+  pendingCount,
   onToggleSettings,
   onNavigate,
   onClose,
@@ -41,6 +42,7 @@ function SidebarContent({
   pathname: string;
   isSettingsActive: boolean;
   settingsOpen: boolean;
+  pendingCount: number;
   onToggleSettings: () => void;
   onNavigate?: () => void;
   onClose?: () => void;
@@ -77,6 +79,11 @@ function SidebarContent({
               }`}>
               <Icon className="w-4 h-4" />
               {item.label}
+              {item.badge && pendingCount > 0 && (
+                <span className="ml-auto bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                  {pendingCount > 99 ? "99+" : pendingCount}
+                </span>
+              )}
             </Link>
           );
         })}
@@ -133,6 +140,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [settingsOpen, setSettingsOpen] = useState(isSettingsActive);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [prevPathname, setPrevPathname] = useState(pathname);
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    fetch("/api/admin/moderation/count")
+      .then((r) => r.json())
+      .then((d) => setPendingCount(d.count ?? 0))
+      .catch(() => {});
+  }, [pathname]);
 
   // Ferme le menu mobile à chaque changement de page
   if (pathname !== prevPathname) {
@@ -156,6 +171,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           pathname={pathname}
           isSettingsActive={isSettingsActive}
           settingsOpen={settingsOpen}
+          pendingCount={pendingCount}
           onToggleSettings={() => setSettingsOpen((open) => !open)}
         />
       </aside>
@@ -179,6 +195,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           pathname={pathname}
           isSettingsActive={isSettingsActive}
           settingsOpen={settingsOpen}
+          pendingCount={pendingCount}
           onToggleSettings={() => setSettingsOpen((open) => !open)}
           onNavigate={() => setMobileMenuOpen(false)}
           onClose={() => setMobileMenuOpen(false)}
