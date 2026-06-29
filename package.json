@@ -6,6 +6,7 @@
     "predev": "tsx prisma/seed.ts",
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "tsx prisma/seed.ts",
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint",
