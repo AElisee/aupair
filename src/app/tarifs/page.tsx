@@ -6,7 +6,7 @@ import { getAppSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "Tarifs — AuPair A.EU",
-  description: "Abonnement au pair à 32€/30 jours. Inscription famille gratuite. Paiement par Mobile Money via KKiaPay.",
+  description: "Abonnement au pair à 32€/30 jours. Inscription famille gratuite. Paiement par Mobile Money via SebPay.",
 };
 
 const auPairFeatures = [
@@ -41,7 +41,7 @@ export default async function TarifsPage() {
   const days = settings.subscriptionDays;
 
   const paymentMethods = [
-    { icon: Smartphone, name: "Mobile Money (KKiaPay)", desc: `Orange Money, MTN MoMo, Moov Money — ${priceXof} FCFA`, countries: "🇨🇲 🇨🇮 🇲🇱 🇧🇯 🇹🇬 🇬🇭 🇸🇳" },
+    { icon: Smartphone, name: "Mobile Money (SebPay)", desc: `Orange Money, MTN MoMo, Moov Money, Wave — ${priceXof} FCFA`, countries: "🇨🇲 🇨🇮 🇲🇱 🇧🇯 🇹🇬 🇬🇭 🇸🇳" },
   ];
 
   return (

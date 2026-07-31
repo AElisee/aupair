@@ -154,19 +154,39 @@ edited at `/admin/parametres/email` via `/api/admin/constants`. `src/lib/mail.ts
 `[mail]` error (never throws) if either is missing or Resend rejects the send.
 See `docs/email-resend.md` for setup, local testing, and production deployment.
 
-### Payments (KKiaPay — Mobile Money, the only payment provider)
+### Payments (SebPay — Mobile Money, the only payment provider)
 
-`kkiapayPublicKey` and `kkiapayPrivateKey` are **not** environment variables —
+SebPay replaced KKiaPay (2026-07). `kkiapayPublicKey`/`kkiapayPrivateKey` were
+removed from `AppSettings`; the old `/api/payments/kkiapay/*` and
+`/api/webhooks/kkiapay` routes now return `410` stubs (kept as files only because
+an OS-level lock prevented deleting them during the migration — safe to delete
+once nothing has them open). `PaymentMethod.KKIAPAY` stays in the Prisma enum so
+historical `Subscription` rows stay valid.
+
+`sebpayPublicKey` and `sebpaySecretKey` are **not** environment variables —
 they're admin-configurable settings stored on `AppSettings` (`app_settings` table),
-edited at `/admin/parametres/kkiapay` via `/api/admin/constants`.
+edited at `/admin/parametres/sebpay` via `/api/admin/constants`. No sandbox toggle
+exists: the key prefix (`pk_live_`/`sk_live_` vs `pk_test_`/`sk_test_`) determines
+the environment. API base URL: `https://newapi.sebpay.bj/api/v1`, docs at
+`https://new.sebpay.bj/fr/docs`. Unlike KKiaPay, SebPay has no client-side JS
+widget — the merchant's server drives the whole flow (`src/lib/sebpay.ts` holds
+the shared header/signature helpers):
 
-- `GET /api/payments/kkiapay/init` — returns the public key + amount (XOF) for the
-  client-side KKiaPay widget (loaded via `https://cdn.kkiapay.me/k.js` on the
-  subscription page); `503` if not configured.
-- `POST /api/payments/kkiapay/verify` — called by the client after the widget reports
-  success; re-verifies the transaction server-side via KKiaPay's
-  `/api/v1/transactions/{id}/status` API (never trusts the client payload alone)
-  before creating a `Subscription` row.
-- `POST /api/webhooks/kkiapay` — server-to-server notification webhook; does the same
-  re-verification independently, looking up the user by the email passed to KKiaPay
-  at payment time.
+- `GET /api/payments/sebpay/countries`, `GET /api/payments/sebpay/operators?country=` —
+  proxy SebPay's reference endpoints so the subscription page can build the
+  country/operator/OTP form dynamically (operator list is fetched, never
+  hardcoded, since `otp_required`/`ussd_code` vary per operator).
+- `POST /api/payments/sebpay/collections` — creates the transaction
+  (`operator`, `country`, `phone`, optional `otp_code`), amount/currency from
+  `AppSettings`. `external_reference` is `AUPAIR-{userId}-{timestamp}`
+  (`buildExternalReference`/`parseUserIdFromReference` in `src/lib/sebpay.ts`) —
+  the only way to map a transaction back to a user, since SebPay's webhook
+  payload carries no email. Some operators (e.g. Wave) return a `provider_link`
+  the client must open in a new tab.
+- `POST /api/payments/sebpay/verify` — polled by the client (transaction status
+  is `pending`/`approved`/`rejected`) while waiting for USSD/OTP confirmation;
+  creates the `Subscription` row on `approved`, idempotent on `paymentId`.
+- `POST /api/webhooks/sebpay` — server-to-server notification; verifies the
+  `X-SebPay-Signature` HMAC-SHA256 header against the raw body with the secret
+  key before trusting the payload, then does the same idempotent `Subscription`
+  creation via `parseUserIdFromReference`.

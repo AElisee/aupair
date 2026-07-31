@@ -38,6 +38,7 @@ enum PaymentMethod {
   CARD
   PAYPAL
   KKIAPAY
+  SEBPAY
 }
 
 enum Currency {
@@ -535,10 +536,9 @@ model AppSettings {
   resendApiKey String?
   emailFrom    String?
 
-  // Configuration des paiements KKiaPay (Mobile Money Bénin/Afrique) — éditable par l'admin, jamais stockée en .env
-  kkiapayPublicKey  String?
-  kkiapayPrivateKey String?
-  kkiapaySandbox    Boolean @default(true)
+  // Configuration des paiements SebPay (Mobile Money Bénin/Afrique) — éditable par l'admin, jamais stockée en .env
+  sebpayPublicKey String?
+  sebpaySecretKey String?
 
   updatedAt            DateTime @updatedAt
 

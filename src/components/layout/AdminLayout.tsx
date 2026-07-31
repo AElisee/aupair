@@ -25,7 +25,7 @@ const settingsNav = {
     { href: "/admin/parametres/constantes", icon: SlidersHorizontal, label: "Constantes" },
     { href: "/admin/parametres/notifications", icon: Bell, label: "Notifications" },
     { href: "/admin/parametres/email", icon: Send, label: "Email" },
-    { href: "/admin/parametres/kkiapay", icon: Smartphone, label: "KKiaPay" },
+    { href: "/admin/parametres/sebpay", icon: Smartphone, label: "SebPay" },
     { href: "/admin/parametres/compte", icon: KeyRound, label: "Mon compte" },
   ],
 };

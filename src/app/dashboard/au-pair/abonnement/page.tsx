@@ -1,11 +1,10 @@
 "use client";
-import { Suspense, useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
-import Script from "next/script";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
-import { User, Search, MessageCircle, Bell, CreditCard, Settings, Home, CheckCircle, Clock, Wallet, Loader2, AlertCircle } from "lucide-react";
+import { User, Search, MessageCircle, Bell, CreditCard, Settings, Home, CheckCircle, Clock, Wallet, Loader2, AlertCircle, ExternalLink } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
 
 const navItems = [
@@ -28,14 +27,30 @@ type SubscriptionData = {
   constants: { priceEur: number; priceXof: number; days: number; features: string[] };
 };
 
+type SebpayCountry = { country_code: string; country_name: string; prefix: string };
+type SebpayOperator = { slug: string; name: string; otp_required: boolean; ussd_code?: string };
+
+const POLL_INTERVAL_MS = 4000;
+const MAX_POLL_ATTEMPTS = 30;
+
 function AbonnementContent() {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
 
   const [data, setData] = useState<SubscriptionData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [payingMethod, setPayingMethod] = useState<"kkiapay" | null>(null);
   const [error, setError] = useState("");
+
+  const [countries, setCountries] = useState<SebpayCountry[]>([]);
+  const [operators, setOperators] = useState<SebpayOperator[]>([]);
+  const [country, setCountry] = useState("");
+  const [operator, setOperator] = useState("");
+  const [phone, setPhone] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [pendingReference, setPendingReference] = useState<string | null>(null);
+  const [providerLink, setProviderLink] = useState<string | null>(null);
+  const pollAttempts = useRef(0);
 
   const load = useCallback(() => {
     fetch("/api/subscription")
@@ -50,68 +65,107 @@ function AbonnementContent() {
     load();
   }, [load]);
 
-  const paymentStatus = searchParams.get("payment");
+  useEffect(() => {
+    fetch("/api/payments/sebpay/countries")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (!json?.countries?.length) return;
+        setCountries(json.countries);
+        setCountry(json.countries[0].country_code);
+      });
+  }, []);
 
-  const handleKkiapay = async () => {
+  useEffect(() => {
+    if (!country) return;
+    setOperator("");
+    setOperators([]);
+    fetch(`/api/payments/sebpay/operators?country=${encodeURIComponent(country)}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (!json?.operators?.length) return;
+        setOperators(json.operators);
+        setOperator(json.operators[0].slug);
+      });
+    const selected = countries.find((c) => c.country_code === country);
+    if (selected) setPhone(selected.prefix);
+  }, [country, countries]);
+
+  const paymentStatus = searchParams.get("payment");
+  const selectedOperator = operators.find((o) => o.slug === operator);
+
+  const verify = useCallback((reference: string) => {
+    fetch("/api/payments/sebpay/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reference }),
+    })
+      .then((res) => res.json().then((json) => ({ ok: res.ok, json })))
+      .then(({ ok, json }) => {
+        if (json.status === "pending") {
+          pollAttempts.current += 1;
+          if (pollAttempts.current >= MAX_POLL_ATTEMPTS) {
+            setPendingReference(null);
+            setError("Le paiement est toujours en attente. Vérifiez votre téléphone ou réessayez dans quelques minutes.");
+            return;
+          }
+          setTimeout(() => verify(reference), POLL_INTERVAL_MS);
+          return;
+        }
+        setPendingReference(null);
+        setProviderLink(null);
+        if (!ok || json.status === "rejected") {
+          setError(json.error ?? "Le paiement a échoué ou a été refusé.");
+          return;
+        }
+        load();
+      })
+      .catch(() => {
+        setPendingReference(null);
+        setError("Erreur lors de la vérification du paiement. Contactez le support.");
+      });
+  }, [load]);
+
+  const handleSubmit = async () => {
     setError("");
-    setPayingMethod("kkiapay");
+    if (!country || !operator || !phone.trim()) {
+      setError("Veuillez renseigner le pays, l'opérateur et le numéro de téléphone.");
+      return;
+    }
+    setSubmitting(true);
     try {
-      const res = await fetch("/api/payments/kkiapay/init");
+      const res = await fetch("/api/payments/sebpay/collections", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          country,
+          operator,
+          phone: phone.trim(),
+          otpCode: otpCode.trim() || undefined,
+        }),
+      });
       const json = await res.json();
       if (!res.ok) {
         setError(json.error ?? "Une erreur est survenue.");
-        setPayingMethod(null);
         return;
       }
 
-      const { publicKey, amount, sandbox } = json as { publicKey: string; amount: number; sandbox: boolean };
+      if (json.providerLink) {
+        setProviderLink(json.providerLink);
+        window.open(json.providerLink, "_blank", "noopener,noreferrer");
+      }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const w = window as any;
-      if (typeof w.openKkiapayWidget !== "function") {
-        setError("Le module de paiement n'est pas encore chargé. Veuillez réessayer.");
-        setPayingMethod(null);
+      if (json.status === "approved") {
+        load();
         return;
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      w.addKkiapayListener("success", async (response: any) => {
-        const transactionId: string = response.transactionId;
-        try {
-          const verifyRes = await fetch("/api/payments/kkiapay/verify", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ transactionId }),
-          });
-          const verifyJson = await verifyRes.json();
-          if (!verifyRes.ok) {
-            setError(verifyJson.error ?? "Paiement reçu mais non vérifié. Contactez le support.");
-          } else {
-            load();
-          }
-        } catch {
-          setError("Erreur lors de la vérification du paiement. Contactez le support.");
-        } finally {
-          setPayingMethod(null);
-        }
-      });
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      w.addKkiapayListener("failed", () => {
-        setError("Le paiement a échoué ou a été annulé.");
-        setPayingMethod(null);
-      });
-
-      w.openKkiapayWidget({
-        amount,
-        api_key: publicKey,
-        sandbox,
-        email: session?.user?.email ?? "",
-        name: session?.user?.name ?? "",
-      });
+      pollAttempts.current = 0;
+      setPendingReference(json.externalReference);
+      setTimeout(() => verify(json.externalReference), POLL_INTERVAL_MS);
     } catch {
       setError("Une erreur est survenue.");
-      setPayingMethod(null);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -123,7 +177,6 @@ function AbonnementContent() {
 
   return (
     <DashboardLayout navItems={navItems} role="au-pair" userName={session?.user?.name ?? ""}>
-      <Script src="https://cdn.kkiapay.me/k.js" strategy="lazyOnload" />
       <div className="max-w-2xl space-y-6">
         <h1 className="text-2xl font-extrabold text-[#1A1A2E]">Mon abonnement</h1>
 
@@ -204,16 +257,82 @@ function AbonnementContent() {
                 </div>
                 <p className="text-white/70 text-xs mt-1">= {formatCurrency(priceXof, "XOF")} · Accès complet à toutes les fonctionnalités</p>
               </div>
-              <div className="space-y-2">
-                <button
-                  onClick={handleKkiapay}
-                  disabled={payingMethod !== null}
-                  className="w-full flex items-center gap-3 bg-[#1A1A2E] hover:bg-[#1A1A2E]/90 disabled:opacity-60 rounded-xl p-3 text-sm font-medium transition-colors text-white"
-                >
-                  {payingMethod === "kkiapay" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wallet className="w-4 h-4" />}
-                  Payer maintenant ({formatCurrency(priceXof, "XOF")})
-                </button>
-              </div>
+
+              {pendingReference ? (
+                <div className="bg-white/20 rounded-xl p-4 flex items-center gap-3 text-sm">
+                  <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
+                  <div>
+                    <p className="font-medium">En attente de confirmation du paiement...</p>
+                    <p className="text-white/80 text-xs mt-0.5">
+                      {providerLink
+                        ? "Validez le paiement dans l'onglet ouvert, ou sur votre téléphone."
+                        : "Validez la transaction sur votre téléphone (USSD/notification)."}
+                    </p>
+                    {providerLink && (
+                      <button
+                        onClick={() => window.open(providerLink, "_blank", "noopener,noreferrer")}
+                        className="mt-2 inline-flex items-center gap-1 text-xs underline"
+                      >
+                        Ouvrir la page de paiement <ExternalLink className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    <select
+                      value={country}
+                      onChange={(e) => setCountry(e.target.value)}
+                      className="bg-white/20 rounded-xl p-3 text-sm text-white [&>option]:text-[#1A1A2E]"
+                    >
+                      {countries.map((c) => (
+                        <option key={c.country_code} value={c.country_code}>{c.country_name}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={operator}
+                      onChange={(e) => setOperator(e.target.value)}
+                      className="bg-white/20 rounded-xl p-3 text-sm text-white [&>option]:text-[#1A1A2E]"
+                    >
+                      {operators.map((o) => (
+                        <option key={o.slug} value={o.slug}>{o.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="Numéro de téléphone (format international, sans +)"
+                    className="w-full bg-white/20 rounded-xl p-3 text-sm text-white placeholder:text-white/70"
+                  />
+                  {selectedOperator?.otp_required && (
+                    <div className="space-y-1">
+                      {selectedOperator.ussd_code && (
+                        <p className="text-white/80 text-xs">
+                          Composez <strong>{selectedOperator.ussd_code}</strong> sur votre téléphone pour recevoir le code, puis saisissez-le ci-dessous.
+                        </p>
+                      )}
+                      <input
+                        type="text"
+                        value={otpCode}
+                        onChange={(e) => setOtpCode(e.target.value)}
+                        placeholder="Code reçu par SMS/USSD"
+                        className="w-full bg-white/20 rounded-xl p-3 text-sm text-white placeholder:text-white/70"
+                      />
+                    </div>
+                  )}
+                  <button
+                    onClick={handleSubmit}
+                    disabled={submitting}
+                    className="w-full flex items-center gap-3 bg-[#1A1A2E] hover:bg-[#1A1A2E]/90 disabled:opacity-60 rounded-xl p-3 text-sm font-medium transition-colors text-white"
+                  >
+                    {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wallet className="w-4 h-4" />}
+                    Payer maintenant ({formatCurrency(priceXof, "XOF")})
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Inclus dans l'abonnement */}

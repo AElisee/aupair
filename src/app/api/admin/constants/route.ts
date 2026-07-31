@@ -9,13 +9,13 @@ export async function GET() {
   }
 
   const settings = await getAppSettings();
-  const { resendApiKey, kkiapayPublicKey, kkiapayPrivateKey, ...rest } = settings;
+  const { resendApiKey, sebpayPublicKey, sebpaySecretKey, ...rest } = settings;
   return NextResponse.json({
     settings: {
       ...rest,
       resendApiKeyConfigured: !!resendApiKey,
-      kkiapayPublicKeyConfigured: !!kkiapayPublicKey,
-      kkiapayPrivateKeyConfigured: !!kkiapayPrivateKey,
+      sebpayPublicKeyConfigured: !!sebpayPublicKey,
+      sebpaySecretKeyConfigured: !!sebpaySecretKey,
     },
   });
 }
@@ -79,7 +79,7 @@ export async function PUT(req: Request) {
     data.heroImageUrl = value.trim();
   }
 
-  for (const key of ["notifyProfileViewEnabled", "notifyWeeklyViewsDigestEnabled", "kkiapaySandbox"] as const) {
+  for (const key of ["notifyProfileViewEnabled", "notifyWeeklyViewsDigestEnabled"] as const) {
     if (key in body) {
       const value = body[key];
       if (typeof value !== "boolean") {
@@ -117,30 +117,30 @@ export async function PUT(req: Request) {
     data.emailFrom = trimmed === "" ? null : trimmed;
   }
 
-  if ("kkiapayPublicKey" in body) {
-    const value = body.kkiapayPublicKey;
+  if ("sebpayPublicKey" in body) {
+    const value = body.sebpayPublicKey;
     if (typeof value !== "string") {
-      return NextResponse.json({ error: `Le champ "kkiapayPublicKey" doit être une chaîne.` }, { status: 400 });
+      return NextResponse.json({ error: `Le champ "sebpayPublicKey" doit être une chaîne.` }, { status: 400 });
     }
-    data.kkiapayPublicKey = value.trim() === "" ? null : value.trim();
+    data.sebpayPublicKey = value.trim() === "" ? null : value.trim();
   }
 
-  if ("kkiapayPrivateKey" in body) {
-    const value = body.kkiapayPrivateKey;
+  if ("sebpaySecretKey" in body) {
+    const value = body.sebpaySecretKey;
     if (typeof value !== "string") {
-      return NextResponse.json({ error: `Le champ "kkiapayPrivateKey" doit être une chaîne.` }, { status: 400 });
+      return NextResponse.json({ error: `Le champ "sebpaySecretKey" doit être une chaîne.` }, { status: 400 });
     }
-    data.kkiapayPrivateKey = value.trim() === "" ? null : value.trim();
+    data.sebpaySecretKey = value.trim() === "" ? null : value.trim();
   }
 
   const settings = await updateAppSettings(data);
-  const { resendApiKey, kkiapayPublicKey, kkiapayPrivateKey, ...rest } = settings;
+  const { resendApiKey, sebpayPublicKey, sebpaySecretKey, ...rest } = settings;
   return NextResponse.json({
     settings: {
       ...rest,
       resendApiKeyConfigured: !!resendApiKey,
-      kkiapayPublicKeyConfigured: !!kkiapayPublicKey,
-      kkiapayPrivateKeyConfigured: !!kkiapayPrivateKey,
+      sebpayPublicKeyConfigured: !!sebpayPublicKey,
+      sebpaySecretKeyConfigured: !!sebpaySecretKey,
     },
   });
 }

@@ -26,9 +26,8 @@ const DEFAULT_SETTINGS = {
   notifyWeeklyViewsDigestEnabled: true,
   resendApiKey: null as string | null,
   emailFrom: null as string | null,
-  kkiapayPublicKey: null as string | null,
-  kkiapayPrivateKey: null as string | null,
-  kkiapaySandbox: true,
+  sebpayPublicKey: null as string | null,
+  sebpaySecretKey: null as string | null,
 };
 
 /** Récupère les constantes éditables (crée la ligne avec les valeurs par défaut si elle n'existe pas encore). */
@@ -54,9 +53,8 @@ export interface AppSettingsInput {
   notifyWeeklyViewsDigestEnabled?: boolean;
   resendApiKey?: string | null;
   emailFrom?: string | null;
-  kkiapayPublicKey?: string | null;
-  kkiapayPrivateKey?: string | null;
-  kkiapaySandbox?: boolean;
+  sebpayPublicKey?: string | null;
+  sebpaySecretKey?: string | null;
 }
 
 export async function updateAppSettings(data: AppSettingsInput) {
