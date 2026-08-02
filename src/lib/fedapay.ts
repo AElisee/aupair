@@ -102,12 +102,19 @@ export function verifyFedapaySignature(
 export interface FedapayWebhookEvent {
   id?: number;
   name: string;
-  entity?: { id?: number };
+  /** Type de ressource concernée (ex: "transaction", "customer") — un simple string, pas un objet. */
+  entity?: string;
   object_id?: number;
 }
 
-/** Extrait l'id de transaction FedaPay depuis un événement webhook — le champ exact (entity.id vs object_id) n'est pas garanti par la doc publique. */
+/**
+ * Extrait l'id de transaction depuis un événement webhook, uniquement si l'événement concerne bien
+ * une transaction (`entity === "transaction"` ou `name` préfixé par "transaction."). Sans cette
+ * vérification, un event `customer.*` dont l'`object_id` (id client) coïncide par hasard avec l'id
+ * d'une transaction appartenant à un autre utilisateur ferait activer un abonnement à tort.
+ */
 export function extractTransactionId(event: FedapayWebhookEvent): number | null {
-  const id = event.entity?.id ?? event.object_id;
-  return typeof id === "number" ? id : null;
+  const isTransactionEvent = event.entity === "transaction" || event.name?.startsWith("transaction.");
+  if (!isTransactionEvent) return null;
+  return typeof event.object_id === "number" ? event.object_id : null;
 }
