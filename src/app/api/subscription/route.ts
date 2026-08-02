@@ -9,11 +9,15 @@ export async function GET() {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   }
 
-  const [settings, subscription] = await Promise.all([
+  const [settings, subscription, profile] = await Promise.all([
     getAppSettings(),
     prisma.subscription.findFirst({
       where: { userId: session.user.id },
       orderBy: { createdAt: "desc" },
+    }),
+    prisma.auPairProfile.findUnique({
+      where: { userId: session.user.id },
+      select: { countryOfOrigin: true },
     }),
   ]);
 
@@ -30,6 +34,7 @@ export async function GET() {
     daysLeft,
     amount: subscription?.amount ?? null,
     currency: subscription?.currency ?? null,
+    countryOfOrigin: profile?.countryOfOrigin ?? null,
     constants: {
       priceEur: settings.subscriptionPriceEur,
       priceXof: settings.subscriptionPriceXof,

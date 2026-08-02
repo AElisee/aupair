@@ -9,13 +9,14 @@ export async function GET() {
   }
 
   const settings = await getAppSettings();
-  const { resendApiKey, sebpayPublicKey, sebpaySecretKey, ...rest } = settings;
+  const { resendApiKey, fedapayPublicKey, fedapaySecretKey, fedapayWebhookSecret, ...rest } = settings;
   return NextResponse.json({
     settings: {
       ...rest,
       resendApiKeyConfigured: !!resendApiKey,
-      sebpayPublicKeyConfigured: !!sebpayPublicKey,
-      sebpaySecretKeyConfigured: !!sebpaySecretKey,
+      fedapayPublicKeyConfigured: !!fedapayPublicKey,
+      fedapaySecretKeyConfigured: !!fedapaySecretKey,
+      fedapayWebhookSecretConfigured: !!fedapayWebhookSecret,
     },
   });
 }
@@ -117,30 +118,47 @@ export async function PUT(req: Request) {
     data.emailFrom = trimmed === "" ? null : trimmed;
   }
 
-  if ("sebpayPublicKey" in body) {
-    const value = body.sebpayPublicKey;
+  if ("fedapayPublicKey" in body) {
+    const value = body.fedapayPublicKey;
     if (typeof value !== "string") {
-      return NextResponse.json({ error: `Le champ "sebpayPublicKey" doit être une chaîne.` }, { status: 400 });
+      return NextResponse.json({ error: `Le champ "fedapayPublicKey" doit être une chaîne.` }, { status: 400 });
     }
-    data.sebpayPublicKey = value.trim() === "" ? null : value.trim();
+    data.fedapayPublicKey = value.trim() === "" ? null : value.trim();
   }
 
-  if ("sebpaySecretKey" in body) {
-    const value = body.sebpaySecretKey;
+  if ("fedapaySecretKey" in body) {
+    const value = body.fedapaySecretKey;
     if (typeof value !== "string") {
-      return NextResponse.json({ error: `Le champ "sebpaySecretKey" doit être une chaîne.` }, { status: 400 });
+      return NextResponse.json({ error: `Le champ "fedapaySecretKey" doit être une chaîne.` }, { status: 400 });
     }
-    data.sebpaySecretKey = value.trim() === "" ? null : value.trim();
+    data.fedapaySecretKey = value.trim() === "" ? null : value.trim();
+  }
+
+  if ("fedapayWebhookSecret" in body) {
+    const value = body.fedapayWebhookSecret;
+    if (typeof value !== "string") {
+      return NextResponse.json({ error: `Le champ "fedapayWebhookSecret" doit être une chaîne.` }, { status: 400 });
+    }
+    data.fedapayWebhookSecret = value.trim() === "" ? null : value.trim();
+  }
+
+  if ("fedapayEnvironment" in body) {
+    const value = body.fedapayEnvironment;
+    if (value !== "sandbox" && value !== "live") {
+      return NextResponse.json({ error: `Le champ "fedapayEnvironment" doit être "sandbox" ou "live".` }, { status: 400 });
+    }
+    data.fedapayEnvironment = value;
   }
 
   const settings = await updateAppSettings(data);
-  const { resendApiKey, sebpayPublicKey, sebpaySecretKey, ...rest } = settings;
+  const { resendApiKey, fedapayPublicKey, fedapaySecretKey, fedapayWebhookSecret, ...rest } = settings;
   return NextResponse.json({
     settings: {
       ...rest,
       resendApiKeyConfigured: !!resendApiKey,
-      sebpayPublicKeyConfigured: !!sebpayPublicKey,
-      sebpaySecretKeyConfigured: !!sebpaySecretKey,
+      fedapayPublicKeyConfigured: !!fedapayPublicKey,
+      fedapaySecretKeyConfigured: !!fedapaySecretKey,
+      fedapayWebhookSecretConfigured: !!fedapayWebhookSecret,
     },
   });
 }

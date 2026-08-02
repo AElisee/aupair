@@ -37,8 +37,7 @@ enum PaymentMethod {
   MOBILE_MONEY
   CARD
   PAYPAL
-  KKIAPAY
-  SEBPAY
+  FEDAPAY
 }
 
 enum Currency {
@@ -536,9 +535,14 @@ model AppSettings {
   resendApiKey String?
   emailFrom    String?
 
-  // Configuration des paiements SebPay (Mobile Money Bénin/Afrique) — éditable par l'admin, jamais stockée en .env
-  sebpayPublicKey String?
-  sebpaySecretKey String?
+  // Configuration des paiements FedaPay (Mobile Money & cartes, Afrique de l'Ouest) — éditable par l'admin,
+  // jamais stockée en .env. fedapayEnvironment détermine l'URL de base API (sandbox-api.fedapay.com vs
+  // api.fedapay.com) : FedaPay ne préfixe pas ses clés par environnement de façon fiable, donc pas de
+  // détection automatique possible, contrairement à un simple préfixe pk_live_/pk_test_.
+  fedapayPublicKey     String?
+  fedapaySecretKey     String?
+  fedapayWebhookSecret String?
+  fedapayEnvironment   String? @default("sandbox")
 
   updatedAt            DateTime @updatedAt
 

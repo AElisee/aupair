@@ -26,8 +26,10 @@ const DEFAULT_SETTINGS = {
   notifyWeeklyViewsDigestEnabled: true,
   resendApiKey: null as string | null,
   emailFrom: null as string | null,
-  sebpayPublicKey: null as string | null,
-  sebpaySecretKey: null as string | null,
+  fedapayPublicKey: null as string | null,
+  fedapaySecretKey: null as string | null,
+  fedapayWebhookSecret: null as string | null,
+  fedapayEnvironment: "sandbox" as string,
 };
 
 /** Récupère les constantes éditables (crée la ligne avec les valeurs par défaut si elle n'existe pas encore). */
@@ -53,8 +55,10 @@ export interface AppSettingsInput {
   notifyWeeklyViewsDigestEnabled?: boolean;
   resendApiKey?: string | null;
   emailFrom?: string | null;
-  sebpayPublicKey?: string | null;
-  sebpaySecretKey?: string | null;
+  fedapayPublicKey?: string | null;
+  fedapaySecretKey?: string | null;
+  fedapayWebhookSecret?: string | null;
+  fedapayEnvironment?: string;
 }
 
 export async function updateAppSettings(data: AppSettingsInput) {

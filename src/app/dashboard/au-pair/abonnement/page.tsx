@@ -24,11 +24,9 @@ type SubscriptionData = {
   daysLeft: number;
   amount: number | null;
   currency: "EUR" | "XOF" | "USD" | null;
+  countryOfOrigin: string | null;
   constants: { priceEur: number; priceXof: number; days: number; features: string[] };
 };
-
-type SebpayCountry = { country_code: string; country_name: string; prefix: string };
-type SebpayOperator = { slug: string; name: string; otp_required: boolean; ussd_code?: string };
 
 const POLL_INTERVAL_MS = 4000;
 const MAX_POLL_ATTEMPTS = 30;
@@ -41,15 +39,9 @@ function AbonnementContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [countries, setCountries] = useState<SebpayCountry[]>([]);
-  const [operators, setOperators] = useState<SebpayOperator[]>([]);
-  const [country, setCountry] = useState("");
-  const [operator, setOperator] = useState("");
-  const [phone, setPhone] = useState("");
-  const [otpCode, setOtpCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [pendingReference, setPendingReference] = useState<string | null>(null);
-  const [providerLink, setProviderLink] = useState<string | null>(null);
+  const [pendingTransactionId, setPendingTransactionId] = useState<number | null>(null);
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const pollAttempts = useRef(0);
 
   const load = useCallback(() => {
@@ -65,103 +57,57 @@ function AbonnementContent() {
     load();
   }, [load]);
 
-  useEffect(() => {
-    fetch("/api/payments/sebpay/countries")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((json) => {
-        if (!json?.countries?.length) return;
-        setCountries(json.countries);
-        setCountry(json.countries[0].country_code);
-      });
-  }, []);
-
-  useEffect(() => {
-    if (!country) return;
-    setOperator("");
-    setOperators([]);
-    fetch(`/api/payments/sebpay/operators?country=${encodeURIComponent(country)}`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((json) => {
-        if (!json?.operators?.length) return;
-        setOperators(json.operators);
-        setOperator(json.operators[0].slug);
-      });
-    const selected = countries.find((c) => c.country_code === country);
-    if (selected) setPhone(selected.prefix);
-  }, [country, countries]);
-
   const paymentStatus = searchParams.get("payment");
-  const selectedOperator = operators.find((o) => o.slug === operator);
 
-  const verify = useCallback((reference: string) => {
-    fetch("/api/payments/sebpay/verify", {
+  const verify = useCallback((transactionId: number) => {
+    fetch("/api/payments/fedapay/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reference }),
+      body: JSON.stringify({ transactionId }),
     })
       .then((res) => res.json().then((json) => ({ ok: res.ok, json })))
       .then(({ ok, json }) => {
         if (json.status === "pending") {
           pollAttempts.current += 1;
           if (pollAttempts.current >= MAX_POLL_ATTEMPTS) {
-            setPendingReference(null);
-            setError("Le paiement est toujours en attente. Vérifiez votre téléphone ou réessayez dans quelques minutes.");
+            setPendingTransactionId(null);
+            setError("Le paiement est toujours en attente. Vérifiez votre confirmation ou réessayez dans quelques minutes.");
             return;
           }
-          setTimeout(() => verify(reference), POLL_INTERVAL_MS);
+          setTimeout(() => verify(transactionId), POLL_INTERVAL_MS);
           return;
         }
-        setPendingReference(null);
-        setProviderLink(null);
+        setPendingTransactionId(null);
+        setCheckoutUrl(null);
         if (!ok || json.status === "rejected") {
-          setError(json.error ?? "Le paiement a échoué ou a été refusé.");
+          setError(json.error ?? "Le paiement a échoué ou a été annulé.");
           return;
         }
         load();
       })
       .catch(() => {
-        setPendingReference(null);
+        setPendingTransactionId(null);
         setError("Erreur lors de la vérification du paiement. Contactez le support.");
       });
   }, [load]);
 
-  const handleSubmit = async () => {
+  const handlePay = async () => {
     setError("");
-    if (!country || !operator || !phone.trim()) {
-      setError("Veuillez renseigner le pays, l'opérateur et le numéro de téléphone.");
-      return;
-    }
     setSubmitting(true);
     try {
-      const res = await fetch("/api/payments/sebpay/collections", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          country,
-          operator,
-          phone: phone.trim(),
-          otpCode: otpCode.trim() || undefined,
-        }),
-      });
+      const res = await fetch("/api/payments/fedapay/checkout", { method: "POST" });
       const json = await res.json();
       if (!res.ok) {
         setError(json.error ?? "Une erreur est survenue.");
         return;
       }
 
-      if (json.providerLink) {
-        setProviderLink(json.providerLink);
-        window.open(json.providerLink, "_blank", "noopener,noreferrer");
-      }
-
-      if (json.status === "approved") {
-        load();
-        return;
-      }
+      setCheckoutUrl(json.checkoutUrl);
+      window.open(json.checkoutUrl, "_blank", "noopener,noreferrer");
 
       pollAttempts.current = 0;
-      setPendingReference(json.externalReference);
-      setTimeout(() => verify(json.externalReference), POLL_INTERVAL_MS);
+      setPendingTransactionId(json.transactionId);
+      setTimeout(() => verify(json.transactionId), POLL_INTERVAL_MS);
     } catch {
       setError("Une erreur est survenue.");
     } finally {
@@ -258,19 +204,17 @@ function AbonnementContent() {
                 <p className="text-white/70 text-xs mt-1">= {formatCurrency(priceXof, "XOF")} · Accès complet à toutes les fonctionnalités</p>
               </div>
 
-              {pendingReference ? (
+              {pendingTransactionId ? (
                 <div className="bg-white/20 rounded-xl p-4 flex items-center gap-3 text-sm">
                   <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
                   <div>
                     <p className="font-medium">En attente de confirmation du paiement...</p>
                     <p className="text-white/80 text-xs mt-0.5">
-                      {providerLink
-                        ? "Validez le paiement dans l'onglet ouvert, ou sur votre téléphone."
-                        : "Validez la transaction sur votre téléphone (USSD/notification)."}
+                      Terminez le paiement dans l&apos;onglet ouvert (Mobile Money ou carte).
                     </p>
-                    {providerLink && (
+                    {checkoutUrl && (
                       <button
-                        onClick={() => window.open(providerLink, "_blank", "noopener,noreferrer")}
+                        onClick={() => window.open(checkoutUrl, "_blank", "noopener,noreferrer")}
                         className="mt-2 inline-flex items-center gap-1 text-xs underline"
                       >
                         Ouvrir la page de paiement <ExternalLink className="w-3 h-3" />
@@ -279,59 +223,14 @@ function AbonnementContent() {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-2">
-                    <select
-                      value={country}
-                      onChange={(e) => setCountry(e.target.value)}
-                      className="bg-white/20 rounded-xl p-3 text-sm text-white [&>option]:text-[#1A1A2E]"
-                    >
-                      {countries.map((c) => (
-                        <option key={c.country_code} value={c.country_code}>{c.country_name}</option>
-                      ))}
-                    </select>
-                    <select
-                      value={operator}
-                      onChange={(e) => setOperator(e.target.value)}
-                      className="bg-white/20 rounded-xl p-3 text-sm text-white [&>option]:text-[#1A1A2E]"
-                    >
-                      {operators.map((o) => (
-                        <option key={o.slug} value={o.slug}>{o.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="Numéro de téléphone (format international, sans +)"
-                    className="w-full bg-white/20 rounded-xl p-3 text-sm text-white placeholder:text-white/70"
-                  />
-                  {selectedOperator?.otp_required && (
-                    <div className="space-y-1">
-                      {selectedOperator.ussd_code && (
-                        <p className="text-white/80 text-xs">
-                          Composez <strong>{selectedOperator.ussd_code}</strong> sur votre téléphone pour recevoir le code, puis saisissez-le ci-dessous.
-                        </p>
-                      )}
-                      <input
-                        type="text"
-                        value={otpCode}
-                        onChange={(e) => setOtpCode(e.target.value)}
-                        placeholder="Code reçu par SMS/USSD"
-                        className="w-full bg-white/20 rounded-xl p-3 text-sm text-white placeholder:text-white/70"
-                      />
-                    </div>
-                  )}
-                  <button
-                    onClick={handleSubmit}
-                    disabled={submitting}
-                    className="w-full flex items-center gap-3 bg-[#1A1A2E] hover:bg-[#1A1A2E]/90 disabled:opacity-60 rounded-xl p-3 text-sm font-medium transition-colors text-white"
-                  >
-                    {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wallet className="w-4 h-4" />}
-                    Payer maintenant ({formatCurrency(priceXof, "XOF")})
-                  </button>
-                </div>
+                <button
+                  onClick={handlePay}
+                  disabled={submitting}
+                  className="w-full flex items-center justify-center gap-3 bg-[#1A1A2E] hover:bg-[#1A1A2E]/90 disabled:opacity-60 rounded-xl p-3 text-sm font-medium transition-colors text-white"
+                >
+                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wallet className="w-4 h-4" />}
+                  Payer maintenant
+                </button>
               )}
             </div>
 

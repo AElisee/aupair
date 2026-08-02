@@ -14,9 +14,9 @@
 | Décision | Choix retenu | Conséquence à gérer |
 |---|---|---|
 | **Authentification** | **Supabase Auth** (séparé de NextAuth du web) | Les comptes web existants (bcrypt dans `public.users`) **ne sont pas** dans `auth.users`. Ils ne pourront pas se connecter sur mobile tant qu'ils n'ont pas (re)créé un mot de passe côté Supabase. **Nouveaux comptes mobile** → un trigger Postgres crée automatiquement la ligne `public.users` + profil. |
-| **Accès données** | **Supabase direct partout** (SDK Dart + RLS) | Toute la logique métier qui vivait dans les routes `/api/*` Next.js doit être **réimplémentée** côté base : politiques **RLS**, **fonctions Postgres (RPC)** et **Edge Functions** pour ce qui exige un secret (KKiaPay). |
+| **Accès données** | **Supabase direct partout** (SDK Dart + RLS) | Toute la logique métier qui vivait dans les routes `/api/*` Next.js doit être **réimplémentée** côté base : politiques **RLS**, **fonctions Postgres (RPC)** et **Edge Functions** pour ce qui exige un secret (FedaPay). |
 | **Back-office admin** | **Exclu** du mobile | Aucun écran `/admin`. Les tables restent lues/écrites par le web pour l'admin. |
-| **Config** | Variables dans **`.env.local`** | Uniquement des valeurs **publiques** (URL Supabase + clé `anon`). **Jamais** la `service_role` ni la clé privée KKiaPay dans l'app. |
+| **Config** | Variables dans **`.env.local`** | Uniquement des valeurs **publiques** (URL Supabase + clé `anon`). **Jamais** la `service_role` ni la clé secrète FedaPay dans l'app. |
 
 ### ⚠️ Points de vigilance critiques (à lire avant de commencer)
 
@@ -26,7 +26,7 @@
    → Solution : à l'inscription, un **trigger `handle_new_user`** insère dans `public.users` une ligne dont
    `id = NEW.id::text` (l'uuid Supabase stocké comme texte). Les FK restant en texte, tout reste cohérent.
 
-2. **Secrets serveur** : la clé privée KKiaPay et la `SUPABASE_SERVICE_ROLE_KEY` ne doivent **jamais**
+2. **Secrets serveur** : la clé secrète FedaPay et la `SUPABASE_SERVICE_ROLE_KEY` ne doivent **jamais**
    être embarquées dans l'app Flutter (elle est décompilable). Elles restent côté **Edge Functions**.
 
 3. **Parité web/mobile** : chaque règle métier réimplémentée en RLS/RPC doit rester **cohérente** avec le
@@ -54,7 +54,7 @@ Cartographie **route web → écran mobile → source Supabase**. Le back-office
 | `/dashboard/au-pair/profil` | Éditer profil au pair | table `au_pair_profiles` |
 | `/dashboard/au-pair/recherche` | Rechercher des familles | table `family_profiles` (statut ACTIVE) |
 | `/dashboard/au-pair/famille/[id]` | Détail famille (+ enregistre une vue) | `family_profiles` + `profile_views` |
-| `/dashboard/au-pair/abonnement` | Abonnement (32 €/30 j) + paiement KKiaPay | `subscriptions`, `app_settings`, Edge Function paiement |
+| `/dashboard/au-pair/abonnement` | Abonnement (32 €/30 j) + paiement FedaPay | `subscriptions`, `app_settings`, Edge Function paiement |
 | `/dashboard/au-pair/messages` | Messagerie (bloquée sans abonnement actif) | `messages` (Realtime) |
 | `/dashboard/au-pair/notifications` | Notifications | `notifications` |
 | `/dashboard/au-pair/parametres` | Paramètres (mot de passe, langue, compte) | `auth`, `users` |
@@ -97,7 +97,7 @@ Cartographie **route web → écran mobile → source Supabase**. Le back-office
 | Témoignages page d'accueil | Section témoignages | `testimonials` |
 
 ### 1.6 Exclu du mobile
-Tout `/admin/*` : dashboard admin, utilisateurs, modération, paiements, analytics, blog admin, FAQ admin, tickets admin, pays admin, paramètres (email Resend, KKiaPay, constantes, compte admin).
+Tout `/admin/*` : dashboard admin, utilisateurs, modération, paiements, analytics, blog admin, FAQ admin, tickets admin, pays admin, paramètres (email Resend, FedaPay, constantes, compte admin).
 
 ---
 
@@ -130,7 +130,7 @@ Tout `/admin/*` : dashboard admin, utilisateurs, modération, paiements, analyti
 | `intl` + `flutter_localizations` | Internationalisation FR/EN | Remplace `t(fr, en)` du web |
 | `timeago` | Dates relatives (« il y a 3 min ») | Messagerie/notifications |
 | `url_launcher` | Ouvrir WhatsApp / liens externes | Contact au pair/famille |
-| `kkiapay_flutter_sdk` | Widget de paiement Mobile Money KKiaPay | **À vérifier sur pub.dev** ; sinon WebView du widget officiel |
+| *(à déterminer)* | Widget de paiement Mobile Money FedaPay | Pas de SDK Flutter officiel confirmé — **à vérifier sur pub.dev** ; sinon WebView de la page de paiement hébergée FedaPay |
 | `fpdart` *(optionnel)* | `Either`/`Option` pour la gestion d'erreurs fonctionnelle | Peut être remplacé par un type `Result` maison plus simple pour débuter |
 
 ### 2.3 Packages (développement)
@@ -254,9 +254,10 @@ Politiques minimales (à affiner) :
 - `notifications`, `subscriptions` : `userId = auth.uid()`.
 - `reports`, `blocks` : insert par l'utilisateur courant ; pas de lecture croisée.
 - `countries`, `app_settings`(lecture partielle), `blog_posts`, `faq_items`, `testimonials` : **lecture publique**
-  (⚠️ n'exposer de `app_settings` que les colonnes publiques : prix, features, `kkiapayPublicKey`, langues,
-  niveaux, durées, motifs — **jamais** `kkiapayPrivateKey`, `resendApiKey`). → créer une **vue** publique
-  `app_settings_public` plutôt que d'ouvrir la table entière.
+  (⚠️ n'exposer de `app_settings` que les colonnes publiques : prix, features, `fedapayPublicKey`, langues,
+  niveaux, durées, motifs — **jamais** `fedapaySecretKey`, `fedapayWebhookSecret`, `resendApiKey`). → créer une
+  **vue** publique `app_settings_public` plutôt que d'ouvrir la table entière (existe déjà en base, voir
+  `docs/` / historique du projet).
 
 ### 4.3 Fonctions Postgres (RPC) — pour la logique complexe
 - `register_profile_view(target_id)` : calcule `weekKey`, `upsert` dans `profile_views`, incrémente `profileViews`.
@@ -272,10 +273,11 @@ Politiques minimales (à affiner) :
   limites web : images 5 Mo, documents 10 Mo).
 
 ### 4.5 Edge Functions (Deno) — pour ce qui exige un secret
-- `kkiapay-verify` : reçoit `transactionId`, appelle `https://api.kkiapay.me/api/v1/transactions/{id}/status`
-  avec la **clé privée** (secret de la fonction), et crée la ligne `subscriptions` si `SUCCESS`
-  (réplique `/api/payments/kkiapay/verify`).
-- `kkiapay-webhook` : notification serveur-à-serveur (réplique `/api/webhooks/kkiapay`).
+- `fedapay-verify` : reçoit `transactionId`, appelle `GET /v1/transactions/{id}` sur l'API FedaPay
+  avec la **clé secrète** (secret de la fonction), et crée la ligne `subscriptions` si `approved`/`transferred`
+  (réplique `/api/payments/fedapay/verify`).
+- `fedapay-webhook` : notification serveur-à-serveur, vérifie la signature `X-FEDAPAY-SIGNATURE` avant tout
+  traitement (réplique `/api/webhooks/fedapay`).
 - `weekly-profile-views` : planifiée (pg_cron/Scheduled Function) — digest hebdo des vues (réplique le cron).
 - `contact` *(optionnel)* : envoi d'email via Resend si l'on veut garder l'email ; sinon simple `insert tickets`.
 
@@ -374,10 +376,10 @@ Politiques minimales (à affiner) :
   ET par l'UI, avec redirection vers l'abonnement) ; respecter les blocages dans les deux sens.
 - **DoD** : deux comptes échangent des messages en temps réel ; un au pair non abonné est bloqué à l'envoi.
 
-### Étape 10 — Abonnement & paiement KKiaPay
-- **Objectif** : afficher l'offre (32 €/20 800 XOF/30 j), payer via KKiaPay, activer l'abonnement.
+### Étape 10 — Abonnement & paiement FedaPay
+- **Objectif** : afficher l'offre (32 €/20 800 XOF/30 j), payer via FedaPay, activer l'abonnement.
 - **Livrables** : écran abonnement (statut, jours restants, features depuis `app_settings`), widget de paiement
-  (`kkiapay_flutter_sdk` ou WebView), appel Edge Function **`kkiapay-verify`** au retour, rafraîchissement du statut.
+  (WebView de la page de paiement hébergée FedaPay), appel Edge Function **`fedapay-verify`** au retour, rafraîchissement du statut.
 - **Points de vigilance** : la vérification et la création de `subscriptions` se font **exclusivement** côté
   Edge Function (secret) ; ne jamais faire confiance au retour client seul.
 - **DoD** : un paiement sandbox réussi crée une `subscription` ACTIVE et débloque la messagerie.
@@ -410,7 +412,7 @@ Politiques minimales (à affiner) :
 
 ## 6. Sécurité & bonnes pratiques (transverse, à respecter partout)
 
-- **Jamais** de `service_role` ni de clé privée KKiaPay dans l'app ; secrets uniquement en Edge Functions.
+- **Jamais** de `service_role` ni de clé secrète FedaPay dans l'app ; secrets uniquement en Edge Functions.
 - **RLS activée sur toutes les tables** exposées ; ne jamais compter sur la seule validation côté client.
 - `app_settings` exposée via une **vue publique** filtrée (pas la table brute).
 - Uploads : valider **type + taille** côté client ET via politiques Storage.
@@ -423,7 +425,7 @@ Politiques minimales (à affiner) :
 ## 7. Priorisation (MVP → itérations)
 
 1. **MVP** : Étapes 0–9 (auth, profils, dashboards, recherche, détail, messagerie) → app utilisable pour la mise en relation.
-2. **Monétisation** : Étape 10 (abonnement KKiaPay) — indispensable pour la messagerie au pair.
+2. **Monétisation** : Étape 10 (abonnement FedaPay) — indispensable pour la messagerie au pair.
 3. **Engagement** : Étape 11 (notifications) + push plus tard.
 4. **Confort** : Étape 12 (paramètres), Étape 13 (découverte).
 5. **Qualité/Store** : Étape 14.
@@ -437,7 +439,7 @@ Politiques minimales (à affiner) :
 - [ ] Vue publique `app_settings_public` (sans secrets).
 - [ ] Buckets `avatars`, `message-attachments`, `id-documents` + politiques.
 - [ ] RPC : `register_profile_view`, `dashboard_au_pair`, `dashboard_famille`, `has_active_subscription`.
-- [ ] Edge Functions : `kkiapay-verify`, `kkiapay-webhook`, `weekly-profile-views`, (option `contact`).
+- [ ] Edge Functions : `fedapay-verify`, `fedapay-webhook`, `weekly-profile-views`, (option `contact`).
 - [ ] Realtime activé sur `messages`.
 - [ ] OAuth Google + Facebook + deep links (OAuth & reset password).
 - [ ] Rôles AU_PAIR / FAMILLE complets ; **admin exclu**.

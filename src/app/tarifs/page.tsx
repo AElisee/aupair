@@ -6,7 +6,7 @@ import { getAppSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "Tarifs — AuPair A.EU",
-  description: "Abonnement au pair à 32€/30 jours. Inscription famille gratuite. Paiement par Mobile Money via SebPay.",
+  description: "Abonnement au pair à 32€/30 jours. Inscription famille gratuite. Paiement par Mobile Money via FedaPay.",
 };
 
 const auPairFeatures = [
@@ -41,7 +41,7 @@ export default async function TarifsPage() {
   const days = settings.subscriptionDays;
 
   const paymentMethods = [
-    { icon: Smartphone, name: "Mobile Money (SebPay)", desc: `Orange Money, MTN MoMo, Moov Money, Wave — ${priceXof} FCFA`, countries: "🇨🇲 🇨🇮 🇲🇱 🇧🇯 🇹🇬 🇬🇭 🇸🇳" },
+    { icon: Smartphone, name: "Mobile Money & carte (FedaPay)", desc: `MTN, Moov, Celtiis, Mixx by Yas, Airtel, Visa/Mastercard — ${priceXof} FCFA`, countries: "🇧🇯 🇹🇬 🇨🇮 🇳🇪 🇸🇳" },
   ];
 
   return (

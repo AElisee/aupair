@@ -15,7 +15,7 @@ AuPair A.EU — Première plateforme mondiale dédiée aux au pairs africains. M
 - **Auth**: NextAuth.js v5 (beta) — Google + Facebook OAuth + credentials, JWT strategy
 - **Hosting**: Vercel
 
-Not yet integrated: Supabase Realtime (messaging), Supabase Storage (photo uploads). KKiaPay (Mobile Money) is the only payment provider, integrated and admin-configurable, see below.
+Not yet integrated: Supabase Realtime (messaging), Supabase Storage (photo uploads). FedaPay (Mobile Money & cards) is the only payment provider, integrated and admin-configurable, see below.
 
 ## Commands
 
@@ -154,39 +154,45 @@ edited at `/admin/parametres/email` via `/api/admin/constants`. `src/lib/mail.ts
 `[mail]` error (never throws) if either is missing or Resend rejects the send.
 See `docs/email-resend.md` for setup, local testing, and production deployment.
 
-### Payments (SebPay — Mobile Money, the only payment provider)
+### Payments (FedaPay — Mobile Money & cards, the only payment provider)
 
-SebPay replaced KKiaPay (2026-07). `kkiapayPublicKey`/`kkiapayPrivateKey` were
-removed from `AppSettings`; the old `/api/payments/kkiapay/*` and
-`/api/webhooks/kkiapay` routes now return `410` stubs (kept as files only because
-an OS-level lock prevented deleting them during the migration — safe to delete
-once nothing has them open). `PaymentMethod.KKIAPAY` stays in the Prisma enum so
-historical `Subscription` rows stay valid.
+`fedapayPublicKey`, `fedapaySecretKey`, `fedapayWebhookSecret` and
+`fedapayEnvironment` are **not** environment variables — they're
+admin-configurable settings stored on `AppSettings` (`app_settings` table),
+edited at `/admin/parametres/fedapay` via `/api/admin/constants`.
+`fedapayEnvironment` (`"sandbox" | "live"`) is an **explicit** admin choice:
+FedaPay's own SDK requires calling `setEnvironment()` rather than inferring it
+from the key prefix, so the app can't auto-detect it either. API base URL is
+derived from it: `https://sandbox-api.fedapay.com/v1` or
+`https://api.fedapay.com/v1` (`fedapayBaseUrl()` in `src/lib/fedapay.ts`, which
+also holds the header/signature/reference helpers). No SDK dependency — plain
+`fetch`.
 
-`sebpayPublicKey` and `sebpaySecretKey` are **not** environment variables —
-they're admin-configurable settings stored on `AppSettings` (`app_settings` table),
-edited at `/admin/parametres/sebpay` via `/api/admin/constants`. No sandbox toggle
-exists: the key prefix (`pk_live_`/`sk_live_` vs `pk_test_`/`sk_test_`) determines
-the environment. API base URL: `https://newapi.sebpay.bj/api/v1`, docs at
-`https://new.sebpay.bj/fr/docs`. Unlike KKiaPay, SebPay has no client-side JS
-widget — the merchant's server drives the whole flow (`src/lib/sebpay.ts` holds
-the shared header/signature helpers):
+FedaPay uses the **hosted checkout redirect** flow (the officially recommended
+starting point — covers all operators and cards without hardcoding per-country
+`mode` values):
 
-- `GET /api/payments/sebpay/countries`, `GET /api/payments/sebpay/operators?country=` —
-  proxy SebPay's reference endpoints so the subscription page can build the
-  country/operator/OTP form dynamically (operator list is fetched, never
-  hardcoded, since `otp_required`/`ussd_code` vary per operator).
-- `POST /api/payments/sebpay/collections` — creates the transaction
-  (`operator`, `country`, `phone`, optional `otp_code`), amount/currency from
-  `AppSettings`. `external_reference` is `AUPAIR-{userId}-{timestamp}`
-  (`buildExternalReference`/`parseUserIdFromReference` in `src/lib/sebpay.ts`) —
-  the only way to map a transaction back to a user, since SebPay's webhook
-  payload carries no email. Some operators (e.g. Wave) return a `provider_link`
-  the client must open in a new tab.
-- `POST /api/payments/sebpay/verify` — polled by the client (transaction status
-  is `pending`/`approved`/`rejected`) while waiting for USSD/OTP confirmation;
-  creates the `Subscription` row on `approved`, idempotent on `paymentId`.
-- `POST /api/webhooks/sebpay` — server-to-server notification; verifies the
-  `X-SebPay-Signature` HMAC-SHA256 header against the raw body with the secret
-  key before trusting the payload, then does the same idempotent `Subscription`
-  creation via `parseUserIdFromReference`.
+- `POST /api/payments/fedapay/checkout` — creates a transaction
+  (`amount` = `settings.subscriptionPriceXof`, `currency.iso: "XOF"` always),
+  then `POST /transactions/{id}/token` to get a hosted checkout `url`.
+  `merchant_reference` is `AUPAIR-{userId}-{timestamp}`
+  (`buildMerchantReference`/`parseUserIdFromMerchantReference` in
+  `src/lib/fedapay.ts`) — the only way to map a transaction back to a user,
+  since FedaPay's webhook payload carries no email. The client opens the
+  returned `url` in a new tab and polls verify; FedaPay's page handles
+  operator/card selection and OTP itself, so there's no `/countries` or
+  `/operators` proxy route.
+- `POST /api/payments/fedapay/verify` — polled by the client with
+  `{ transactionId }`; re-fetches the transaction from FedaPay (`GET
+  /transactions/{id}`) rather than trusting client-supplied status. FedaPay has
+  7 statuses (`pending`, `approved`, `declined`, `canceled`, `refunded`,
+  `transferred`, `expired`) mapped to success (`approved`/`transferred`),
+  failure, or still-pending. Creates the `Subscription` row on success,
+  idempotent on `paymentId` (the FedaPay transaction id).
+- `POST /api/webhooks/fedapay` — server-to-server notification; verifies the
+  `X-FEDAPAY-SIGNATURE` header (format `t=<timestamp>,s=<hex>`, HMAC-SHA256 of
+  `` `${timestamp}.${rawBody}` `` with `fedapayWebhookSecret` — a **separate**
+  secret from the API secret key, confirmed from the `fedapay-node` SDK
+  source), then re-fetches the canonical transaction status server-side before
+  writing (never trusts the webhook payload's embedded status), same idempotent
+  `Subscription` creation as verify.
