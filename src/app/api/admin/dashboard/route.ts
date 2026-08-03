@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin";
 import { ProfileStatus } from "@/generated/prisma/client";
 import { getCountryFlagMap } from "@/lib/countries";
-import { formatRelativeDate, formatCurrency } from "@/lib/utils";
+import { formatRelativeDate, formatCurrency, formatRevenueByCurrency } from "@/lib/utils";
+import { PAYMENT_METHOD_LABELS } from "@/lib/constants";
 
 export async function GET() {
   const session = await requireAdminSession();
@@ -21,8 +22,8 @@ export async function GET() {
     totalFamilies,
     signups30d,
     signupsPrev30d,
-    revenueAgg,
-    totalRevenueAgg,
+    revenueByCurrency30d,
+    totalRevenueByCurrency,
     activeSubscriptions,
     pendingAuPairs,
     pendingFamilies,
@@ -37,13 +38,15 @@ export async function GET() {
     prisma.familyProfile.count(),
     prisma.user.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
     prisma.user.count({ where: { createdAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo } } }),
-    prisma.subscription.aggregate({
+    prisma.subscription.groupBy({
+      by: ["currency"],
       _sum: { amount: true },
-      where: { createdAt: { gte: thirtyDaysAgo }, currency: "EUR" },
+      where: { createdAt: { gte: thirtyDaysAgo } },
     }),
-    prisma.subscription.aggregate({
+    prisma.subscription.groupBy({
+      by: ["currency"],
       _sum: { amount: true },
-      where: { currency: "EUR", status: { in: ["ACTIVE", "EXPIRED"] } },
+      where: { status: { in: ["ACTIVE", "EXPIRED"] } },
     }),
     prisma.subscription.count({ where: { status: "ACTIVE" } }),
     prisma.auPairProfile.count({ where: { status: ProfileStatus.PENDING } }),
@@ -107,7 +110,7 @@ export async function GET() {
     id: s.id,
     user: s.user.name ?? "Utilisateur",
     amount: formatCurrency(s.amount, s.currency),
-    method: s.paymentMethod,
+    method: PAYMENT_METHOD_LABELS[s.paymentMethod] ?? s.paymentMethod,
     status: s.status,
     date: formatRelativeDate(s.createdAt),
   }));
@@ -119,8 +122,8 @@ export async function GET() {
       totalFamilies,
       signups30d,
       signupsChange,
-      revenue30d: formatCurrency(revenueAgg._sum.amount ?? 0, "EUR"),
-      totalRevenue: formatCurrency(totalRevenueAgg._sum.amount ?? 0, "EUR"),
+      revenue30d: formatRevenueByCurrency(revenueByCurrency30d),
+      totalRevenue: formatRevenueByCurrency(totalRevenueByCurrency),
       activeSubscriptions,
       pendingProfiles,
       openReports,

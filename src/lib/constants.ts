@@ -41,6 +41,12 @@ export const REPORT_REASONS = [
   "Autre",
 ];
 
+export const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  MOBILE_MONEY: "Mobile Money",
+  CARD: "Carte bancaire",
+  FEDAPAY: "FedaPay",
+};
+
 export const CONTACT_SUBJECTS: Record<string, string> = {
   inscription: "Inscription / Compte",
   paiement: "Paiement / Abonnement",

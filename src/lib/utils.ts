@@ -39,6 +39,23 @@ export function formatCurrency(amount: number, currency: "EUR" | "XOF" | "USD" =
   return new Intl.NumberFormat("fr-FR", { style: "currency", currency }).format(amount);
 }
 
+/**
+ * Formate un total réparti par devise (résultat d'un `groupBy currency`) en une seule chaîne,
+ * en priorisant le F CFA (devise réellement utilisée par FedaPay) : "20 800 F CFA" ou,
+ * si plusieurs devises ont un montant, "20 800 F CFA + 32,00 €".
+ */
+export function formatRevenueByCurrency(
+  rows: { currency: "EUR" | "XOF" | "USD"; _sum: { amount: number | null } }[]
+): string {
+  const sums = new Map(rows.map((r) => [r.currency, r._sum.amount ?? 0]));
+  const order: ("XOF" | "EUR" | "USD")[] = ["XOF", "EUR", "USD"];
+  const parts = order
+    .filter((currency) => (sums.get(currency) ?? 0) > 0)
+    .map((currency) => formatCurrency(sums.get(currency) ?? 0, currency));
+
+  return parts.length > 0 ? parts.join(" + ") : formatCurrency(0, "XOF");
+}
+
 export function slugify(text: string): string {
   return text
     .toLowerCase()

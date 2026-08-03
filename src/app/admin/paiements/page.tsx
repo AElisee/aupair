@@ -3,13 +3,14 @@ import { useEffect, useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Badge } from "@/components/ui/badge";
 import { DollarSign, TrendingUp, CreditCard, Smartphone, Globe, Download, Loader2, FileText } from "lucide-react";
+import { PAYMENT_METHOD_LABELS } from "@/lib/constants";
 
 type Payment = {
   id: string;
   user: string;
   email: string;
   amount: string;
-  method: "MOBILE_MONEY" | "CARD" | "PAYPAL";
+  method: "MOBILE_MONEY" | "CARD" | "FEDAPAY";
   status: "ACTIVE" | "EXPIRED" | "CANCELLED" | "REFUNDED";
   date: string;
   invoiceUrl: string | null;
@@ -19,8 +20,8 @@ const PAGE_SIZE = 10;
 
 type PaymentsData = {
   kpis: {
-    revenueActiveEur: string;
-    revenueActiveXof: string | null;
+    revenueActiveXof: string;
+    revenueActiveEur: string | null;
     activeSubscriptions: number;
     mobileMoneyCount: number;
   };
@@ -33,11 +34,7 @@ const methodIcon = (method: Payment["method"]) => {
   return <Globe className="w-3.5 h-3.5" />;
 };
 
-const methodLabel = (method: Payment["method"]) => {
-  if (method === "MOBILE_MONEY") return "Mobile Money";
-  if (method === "CARD") return "Carte bancaire";
-  return "PayPal";
-};
+const methodLabel = (method: Payment["method"]) => PAYMENT_METHOD_LABELS[method] ?? method;
 
 const statusBadge = (status: Payment["status"]) => {
   switch (status) {
@@ -100,9 +97,9 @@ export default function PaiementsPage() {
                     <DollarSign className="w-5 h-5 text-[#E87722]" />
                   </div>
                   <div>
-                    <p className="text-2xl font-extrabold text-[#1A1A2E]">{data.kpis.revenueActiveEur}</p>
-                    {data.kpis.revenueActiveXof && (
-                      <p className="text-xs text-gray-400">+ {data.kpis.revenueActiveXof}</p>
+                    <p className="text-2xl font-extrabold text-[#1A1A2E]">{data.kpis.revenueActiveXof}</p>
+                    {data.kpis.revenueActiveEur && (
+                      <p className="text-xs text-gray-400">+ {data.kpis.revenueActiveEur}</p>
                     )}
                     <p className="text-xs text-gray-500">Revenus actifs</p>
                   </div>

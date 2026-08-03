@@ -29,8 +29,24 @@ export interface FedapayTransaction {
   description: string;
   status: FedapayTransactionStatus;
   merchant_reference?: string;
+  /** Canal réel utilisé par le client une fois la transaction traitée (ex: "mtn_open", "moov", "card"). Absent tant que la transaction n'est pas complétée. */
+  mode?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+/**
+ * Déduit MOBILE_MONEY vs CARD à partir du `mode` FedaPay. Si le mode est absent ou inconnu,
+ * on retombe sur "FEDAPAY" (générique) plutôt que de deviner — mieux vaut une catégorie
+ * générique correcte qu'une catégorie précise mais fausse.
+ */
+export function resolvePaymentMethodFromMode(mode: string | null | undefined): "MOBILE_MONEY" | "CARD" | "FEDAPAY" {
+  if (!mode) return "FEDAPAY";
+  if (mode.includes("card")) return "CARD";
+  if (mode.includes("mtn") || mode.includes("moov") || mode.includes("celtiis") || mode.includes("airtel") || mode.includes("mixx")) {
+    return "MOBILE_MONEY";
+  }
+  return "FEDAPAY";
 }
 
 export interface FedapayTokenResponse {

@@ -8,7 +8,7 @@ const categories = [
     name: "Au pairs",
     items: [
       { q: "Qui peut devenir au pair via AuPair A.EU ?", a: "Tout jeune africain âgé de 18 à 30 ans, motivé, avec une expérience en garde d'enfants, une bonne santé et un casier judiciaire vierge peut s'inscrire." },
-      { q: "Combien coûte l'abonnement au pair ?", a: "L'abonnement est de 32€ ou 20 800 FCFA pour 30 jours. Vous pouvez payer par Mobile Money, carte bancaire ou PayPal." },
+      { q: "Combien coûte l'abonnement au pair ?", a: "L'abonnement est de 32€ ou 20 800 FCFA pour 30 jours. Vous pouvez payer par Mobile Money ou carte bancaire via FedaPay." },
       { q: "Mon profil est-il visible immédiatement ?", a: "Non. Chaque profil est vérifié manuellement par notre équipe de modération avant publication. Ce processus prend généralement 24 à 48h ouvrées." },
       { q: "Comment contacter une famille ?", a: "Une fois votre abonnement actif, vous pouvez envoyer des messages directement aux familles via notre messagerie intégrée." },
     ],

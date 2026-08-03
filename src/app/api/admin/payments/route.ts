@@ -36,8 +36,8 @@ export async function GET() {
 
   return NextResponse.json({
     kpis: {
-      revenueActiveEur: formatCurrency(revenueActiveEur, "EUR"),
-      revenueActiveXof: revenueActiveXof > 0 ? formatCurrency(revenueActiveXof, "XOF") : null,
+      revenueActiveXof: formatCurrency(revenueActiveXof, "XOF"),
+      revenueActiveEur: revenueActiveEur > 0 ? formatCurrency(revenueActiveEur, "EUR") : null,
       activeSubscriptions: activeSubs.length,
       mobileMoneyCount,
     },

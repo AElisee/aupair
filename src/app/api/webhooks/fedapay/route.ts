@@ -8,6 +8,7 @@ import {
   extractTransactionId,
   parseUserIdFromMerchantReference,
   unwrapFedapayTransaction,
+  resolvePaymentMethodFromMode,
   type FedapayWebhookEvent,
 } from "@/lib/fedapay";
 
@@ -58,7 +59,7 @@ export async function POST(req: Request) {
                 status: "ACTIVE",
                 amount: transaction.amount ?? settings.subscriptionPriceXof,
                 currency: "XOF",
-                paymentMethod: "FEDAPAY",
+                paymentMethod: resolvePaymentMethodFromMode(transaction.mode),
                 paymentId: String(transaction.id),
                 startsAt: now,
                 expiresAt: new Date(now.getTime() + settings.subscriptionDays * 24 * 60 * 60 * 1000),

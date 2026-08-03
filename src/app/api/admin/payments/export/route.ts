@@ -2,12 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin";
 import { formatDate } from "@/lib/utils";
-
-const PAYMENT_METHOD_LABELS: Record<string, string> = {
-  MOBILE_MONEY: "Mobile Money",
-  CARD: "Carte bancaire",
-  PAYPAL: "PayPal",
-};
+import { PAYMENT_METHOD_LABELS } from "@/lib/constants";
 
 const STATUS_LABELS: Record<string, string> = {
   ACTIVE: "Actif",

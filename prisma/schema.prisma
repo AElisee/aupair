@@ -36,7 +36,6 @@ enum SubscriptionStatus {
 enum PaymentMethod {
   MOBILE_MONEY
   CARD
-  PAYPAL
   FEDAPAY
 }
 
