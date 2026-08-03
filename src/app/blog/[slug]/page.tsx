@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { ArrowLeft, Clock, Calendar, Tag } from "lucide-react";
 import type { Metadata } from "next";
+import { escapeHtml } from "@/lib/utils";
+
+/** Échappe le texte puis ré-autorise seulement le **gras** en <strong> — protège contre
+ * une injection HTML si ce contenu venait un jour d'une source éditable (admin/DB). */
+function formatInline(text: string): string {
+  return escapeHtml(text).replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+}
 
 const articles: Record<string, {
   title: string; category: string; readTime: string; date: string;
@@ -594,7 +601,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
                   {items.map((item, j) => (
                     <li key={j} className="text-gray-700 flex items-start gap-2">
                       <span className="text-[#E87722] mt-1">•</span>
-                      <span dangerouslySetInnerHTML={{ __html: item.replace("- ", "").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") }} />
+                      <span dangerouslySetInnerHTML={{ __html: formatInline(item.replace("- ", "")) }} />
                     </li>
                   ))}
                 </ul>
@@ -607,7 +614,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
                   {items.map((item, j) => (
                     <li key={j} className="text-gray-700 flex items-start gap-2">
                       <span className="text-[#E87722] font-bold">{j + 1}.</span>
-                      <span dangerouslySetInnerHTML={{ __html: item.replace(/^\d+\.\s/, "").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") }} />
+                      <span dangerouslySetInnerHTML={{ __html: formatInline(item.replace(/^\d+\.\s/, "")) }} />
                     </li>
                   ))}
                 </ol>
@@ -615,7 +622,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
             }
             if (p.trim()) {
               return <p key={i} className="text-gray-700 leading-relaxed mb-4"
-                dangerouslySetInnerHTML={{ __html: p.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") }} />;
+                dangerouslySetInnerHTML={{ __html: formatInline(p) }} />;
             }
             return null;
           })}

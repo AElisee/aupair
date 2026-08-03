@@ -128,6 +128,10 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Profil introuvable." }, { status: 404 });
   }
 
+  if (!profile.idDocumentUrls.includes(body.url)) {
+    return NextResponse.json({ error: "Document introuvable." }, { status: 404 });
+  }
+
   const idDocumentUrls = profile.idDocumentUrls.filter((url) => url !== body.url);
 
   await prisma.auPairProfile.update({

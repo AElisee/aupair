@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { calculateAge } from "@/lib/utils";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+
+const REGISTER_MAX_PER_IP = 10;
+const REGISTER_WINDOW_MS = 60 * 60 * 1000;
 
 type RegisterBody = {
   role?: "au-pair" | "famille";
@@ -38,6 +42,15 @@ export async function POST(request: Request) {
   }
 
   const { role, firstName, lastName, email, password } = body;
+
+  const ip = getClientIp(request);
+  const { allowed } = await checkRateLimit(`register:ip:${ip}`, REGISTER_MAX_PER_IP, REGISTER_WINDOW_MS);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Trop de tentatives d'inscription. Merci de réessayer plus tard." },
+      { status: 429 }
+    );
+  }
 
   // ── Validation minimale ────────────────────────────────────────────────────
   if (!email || !password || !firstName || !lastName) {

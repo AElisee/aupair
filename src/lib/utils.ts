@@ -56,6 +56,19 @@ export function formatRevenueByCurrency(
   return parts.length > 0 ? parts.join(" + ") : formatCurrency(0, "XOF");
 }
 
+const HTML_ESCAPES: Record<string, string> = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;",
+};
+
+/** Échappe les caractères HTML avant d'injecter du texte via dangerouslySetInnerHTML. */
+export function escapeHtml(text: string): string {
+  return text.replace(/[&<>"']/g, (c) => HTML_ESCAPES[c]);
+}
+
 export function slugify(text: string): string {
   return text
     .toLowerCase()

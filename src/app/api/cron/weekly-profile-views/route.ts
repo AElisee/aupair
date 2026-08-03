@@ -7,12 +7,16 @@ import { getISOWeekKey } from "@/lib/profile-views";
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 export async function GET(req: Request) {
+  // CRON_SECRET doit toujours être configuré en prod — sans lui, on refuse plutôt que
+  // de laisser cette route publique déclencher des notifications à volonté.
   const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const authHeader = req.headers.get("authorization");
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-    }
+  if (!cronSecret) {
+    console.error("[cron/weekly-profile-views] CRON_SECRET n'est pas configuré.");
+    return NextResponse.json({ error: "Non configuré" }, { status: 503 });
+  }
+  const authHeader = req.headers.get("authorization");
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
   const settings = await getAppSettings();

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendMail } from "@/lib/mail";
 import { CONTACT_SUBJECTS } from "@/lib/constants";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 type ContactBody = {
   name?: string;
@@ -12,6 +13,9 @@ type ContactBody = {
 };
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const WINDOW_MS = 60 * 60 * 1000;
+const MAX_PER_EMAIL = 3;
+const MAX_PER_IP = 10;
 
 export async function POST(request: Request) {
   let body: ContactBody;
@@ -37,6 +41,19 @@ export async function POST(request: Request) {
   }
   if (message.length < 10) {
     return NextResponse.json({ error: "Le message doit contenir au moins 10 caractères." }, { status: 400 });
+  }
+
+  const ip = getClientIp(request);
+  const [emailLimit, ipLimit] = await Promise.all([
+    checkRateLimit(`contact:email:${email}`, MAX_PER_EMAIL, WINDOW_MS),
+    checkRateLimit(`contact:ip:${ip}`, MAX_PER_IP, WINDOW_MS),
+  ]);
+  if (!emailLimit.allowed || !ipLimit.allowed) {
+    console.log(`[contact] Limite de débit atteinte pour "${email}" (ip=${ip}).`);
+    return NextResponse.json(
+      { error: "Trop de messages envoyés. Merci de réessayer plus tard." },
+      { status: 429 }
+    );
   }
 
   const session = await auth();
