@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { getSafeCallbackUrl, getDefaultRedirectForRole } from "@/lib/safe-redirect";
+import { ADMIN_SESSION_MAX_AGE_MS } from "@/lib/constants";
 
 /**
  * Routes protégées par authentification (tout utilisateur connecté)
@@ -57,6 +58,19 @@ export async function proxy(request: NextRequest) {
     }
 
     return NextResponse.redirect(loginUrl);
+  }
+
+  // ── Session ADMIN expirée (durée de vie plafonnée, cf. src/lib/auth.ts) ───
+  if (isAdminOnly && token.role === "ADMIN") {
+    const loginAt = token.loginAt as number | undefined;
+    if (!loginAt || Date.now() - loginAt > ADMIN_SESSION_MAX_AGE_MS) {
+      const loginUrl = new URL("/connexion", request.url);
+      const safeCallback = getSafeCallbackUrl(pathname);
+      if (safeCallback !== "/") {
+        loginUrl.searchParams.set("callbackUrl", safeCallback);
+      }
+      return NextResponse.redirect(loginUrl);
+    }
   }
 
   // ── Authentifié mais route ADMIN réservée au rôle ADMIN ───────────────────

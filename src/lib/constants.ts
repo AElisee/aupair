@@ -41,6 +41,10 @@ export const REPORT_REASONS = [
   "Autre",
 ];
 
+/** Durée de vie absolue d'une session ADMIN, indépendante de l'activité — le back-office donne accès
+ * aux paiements et à la modération, donc on force une reconnexion régulière même si le JWT est encore valide. */
+export const ADMIN_SESSION_MAX_AGE_MS = 8 * 60 * 60 * 1000;
+
 export const PAYMENT_METHOD_LABELS: Record<string, string> = {
   MOBILE_MONEY: "Mobile Money",
   CARD: "Carte bancaire",

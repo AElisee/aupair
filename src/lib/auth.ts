@@ -6,6 +6,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
 import { checkRateLimit, resetRateLimit } from "./rate-limit";
+import { ADMIN_SESSION_MAX_AGE_MS } from "./constants";
 
 const LOGIN_MAX_ATTEMPTS = 5;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
@@ -70,6 +71,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.role = (user as { role?: string }).role;
         token.id = user.id;
+        token.loginAt = Date.now();
         const passwordChangedAt = (
           user as { passwordChangedAt?: Date | string | null }
         ).passwordChangedAt;
@@ -89,6 +91,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           select: { passwordChangedAt: true },
         });
         token.pwdAt = dbUser?.passwordChangedAt?.getTime() ?? 0;
+        return token;
+      }
+
+      // Session ADMIN à durée de vie plafonnée, indépendamment de l'activité — le
+      // back-office donne accès aux paiements et à la modération, donc on force une
+      // reconnexion régulière même si le token est encore valide par ailleurs.
+      if (
+        token.role === "ADMIN" &&
+        Date.now() - (token.loginAt ?? 0) > ADMIN_SESSION_MAX_AGE_MS
+      ) {
+        delete token.id;
+        delete token.role;
         return token;
       }
 
@@ -127,6 +141,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   session: {
     strategy: "jwt",
+    // Session glissante de 30 jours pour les utilisateurs classiques (confort attendu sur ce
+    // type de plateforme) ; la session ADMIN est en plus plafonnée à ADMIN_SESSION_MAX_AGE_MS
+    // ci-dessus, indépendamment de cette valeur.
+    maxAge: 30 * 24 * 60 * 60,
+    updateAge: 24 * 60 * 60,
   },
   events: {
     /** Lors d'une première connexion OAuth, l'adapter crée le User mais pas son profil métier. */

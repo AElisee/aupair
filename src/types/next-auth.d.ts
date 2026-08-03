@@ -19,5 +19,7 @@ declare module "next-auth/jwt" {
     role?: string;
     /** Timestamp (ms) de `User.passwordChangedAt` au moment de l'émission/rafraîchissement du token. */
     pwdAt?: number;
+    /** Timestamp (ms) de connexion initiale — sert à plafonner la durée de vie des sessions ADMIN. */
+    loginAt?: number;
   }
 }
