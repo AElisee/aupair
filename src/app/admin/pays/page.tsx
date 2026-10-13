@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
+import Pagination from "@/components/admin/Pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +15,7 @@ import {
   Search,
 } from "lucide-react";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import { useI18n } from "@/i18n";
 
 type Country = {
   id: string;
@@ -76,6 +78,9 @@ export default function AdminPaysPage() {
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
+  const { t, tError } = useI18n();
+  const ac = t.adminCommon;
+  const tc = t.adminCountries;
 
   const load = () => {
     fetch("/api/admin/countries")
@@ -110,12 +115,12 @@ export default function AdminPaysPage() {
     setError("");
 
     if (!form.name.trim() || !form.flag.trim() || !form.dialCode.trim()) {
-      setError("Tous les champs sont requis.");
+      setError(tc.allFieldsRequired);
       return;
     }
 
     if (!/^[A-Za-z]{2}$/.test(form.flag.trim())) {
-      setError("Le code pays doit être composé de 2 lettres (ex : FR, TN).");
+      setError(tc.invalidIso);
       return;
     }
 
@@ -136,7 +141,7 @@ export default function AdminPaysPage() {
         });
         const data = await res.json();
         if (!res.ok) {
-          setError(data.error ?? "Erreur lors de la modification.");
+          setError(tError(data.error, ac.editError));
           return;
         }
         setCountries((prev) =>
@@ -151,7 +156,7 @@ export default function AdminPaysPage() {
         });
         const data = await res.json();
         if (!res.ok) {
-          setError(data.error ?? "Erreur lors de l'ajout.");
+          setError(tError(data.error, ac.addError));
           return;
         }
         setCountries((prev) => [...prev, data.country]);
@@ -250,8 +255,8 @@ export default function AdminPaysPage() {
     <AdminLayout>
       <div className="space-y-5">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">Pays</h1>
-          <div className="text-sm text-gray-500">{filtered.length} pays</div>
+          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{tc.title}</h1>
+          <div className="text-sm text-gray-500">{tc.count(filtered.length)}</div>
         </div>
 
         {/* Formulaire d'ajout / modification */}
@@ -262,7 +267,7 @@ export default function AdminPaysPage() {
             ) : (
               <Globe className="w-4 h-4 text-[#E87722]" />
             )}
-            {editingId ? "Modifier le pays" : "Ajouter un pays"}
+            {editingId ? tc.editTitle : tc.addTitle}
           </h2>
           <form
             onSubmit={handleSubmit}
@@ -270,7 +275,7 @@ export default function AdminPaysPage() {
           >
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">
-                Code pays (ISO)
+                {tc.isoCode}
               </label>
               <input
                 type="text"
@@ -285,7 +290,7 @@ export default function AdminPaysPage() {
             </div>
             <div className="flex-1 min-w-40">
               <label className="block text-xs font-medium text-gray-500 mb-1">
-                Nom du pays
+                {tc.name}
               </label>
               <input
                 type="text"
@@ -297,7 +302,7 @@ export default function AdminPaysPage() {
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">
-                Indicatif
+                {tc.dialCode}
               </label>
               <input
                 type="text"
@@ -309,7 +314,7 @@ export default function AdminPaysPage() {
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">
-                Type
+                {tc.type}
               </label>
               <select
                 value={form.type}
@@ -321,18 +326,18 @@ export default function AdminPaysPage() {
                 }
                 className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none bg-white"
               >
-                <option value="ORIGIN">Pays d'origine</option>
-                <option value="HOST">Pays d'accueil</option>
+                <option value="ORIGIN">{tc.originCountry}</option>
+                <option value="HOST">{tc.hostCountry}</option>
               </select>
             </div>
             <Button type="submit" disabled={submitting}>
               {editingId ? (
                 <>
-                  <Pencil className="w-4 h-4 mr-1" /> Enregistrer
+                  <Pencil className="w-4 h-4 mr-1" /> {ac.save}
                 </>
               ) : (
                 <>
-                  <Plus className="w-4 h-4 mr-1" /> Ajouter
+                  <Plus className="w-4 h-4 mr-1" /> {ac.add}
                 </>
               )}
             </Button>
@@ -343,7 +348,7 @@ export default function AdminPaysPage() {
                 onClick={cancelEdit}
                 disabled={submitting}
               >
-                Annuler
+                {ac.cancel}
               </Button>
             )}
           </form>
@@ -357,19 +362,19 @@ export default function AdminPaysPage() {
               onClick={() => changeFilter("")}
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${filterType === "" ? "bg-[#E87722] text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-[#E87722]"}`}
             >
-              Tous
+              {ac.all}
             </button>
             <button
               onClick={() => changeFilter("ORIGIN")}
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${filterType === "ORIGIN" ? "bg-[#E87722] text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-[#E87722]"}`}
             >
-              Origine
+              {tc.origin}
             </button>
             <button
               onClick={() => changeFilter("HOST")}
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${filterType === "HOST" ? "bg-[#E87722] text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-[#E87722]"}`}
             >
-              Accueil
+              {tc.host}
             </button>
           </div>
           <div className="relative flex-1 sm:max-w-xs">
@@ -381,7 +386,7 @@ export default function AdminPaysPage() {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              placeholder="Rechercher un pays ou un indicatif..."
+              placeholder={tc.searchPlaceholder}
               className="w-full pl-9 pr-3 py-1.5 rounded-full border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
             />
           </div>
@@ -392,7 +397,7 @@ export default function AdminPaysPage() {
           {loading ? (
             <div className="p-12 text-center">
               <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
-              <p className="text-gray-500">Chargement...</p>
+              <p className="text-gray-500">{ac.loading}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -408,22 +413,22 @@ export default function AdminPaysPage() {
                     />
                   </th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Drapeau
+                    {tc.colFlag}
                   </th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Nom
+                    {tc.colName}
                   </th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Indicatif
+                    {tc.dialCode}
                   </th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Type
+                    {tc.type}
                   </th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Statut
+                    {ac.status}
                   </th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Actions
+                    {ac.actions}
                   </th>
                 </tr>
               </thead>
@@ -434,7 +439,7 @@ export default function AdminPaysPage() {
                       colSpan={7}
                       className="px-5 py-8 text-center text-gray-400"
                     >
-                      Aucun pays.
+                      {tc.none}
                     </td>
                   </tr>
                 ) : (
@@ -466,14 +471,14 @@ export default function AdminPaysPage() {
                             c.type === "ORIGIN" ? "default" : "secondary"
                           }
                         >
-                          {c.type === "ORIGIN" ? "Origine" : "Accueil"}
+                          {c.type === "ORIGIN" ? tc.origin : tc.host}
                         </Badge>
                       </td>
                       <td className="px-5 py-3.5">
                         {c.isActive ? (
-                          <Badge variant="success">Actif</Badge>
+                          <Badge variant="success">{t.adminCommon.active}</Badge>
                         ) : (
-                          <Badge variant="secondary">Inactif</Badge>
+                          <Badge variant="secondary">{t.adminCommon.inactive}</Badge>
                         )}
                       </td>
                       <td className="px-5 py-3.5">
@@ -482,7 +487,7 @@ export default function AdminPaysPage() {
                             disabled={processingId === c.id}
                             onClick={() => startEdit(c)}
                             className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
-                            title="Modifier"
+                            title={t.adminCommon.edit}
                           >
                             <Pencil className="w-4 h-4" />
                           </button>
@@ -490,7 +495,7 @@ export default function AdminPaysPage() {
                             disabled={processingId === c.id}
                             onClick={() => toggleActive(c)}
                             className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
-                            title={c.isActive ? "Désactiver" : "Activer"}
+                            title={c.isActive ? tc.deactivate : tc.activate}
                           >
                             {c.isActive ? (
                               <EyeOff className="w-4 h-4" />
@@ -502,7 +507,7 @@ export default function AdminPaysPage() {
                             disabled={processingId === c.id}
                             onClick={() => setDeleteTarget(c)}
                             className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                            title="Supprimer"
+                            title={t.adminCommon.delete}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -516,40 +521,13 @@ export default function AdminPaysPage() {
             </div>
           )}
           {!loading && filtered.length > 0 && (
-            <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100">
-              <div className="text-xs text-gray-500">
-                {(currentPage - 1) * PAGE_SIZE + 1}–
-                {Math.min(currentPage * PAGE_SIZE, filtered.length)} sur{" "}
-                {filtered.length}
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:border-[#E87722] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  Précédent
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (p) => (
-                    <button
-                      key={p}
-                      onClick={() => setPage(p)}
-                      className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${p === currentPage ? "bg-[#E87722] text-white" : "border border-gray-200 text-gray-600 hover:border-[#E87722]"}`}
-                    >
-                      {p}
-                    </button>
-                  ),
-                )}
-                <button
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:border-[#E87722] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  Suivant
-                </button>
-              </div>
-            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={PAGE_SIZE}
+              totalItems={filtered.length}
+              onPageChange={setPage}
+            />
           )}
         </div>
       </div>
@@ -557,16 +535,16 @@ export default function AdminPaysPage() {
       {/* Modale de confirmation de suppression */}
       {deleteTarget && (
         <ConfirmDialog
-          title="Supprimer ce pays ?"
+          title={tc.deleteTitle}
           description={
             <>
               <span className="font-semibold text-[#1A1A2E]">
                 {deleteTarget.flag} {deleteTarget.name}
               </span>{" "}
-              sera définitivement supprimé. Cette action est irréversible.
+              {t.adminCommon.willBeDeleted} {t.adminCommon.irreversible}
             </>
           }
-          confirmLabel="Supprimer"
+          confirmLabel={t.adminCommon.delete}
           loading={processingId === deleteTarget.id}
           onConfirm={confirmDelete}
           onCancel={() => setDeleteTarget(null)}

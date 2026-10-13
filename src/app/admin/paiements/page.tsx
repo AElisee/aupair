@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
+import Pagination from "@/components/admin/Pagination";
 import { Badge } from "@/components/ui/badge";
 import { DollarSign, TrendingUp, CreditCard, Smartphone, Globe, Download, Loader2, FileText } from "lucide-react";
-import { PAYMENT_METHOD_LABELS } from "@/lib/constants";
+import { useI18n } from "@/i18n";
 
 type Payment = {
   id: string;
@@ -34,25 +35,20 @@ const methodIcon = (method: Payment["method"]) => {
   return <Globe className="w-3.5 h-3.5" />;
 };
 
-const methodLabel = (method: Payment["method"]) => PAYMENT_METHOD_LABELS[method] ?? method;
-
-const statusBadge = (status: Payment["status"]) => {
-  switch (status) {
-    case "ACTIVE":
-      return <Badge variant="success">Actif</Badge>;
-    case "EXPIRED":
-      return <Badge variant="secondary">Expiré</Badge>;
-    case "CANCELLED":
-      return <Badge variant="warning">Annulé</Badge>;
-    case "REFUNDED":
-      return <Badge variant="destructive">Remboursé</Badge>;
-  }
+const STATUS_VARIANTS: Record<Payment["status"], "success" | "secondary" | "warning" | "destructive"> = {
+  ACTIVE: "success",
+  EXPIRED: "secondary",
+  CANCELLED: "warning",
+  REFUNDED: "destructive",
 };
 
 export default function PaiementsPage() {
   const [data, setData] = useState<PaymentsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const { t, locale } = useI18n();
+  const c = t.adminCommon;
+  const tp = t.adminPayments;
 
   useEffect(() => {
     fetch("/api/admin/payments")
@@ -72,20 +68,20 @@ export default function PaiementsPage() {
     <AdminLayout>
       <div className="space-y-5">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">Paiements</h1>
+          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{tp.title}</h1>
           <a
             href="/api/admin/payments/export"
             className="flex items-center gap-2 bg-[#1A1A2E] text-white text-sm px-4 py-2 rounded-xl hover:bg-[#2a2a3e] transition-colors"
           >
             <Download className="w-4 h-4" />
-            Exporter CSV
+            {tp.exportCsv}
           </a>
         </div>
 
         {loading || !data ? (
           <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
             <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
-            <p className="text-gray-500">Chargement...</p>
+            <p className="text-gray-500">{c.loading}</p>
           </div>
         ) : (
           <>
@@ -101,7 +97,7 @@ export default function PaiementsPage() {
                     {data.kpis.revenueActiveEur && (
                       <p className="text-xs text-gray-400">+ {data.kpis.revenueActiveEur}</p>
                     )}
-                    <p className="text-xs text-gray-500">Revenus actifs</p>
+                    <p className="text-xs text-gray-500">{tp.activeRevenue}</p>
                   </div>
                 </div>
               </div>
@@ -112,7 +108,7 @@ export default function PaiementsPage() {
                   </div>
                   <div>
                     <p className="text-2xl font-extrabold text-[#1A1A2E]">{data.kpis.activeSubscriptions}</p>
-                    <p className="text-xs text-gray-500">Abonnements actifs</p>
+                    <p className="text-xs text-gray-500">{tp.activeSubscriptions}</p>
                   </div>
                 </div>
               </div>
@@ -123,7 +119,7 @@ export default function PaiementsPage() {
                   </div>
                   <div>
                     <p className="text-2xl font-extrabold text-[#1A1A2E]">{data.kpis.mobileMoneyCount}</p>
-                    <p className="text-xs text-gray-500">Via Mobile Money</p>
+                    <p className="text-xs text-gray-500">{tp.viaMobileMoney}</p>
                   </div>
                 </div>
               </div>
@@ -134,19 +130,19 @@ export default function PaiementsPage() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b border-gray-100">
                   <tr>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Utilisateur</th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Montant</th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Méthode</th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Statut</th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Date</th>
-                    <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Facture</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">{tp.colUser}</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">{tp.colAmount}</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">{tp.colMethod}</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">{c.status}</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">{tp.colDate}</th>
+                    <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase">{tp.colInvoice}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {paginated.map((p) => (
                     <tr key={p.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-5 py-3.5">
-                        <p className="font-semibold text-[#1A1A2E]">{p.user}</p>
+                        <p className="font-semibold text-[#1A1A2E]">{p.user || c.unknownUser}</p>
                         <p className="text-xs text-gray-400">{p.email}</p>
                       </td>
                       <td className="px-5 py-3.5">
@@ -155,11 +151,11 @@ export default function PaiementsPage() {
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-1.5 text-gray-600">
                           {methodIcon(p.method)}
-                          {methodLabel(p.method)}
+                          {tp.methods[p.method] ?? p.method}
                         </div>
                       </td>
-                      <td className="px-5 py-3.5">{statusBadge(p.status)}</td>
-                      <td className="px-5 py-3.5 text-gray-400 text-xs">{p.date}</td>
+                      <td className="px-5 py-3.5"><Badge variant={STATUS_VARIANTS[p.status]}>{tp.statuses[p.status]}</Badge></td>
+                      <td className="px-5 py-3.5 text-gray-400 text-xs">{new Date(p.date).toLocaleDateString(locale)}</td>
                       <td className="px-5 py-3.5 text-right">
                         {p.invoiceUrl ? (
                           <a
@@ -181,45 +177,18 @@ export default function PaiementsPage() {
 
               {data.payments.length === 0 && (
                 <div className="p-12 text-center">
-                  <p className="text-gray-400">Aucun paiement enregistré.</p>
+                  <p className="text-gray-400">{tp.none}</p>
                 </div>
               )}
 
               {data.payments.length > 0 && (
-                <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100">
-                  <div className="text-xs text-gray-500">
-                    {(currentPage - 1) * PAGE_SIZE + 1}–
-                    {Math.min(currentPage * PAGE_SIZE, data.payments.length)} sur{" "}
-                    {data.payments.length}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={currentPage === 1}
-                      className="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:border-[#E87722] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                    >
-                      Précédent
-                    </button>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                      (p) => (
-                        <button
-                          key={p}
-                          onClick={() => setPage(p)}
-                          className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${p === currentPage ? "bg-[#E87722] text-white" : "border border-gray-200 text-gray-600 hover:border-[#E87722]"}`}
-                        >
-                          {p}
-                        </button>
-                      ),
-                    )}
-                    <button
-                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                      disabled={currentPage === totalPages}
-                      className="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:border-[#E87722] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                    >
-                      Suivant
-                    </button>
-                  </div>
-                </div>
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  pageSize={PAGE_SIZE}
+                  totalItems={data.payments.length}
+                  onPageChange={setPage}
+                />
               )}
             </div>
           </>

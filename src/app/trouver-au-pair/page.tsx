@@ -9,6 +9,7 @@ import { Search, Filter, MapPin, Languages, Star, Lock, Loader2 } from "lucide-r
 import { useCountries } from "@/hooks/useCountries";
 import { useConstants } from "@/hooks/useConstants";
 import { CountryFlag } from "@/components/ui/CountryFlag";
+import { useI18n } from "@/i18n";
 
 type AuPair = {
   id: string;
@@ -27,6 +28,7 @@ type AuPair = {
 };
 
 function AuPairCard({ ap, isFamily }: { ap: AuPair; isFamily: boolean }) {
+  const { t, tValue, tList } = useI18n();
   const card = (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden group">
       {/* Photo */}
@@ -41,21 +43,21 @@ function AuPairCard({ ap, isFamily }: { ap: AuPair; isFamily: boolean }) {
         )}
         {!ap.available && (
           <div className="absolute top-3 right-3">
-            <Badge variant="warning">Indisponible</Badge>
+            <Badge variant="warning">{t.common.unavailable}</Badge>
           </div>
         )}
         {ap.available && (
           <div className="absolute top-3 right-3">
-            <Badge variant="success">Disponible</Badge>
+            <Badge variant="success">{t.common.available}</Badge>
           </div>
         )}
         {/* Overlay CTA si non connecté en tant que famille */}
         {!isFamily && (
           <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
             <Lock className="w-6 h-6 text-[#E87722] mb-2" />
-            <p className="text-sm font-semibold text-[#1A1A2E] mb-3">Voir le profil complet</p>
+            <p className="text-sm font-semibold text-[#1A1A2E] mb-3">{t.publicSearch.seeFullProfile}</p>
             <Link href="/inscription?role=famille">
-              <Button size="sm">S'inscrire gratuitement</Button>
+              <Button size="sm">{t.publicSearch.signUpFree}</Button>
             </Link>
           </div>
         )}
@@ -65,10 +67,10 @@ function AuPairCard({ ap, isFamily }: { ap: AuPair; isFamily: boolean }) {
       <div className="p-5">
         <div className="flex items-start justify-between mb-2">
           <div>
-            <h3 className="font-bold text-[#1A1A2E] text-lg">{ap.firstName}, {ap.age} ans</h3>
+            <h3 className="font-bold text-[#1A1A2E] text-lg">{ap.firstName}, {t.common.age(ap.age)}</h3>
             <div className="flex items-center gap-1 text-gray-500 text-sm">
               <CountryFlag flag={ap.flag} className="h-4 w-auto rounded-sm" />
-              <span>{ap.country}</span>
+              <span>{tValue(ap.country)}</span>
             </div>
           </div>
         </div>
@@ -78,15 +80,15 @@ function AuPairCard({ ap, isFamily }: { ap: AuPair; isFamily: boolean }) {
         <div className="space-y-2 text-xs text-gray-500">
           <div className="flex items-center gap-2">
             <Languages className="w-3.5 h-3.5 text-[#E87722]" />
-            <span>{ap.languages.join(", ")}</span>
+            <span>{tList(ap.languages)}</span>
           </div>
           <div className="flex items-center gap-2">
             <Star className="w-3.5 h-3.5 text-[#E87722]" />
-            <span>{ap.experience} an{ap.experience > 1 ? "s" : ""} d'expérience</span>
+            <span>{t.common.experience(ap.experience)}</span>
           </div>
           <div className="flex items-center gap-2">
             <MapPin className="w-3.5 h-3.5 text-[#E87722]" />
-            <span>Souhaite : {ap.targetCountries.join(", ")}</span>
+            <span>{t.common.wishes(tList(ap.targetCountries))}</span>
           </div>
         </div>
       </div>
@@ -116,6 +118,7 @@ export default function TrouverAuPairPage() {
   const [showFilters, setShowFilters] = useState(false);
   const { origin: originCountries, host: hostCountries } = useCountries();
   const { languages: LANGUAGES } = useConstants();
+  const { t, tValue } = useI18n();
 
   useEffect(() => {
     fetch("/api/au-pairs")
@@ -136,7 +139,11 @@ export default function TrouverAuPairPage() {
   };
 
   const filtered = auPairs.filter((ap) => {
-    const matchSearch = ap.firstName.toLowerCase().includes(search.toLowerCase()) || ap.country.toLowerCase().includes(search.toLowerCase());
+    const query = search.toLowerCase();
+    const matchSearch =
+      ap.firstName.toLowerCase().includes(query) ||
+      ap.country.toLowerCase().includes(query) ||
+      tValue(ap.country).toLowerCase().includes(query);
     const matchCountry = !filterCountry || ap.country === filterCountry;
     const matchLang = !filterLang || ap.languages.includes(filterLang);
     const matchGender = !filterGender || ap.gender === filterGender;
@@ -153,11 +160,11 @@ export default function TrouverAuPairPage() {
       <div className="bg-[#1A1A2E] py-14">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-2">
-            Trouver un au pair africain
+            {t.publicSearch.auPairTitle}
           </h1>
           <p className="text-gray-400 mb-6">
-            {auPairs.length} au pairs disponibles
-            {!isFamily && " • Inscription famille gratuite pour accéder aux profils complets"}
+            {t.searchAuPairs.availableCount(auPairs.length)}
+            {!isFamily && t.publicSearch.auPairFreeHint}
           </p>
 
           {/* Barre de recherche */}
@@ -166,7 +173,7 @@ export default function TrouverAuPairPage() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Rechercher par nom, pays..."
+                placeholder={t.searchAuPairs.searchPlaceholder}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-11 pr-4 py-3 rounded-xl bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
@@ -177,7 +184,7 @@ export default function TrouverAuPairPage() {
               className="flex items-center gap-2 bg-white/10 text-white px-5 py-3 rounded-xl text-sm font-medium hover:bg-white/20 transition-colors"
             >
               <Filter className="w-4 h-4" />
-              Filtres
+              {t.common.filters}
             </button>
           </div>
 
@@ -189,57 +196,57 @@ export default function TrouverAuPairPage() {
                 onChange={(e) => setFilterCountry(e.target.value)}
                 className="px-4 py-3 rounded-xl bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
               >
-                <option value="">Tous les pays d'origine</option>
-                {originCountries.map((c) => <option key={c.name} value={c.name}>{c.name}</option>)}
+                <option value="">{t.searchAuPairs.allOriginCountries}</option>
+                {originCountries.map((c) => <option key={c.name} value={c.name}>{tValue(c.name)}</option>)}
               </select>
               <select
                 value={filterLang}
                 onChange={(e) => setFilterLang(e.target.value)}
                 className="px-4 py-3 rounded-xl bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
               >
-                <option value="">Toutes les langues</option>
-                {LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
+                <option value="">{t.searchAuPairs.allLanguages}</option>
+                {LANGUAGES.map((l) => <option key={l} value={l}>{tValue(l)}</option>)}
               </select>
               <select
                 value={filterGender}
                 onChange={(e) => setFilterGender(e.target.value)}
                 className="px-4 py-3 rounded-xl bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
               >
-                <option value="">Tous les genres</option>
-                <option value="Femme">Femme</option>
-                <option value="Homme">Homme</option>
+                <option value="">{t.searchAuPairs.allGenders}</option>
+                <option value="Femme">{tValue("Femme")}</option>
+                <option value="Homme">{tValue("Homme")}</option>
               </select>
               <select
                 value={filterTargetCountry}
                 onChange={(e) => setFilterTargetCountry(e.target.value)}
                 className="px-4 py-3 rounded-xl bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
               >
-                <option value="">Toutes destinations souhaitées</option>
-                {hostCountries.map((c) => <option key={c.name} value={c.name}>{c.name}</option>)}
+                <option value="">{t.searchAuPairs.allDestinations}</option>
+                {hostCountries.map((c) => <option key={c.name} value={c.name}>{tValue(c.name)}</option>)}
               </select>
               <select
                 value={filterMinAge}
                 onChange={(e) => setFilterMinAge(e.target.value)}
                 className="px-4 py-3 rounded-xl bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
               >
-                <option value="">Âge min.</option>
-                {[18, 20, 22, 25, 28, 30, 35, 40].map((a) => <option key={a} value={a}>{a} ans</option>)}
+                <option value="">{t.searchAuPairs.minAge}</option>
+                {[18, 20, 22, 25, 28, 30, 35, 40].map((a) => <option key={a} value={a}>{t.searchAuPairs.ageOption(a)}</option>)}
               </select>
               <select
                 value={filterMaxAge}
                 onChange={(e) => setFilterMaxAge(e.target.value)}
                 className="px-4 py-3 rounded-xl bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
               >
-                <option value="">Âge max.</option>
-                {[20, 22, 25, 28, 30, 35, 40, 50].map((a) => <option key={a} value={a}>{a} ans</option>)}
+                <option value="">{t.searchAuPairs.maxAge}</option>
+                {[20, 22, 25, 28, 30, 35, 40, 50].map((a) => <option key={a} value={a}>{t.searchAuPairs.ageOption(a)}</option>)}
               </select>
               <select
                 value={filterMinExperience}
                 onChange={(e) => setFilterMinExperience(e.target.value)}
                 className="px-4 py-3 rounded-xl bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
               >
-                <option value="">Expérience minimale</option>
-                {[1, 2, 3, 4, 5].map((y) => <option key={y} value={y}>{y}+ an{y > 1 ? "s" : ""}</option>)}
+                <option value="">{t.searchAuPairs.minExperience}</option>
+                {[1, 2, 3, 4, 5].map((y) => <option key={y} value={y}>{t.searchAuPairs.experienceOption(y)}</option>)}
               </select>
             </div>
           )}
@@ -252,11 +259,11 @@ export default function TrouverAuPairPage() {
         {!isFamily && (
           <div className="bg-[#FFF3E0] border border-[#E87722]/30 rounded-2xl p-5 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>
-              <p className="font-bold text-[#1A1A2E]">👨‍👩‍👧 Inscrivez-vous gratuitement pour voir les profils complets</p>
-              <p className="text-sm text-gray-500">Accès aux coordonnées, messagerie, favoris — 100% gratuit pour les familles.</p>
+              <p className="font-bold text-[#1A1A2E]">{t.publicSearch.familyBannerTitle}</p>
+              <p className="text-sm text-gray-500">{t.publicSearch.familyBannerText}</p>
             </div>
             <Link href="/inscription?role=famille">
-              <Button>Inscription gratuite</Button>
+              <Button>{t.publicSearch.freeSignup}</Button>
             </Link>
           </div>
         )}
@@ -264,11 +271,11 @@ export default function TrouverAuPairPage() {
         {loading ? (
           <div className="py-20 text-center">
             <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
-            <p className="text-gray-500">Chargement...</p>
+            <p className="text-gray-500">{t.common.loading}</p>
           </div>
         ) : (
           <>
-            <p className="text-gray-500 text-sm mb-6">{filtered.length} au pairs trouvés</p>
+            <p className="text-gray-500 text-sm mb-6">{t.searchAuPairs.foundCount(filtered.length)}</p>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filtered.map((ap) => <AuPairCard key={ap.id} ap={ap} isFamily={isFamily} />)}
@@ -276,8 +283,8 @@ export default function TrouverAuPairPage() {
 
             {filtered.length === 0 && (
               <div className="text-center py-20">
-                <p className="text-gray-400 text-lg">Aucun au pair trouvé avec ces critères.</p>
-                <button onClick={resetFilters} className="mt-4 text-[#E87722] font-semibold">Réinitialiser les filtres</button>
+                <p className="text-gray-400 text-lg">{t.searchAuPairs.noneFound}</p>
+                <button onClick={resetFilters} className="mt-4 text-[#E87722] font-semibold">{t.common.resetFilters}</button>
               </div>
             )}
           </>

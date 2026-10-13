@@ -4,6 +4,7 @@ import AdminLayout from "@/components/layout/AdminLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, Mail, Send, Inbox } from "lucide-react";
+import { useI18n } from "@/i18n";
 
 type TicketStatus = "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
 type TicketPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
@@ -30,39 +31,24 @@ type TicketMessage = {
 
 type TicketDetail = TicketListItem & { messages: TicketMessage[] };
 
-const STATUS_LABELS: Record<TicketStatus, string> = {
-  OPEN: "Ouvert",
-  IN_PROGRESS: "En cours",
-  RESOLVED: "Résolu",
-  CLOSED: "Fermé",
+const STATUSES: TicketStatus[] = ["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"];
+const PRIORITIES: TicketPriority[] = ["LOW", "MEDIUM", "HIGH", "URGENT"];
+
+const STATUS_VARIANTS: Record<TicketStatus, "warning" | "default" | "success" | "secondary"> = {
+  OPEN: "warning",
+  IN_PROGRESS: "default",
+  RESOLVED: "success",
+  CLOSED: "secondary",
 };
 
-const PRIORITY_LABELS: Record<TicketPriority, string> = {
-  LOW: "Faible",
-  MEDIUM: "Moyenne",
-  HIGH: "Haute",
-  URGENT: "Urgente",
+const PRIORITY_VARIANTS: Record<TicketPriority, "secondary" | "default" | "warning" | "destructive"> = {
+  LOW: "secondary",
+  MEDIUM: "default",
+  HIGH: "warning",
+  URGENT: "destructive",
 };
 
-const statusBadge = (status: TicketStatus) => {
-  switch (status) {
-    case "OPEN": return <Badge variant="warning">Ouvert</Badge>;
-    case "IN_PROGRESS": return <Badge variant="default">En cours</Badge>;
-    case "RESOLVED": return <Badge variant="success">Résolu</Badge>;
-    case "CLOSED": return <Badge variant="secondary">Fermé</Badge>;
-  }
-};
-
-const priorityBadge = (priority: TicketPriority) => {
-  switch (priority) {
-    case "LOW": return <Badge variant="secondary">Faible</Badge>;
-    case "MEDIUM": return <Badge variant="default">Moyenne</Badge>;
-    case "HIGH": return <Badge variant="warning">Haute</Badge>;
-    case "URGENT": return <Badge variant="destructive">Urgente</Badge>;
-  }
-};
-
-const requesterName = (t: TicketListItem) => t.user?.name ?? t.guestName ?? "Anonyme";
+const requesterName = (t: TicketListItem, anonymous: string) => t.user?.name ?? t.guestName ?? anonymous;
 const requesterEmail = (t: TicketListItem) => t.user?.email ?? t.guestEmail ?? "";
 
 export default function AdminTicketsPage() {
@@ -75,6 +61,11 @@ export default function AdminTicketsPage() {
   const [reply, setReply] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const { t: i18n, locale } = useI18n();
+  const c = i18n.adminCommon;
+  const tt = i18n.adminTickets;
+  const statusBadge = (status: TicketStatus) => <Badge variant={STATUS_VARIANTS[status]}>{tt.statuses[status]}</Badge>;
+  const priorityBadge = (priority: TicketPriority) => <Badge variant={PRIORITY_VARIANTS[priority]}>{tt.priorities[priority]}</Badge>;
 
   const load = () => {
     fetch("/api/admin/tickets")
@@ -147,8 +138,8 @@ export default function AdminTicketsPage() {
     <AdminLayout>
       <div className="space-y-5">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">Tickets support</h1>
-          <div className="text-sm text-gray-500">{filtered.length} ticket(s)</div>
+          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{tt.title}</h1>
+          <div className="text-sm text-gray-500">{tt.count(filtered.length)}</div>
         </div>
 
         {/* Filtres statut */}
@@ -159,7 +150,7 @@ export default function AdminTicketsPage() {
               onClick={() => setStatusFilter(s)}
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${statusFilter === s ? "bg-[#E87722] text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-[#E87722]"}`}
             >
-              {s === "" ? "Tous" : STATUS_LABELS[s]}
+              {s === "" ? c.all : tt.statuses[s]}
             </button>
           ))}
         </div>
@@ -170,12 +161,12 @@ export default function AdminTicketsPage() {
             {loading ? (
               <div className="p-12 text-center">
                 <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
-                <p className="text-gray-500">Chargement...</p>
+                <p className="text-gray-500">{c.loading}</p>
               </div>
             ) : filtered.length === 0 ? (
               <div className="p-12 text-center">
                 <Inbox className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                <p className="text-gray-400">Aucun ticket.</p>
+                <p className="text-gray-400">{tt.none}</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-50 max-h-[70vh] overflow-y-auto">
@@ -189,9 +180,9 @@ export default function AdminTicketsPage() {
                       <span className="font-semibold text-[#1A1A2E] text-sm line-clamp-1">{t.subject}</span>
                       {statusBadge(t.status)}
                     </div>
-                    <p className="text-xs text-gray-500 line-clamp-1 mb-1">{requesterName(t)} · {requesterEmail(t)}</p>
+                    <p className="text-xs text-gray-500 line-clamp-1 mb-1">{requesterName(t, tt.anonymous)} · {requesterEmail(t)}</p>
                     <div className="flex items-center justify-between">
-                      <p className="text-xs text-gray-400">{new Date(t.createdAt).toLocaleString("fr-FR")}</p>
+                      <p className="text-xs text-gray-400">{new Date(t.createdAt).toLocaleString(locale)}</p>
                       {priorityBadge(t.priority)}
                     </div>
                   </button>
@@ -205,20 +196,20 @@ export default function AdminTicketsPage() {
             {!selectedId ? (
               <div className="h-full flex flex-col items-center justify-center text-center py-12">
                 <Mail className="w-10 h-10 text-gray-300 mb-2" />
-                <p className="text-gray-400">Sélectionnez un ticket pour voir le détail.</p>
+                <p className="text-gray-400">{tt.selectTicket}</p>
               </div>
             ) : loadingDetail || !detail ? (
               <div className="p-12 text-center">
                 <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
-                <p className="text-gray-500">Chargement...</p>
+                <p className="text-gray-500">{c.loading}</p>
               </div>
             ) : (
               <div className="space-y-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h2 className="font-bold text-[#1A1A2E] text-lg">{detail.subject}</h2>
-                    <p className="text-sm text-gray-500">{requesterName(detail)} · {requesterEmail(detail)}</p>
-                    <p className="text-xs text-gray-400">{new Date(detail.createdAt).toLocaleString("fr-FR")}</p>
+                    <p className="text-sm text-gray-500">{requesterName(detail, tt.anonymous)} · {requesterEmail(detail)}</p>
+                    <p className="text-xs text-gray-400">{new Date(detail.createdAt).toLocaleString(locale)}</p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <select
@@ -227,7 +218,7 @@ export default function AdminTicketsPage() {
                       onChange={(e) => handleStatusChange(e.target.value as TicketStatus)}
                       className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
                     >
-                      {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                      {STATUSES.map((s) => <option key={s} value={s}>{tt.statuses[s]}</option>)}
                     </select>
                     <select
                       value={detail.priority}
@@ -235,7 +226,7 @@ export default function AdminTicketsPage() {
                       onChange={(e) => handlePriorityChange(e.target.value as TicketPriority)}
                       className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
                     >
-                      {Object.entries(PRIORITY_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                      {PRIORITIES.map((p) => <option key={p} value={p}>{tt.priorities[p]}</option>)}
                     </select>
                   </div>
                 </div>
@@ -253,7 +244,7 @@ export default function AdminTicketsPage() {
                         <div className={`max-w-[80%] rounded-xl p-3 text-sm whitespace-pre-wrap ${m.isAdmin ? "bg-[#E87722] text-white" : "bg-gray-100 text-gray-700"}`}>
                           {m.content}
                           <p className={`text-xs mt-1 ${m.isAdmin ? "text-white/70" : "text-gray-400"}`}>
-                            {m.isAdmin ? "Support" : "Demandeur"} · {new Date(m.createdAt).toLocaleString("fr-FR")}
+                            {m.isAdmin ? tt.support : tt.requester} · {new Date(m.createdAt).toLocaleString(locale)}
                           </p>
                         </div>
                       </div>
@@ -263,17 +254,17 @@ export default function AdminTicketsPage() {
 
                 {/* Répondre */}
                 <div className="space-y-2 pt-2 border-t border-gray-100">
-                  <label className="block text-xs font-medium text-gray-500">Répondre au demandeur</label>
+                  <label className="block text-xs font-medium text-gray-500">{tt.replyLabel}</label>
                   <textarea
                     value={reply} rows={3}
                     onChange={(e) => setReply(e.target.value)}
                     className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] resize-none"
-                    placeholder="Votre réponse sera envoyée par email au demandeur..."
+                    placeholder={tt.replyPlaceholder}
                   />
                   <div className="flex justify-end">
                     <Button onClick={handleReply} disabled={submitting || !reply.trim()}>
                       {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 mr-1" />}
-                      Envoyer
+                      {tt.send}
                     </Button>
                   </div>
                 </div>

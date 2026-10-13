@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession, setProfileStatus, restoreProfile, hardDeleteUser } from "@/lib/admin";
 import { ProfileStatus } from "@/generated/prisma/client";
-import { formatDate } from "@/lib/utils";
 
 export async function GET() {
   const session = await requireAdminSession();
@@ -50,7 +49,7 @@ export async function GET() {
     })),
   ]
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-    .map((u) => ({ ...u, createdAt: formatDate(u.createdAt) }));
+    .map((u) => ({ ...u, createdAt: u.createdAt.toISOString() }));
 
   return NextResponse.json({ users });
 }

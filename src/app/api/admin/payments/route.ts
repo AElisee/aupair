@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin";
-import { formatDate, formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 
 export async function GET() {
   const session = await requireAdminSession();
@@ -25,12 +25,12 @@ export async function GET() {
 
   const payments = subscriptions.map((s) => ({
     id: s.id,
-    user: s.user.name ?? "Utilisateur",
+    user: s.user.name ?? "",
     email: s.user.email,
     amount: formatCurrency(s.amount, s.currency),
     method: s.paymentMethod,
     status: s.status,
-    date: formatDate(s.createdAt),
+    date: s.createdAt.toISOString(),
     invoiceUrl: s.invoiceUrl,
   }));
 

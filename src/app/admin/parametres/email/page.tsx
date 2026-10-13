@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Mail, Key, Loader2, Save, CheckCircle, Trash2, ExternalLink } from "lucide-react";
+import { useI18n } from "@/i18n";
 
 interface Settings {
   emailFrom: string | null;
@@ -16,6 +17,9 @@ export default function AdminEmailSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const { t, tError } = useI18n();
+  const c = t.adminCommon;
+  const ts = t.adminSettings;
 
   useEffect(() => {
     fetch("/api/admin/constants")
@@ -36,7 +40,7 @@ export default function AdminEmailSettingsPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Erreur lors de l'enregistrement.");
+        setError(tError(data.error, c.saveError));
         return;
       }
       setSettings(data.settings);
@@ -44,7 +48,7 @@ export default function AdminEmailSettingsPage() {
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch {
-      setError("Erreur réseau, veuillez réessayer.");
+      setError(c.networkError);
     } finally {
       setSaving(false);
     }
@@ -60,7 +64,7 @@ export default function AdminEmailSettingsPage() {
   };
 
   const handleRemoveKey = () => {
-    if (!confirm("Supprimer la clé API Resend ? Aucun email ne pourra plus être envoyé jusqu'à ce qu'une nouvelle clé soit renseignée.")) {
+    if (!confirm(ts.removeResendConfirm)) {
       return;
     }
     save({ resendApiKey: "" });
@@ -71,7 +75,7 @@ export default function AdminEmailSettingsPage() {
       <AdminLayout>
         <div className="p-12 text-center">
           <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
-          <p className="text-gray-500">Chargement...</p>
+          <p className="text-gray-500">{c.loading}</p>
         </div>
       </AdminLayout>
     );
@@ -81,10 +85,10 @@ export default function AdminEmailSettingsPage() {
     <AdminLayout>
       <div className="space-y-5">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">Paramètres — Email (Resend)</h1>
+          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{ts.emailTitle}</h1>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
-            Enregistrer
+            {c.save}
           </Button>
         </div>
 
@@ -92,7 +96,7 @@ export default function AdminEmailSettingsPage() {
         {saved && (
           <p className="text-green-600 text-sm flex items-center gap-1.5">
             <CheckCircle className="w-4 h-4" />
-            Modifications enregistrées.
+            {c.saved}
           </p>
         )}
 
@@ -100,14 +104,14 @@ export default function AdminEmailSettingsPage() {
           <div>
             <label className="font-semibold text-[#1A1A2E] flex items-center gap-2 mb-1">
               <Key className="w-4 h-4 text-[#E87722]" />
-              Clé API Resend
+              {ts.resendKey}
             </label>
             <p className="text-sm text-gray-500 mb-2">
-              Statut actuel :{" "}
+              {c.currentStatus}{" "}
               {settings.resendApiKeyConfigured ? (
-                <span className="text-green-600 font-semibold">configurée</span>
+                <span className="text-green-600 font-semibold">{c.configured}</span>
               ) : (
-                <span className="text-red-500 font-semibold">non configurée — aucun email ne sera envoyé</span>
+                <span className="text-red-500 font-semibold">{ts.resendNotConfigured}</span>
               )}
             </p>
             <div className="flex gap-2">
@@ -115,18 +119,18 @@ export default function AdminEmailSettingsPage() {
                 type="password"
                 value={apiKeyInput}
                 onChange={(e) => setApiKeyInput(e.target.value)}
-                placeholder={settings.resendApiKeyConfigured ? "•••••••••••••••• (laisser vide pour ne pas changer)" : "re_xxxxxxxxxxxxxxxxxxxxxxxx"}
+                placeholder={settings.resendApiKeyConfigured ? c.keepEmpty : "re_xxxxxxxxxxxxxxxxxxxxxxxx"}
                 autoComplete="off"
                 className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
               />
               {settings.resendApiKeyConfigured && (
-                <Button type="button" variant="outline" onClick={handleRemoveKey} disabled={saving} title="Supprimer la clé">
+                <Button type="button" variant="outline" onClick={handleRemoveKey} disabled={saving} title={ts.removeKey}>
                   <Trash2 className="w-4 h-4 text-red-500" />
                 </Button>
               )}
             </div>
             <p className="text-xs text-gray-400 mt-1">
-              Obtenez votre clé sur{" "}
+              {ts.getKeyOn}{" "}
               <a
                 href="https://resend.com/api-keys"
                 target="_blank"
@@ -142,7 +146,7 @@ export default function AdminEmailSettingsPage() {
           <div>
             <label className="font-semibold text-[#1A1A2E] flex items-center gap-2 mb-1">
               <Mail className="w-4 h-4 text-[#E87722]" />
-              Adresse d&apos;expédition (From)
+              {ts.emailFrom}
             </label>
             <input
               type="text"
@@ -152,7 +156,7 @@ export default function AdminEmailSettingsPage() {
               className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
             />
             <p className="text-xs text-gray-400 mt-1">
-              Le domaine de cette adresse doit être vérifié dans Resend, sinon l&apos;envoi échouera.
+              {ts.emailFromHint}
             </p>
           </div>
         </div>

@@ -1,0 +1,53 @@
+
+J'ai ajouté le sous-menu Paramètres → Documents dans le back-office admin. TypeScript et ESLint passent sans erreur. Je ne l'ai pas encore testé dans le navigateur, et rien n'est commité.
+
+Avant de tester, il faut créer la nouvelle table legal_documents. Je n'ai pas lancé la commande parce qu'elle modifie la base de données :
+npx prisma db push
+
+Côté admin (/admin/parametres/documents)
+
+- Liste des documents : titre, adresse de la page publique (cliquable), date de mise à jour, statut Publié/Brouillon. Les actions sont modifier, publier/dépublier et supprimer (avec confirmation).
+- Éditeur :
+  - un identifiant qui sert d'adresse de la page (ex. cgu), nettoyé automatiquement (minuscules, sans accents) ;
+  - un titre en français et en anglais ;
+  - le contenu FR et EN dans deux onglets, avec un bouton Aperçu.
+- Mise en forme du texte : titres (##, ###), listes (- et 1.), **gras** et [lien](https://…). Le texte s'affiche sans HTML brut, donc on ne peut pas injecter de script.
+- Bandeau de rappel : le footer et la page d'inscription renvoient déjà vers /cgu et /confidentialite, mais ces pages n'existaient pas (erreur 404). Le bandeau propose de créer ces deux documents en un clic tant qu'ils manquent.
+
+Côté site public
+
+- /cgu et /confidentialite affichent maintenant le document publié correspondant.
+- Les autres documents sont accessibles à l'adresse /documents/<identifiant>.
+- La version anglaise s'affiche quand le site est en anglais. Si elle est vide, c'est la version française qui apparaît.
+- La date de dernière mise à jour est indiquée en haut de la page.
+- Un document en brouillon ou supprimé donne une page 404.
+
+Fichiers
+
+- prisma/schema.prisma : nouveau modèle LegalDocument
+- src/app/api/admin/documents/route.ts : création, lecture, modification et suppression, réservées à l'admin
+- src/app/admin/parametres/documents/page.tsx : la page admin
+- src/components/legal/LegalDocumentView.tsx, src/lib/legal-documents.ts, src/lib/legal-documents.server.ts
+- src/app/cgu, src/app/confidentialite, src/app/documents/[slug] : les pages publiques
+- AdminLayout.tsx (entrée de menu) et CLAUDE.md (documentation)
+
+La page /mentions-legales reste écrite en dur dans le code. Si vous voulez aussi la gérer depuis cette section, je peux la migrer de la même façon.
+
+✻ Worked for 4m 49s · done 23:26
+
+※ recap: Vous vouliez un sous-menu Paramètres → Documents dans l'admin pour gérer les CGU et autres documents. C'est prêt et ça compile, mais ce n'est ni testé ni commité. Prochaine étape : lancer `npx prisma db push` pour créer la table, puis tester. (disable recaps in /config)
+
+------------------------------------
+Dans PowerShell, sur une seule ligne :
+
+$env:NODE_ENV="production"; npx prisma db push; Remove-Item Env:NODE_ENV
+
+La commande fait trois choses dans l'ordre :
+1. Elle passe NODE_ENV à production, pour que Prisma charge .env.production.
+2. Elle crée la table dans la base de prod.
+3. Elle remet NODE_ENV à vide, pour que les commandes suivantes (npm run dev, etc.) visent de nouveau la base locale.
+
+Lancez-la seulement quand le test en local est concluant.
+
+Si vous utilisez Git Bash au lieu de PowerShell :
+NODE_ENV=production npx prisma db push

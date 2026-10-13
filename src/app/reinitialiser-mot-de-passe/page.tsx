@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Lock, CheckCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/i18n";
 
 function ReinitialiserMotDePasseForm() {
   const router = useRouter();
@@ -18,21 +19,23 @@ function ReinitialiserMotDePasseForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const { t, tError } = useI18n();
+  const r = t.resetPassword;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
     if (!token) {
-      setError("Lien de réinitialisation invalide.");
+      setError(r.invalidLink);
       return;
     }
     if (newPassword.length < 8) {
-      setError("Le mot de passe doit contenir au moins 8 caractères.");
+      setError(r.tooShort);
       return;
     }
     if (newPassword !== confirmPassword) {
-      setError("Les deux mots de passe ne correspondent pas.");
+      setError(r.mismatch);
       return;
     }
 
@@ -46,14 +49,14 @@ function ReinitialiserMotDePasseForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error ?? "Une erreur est survenue.");
+        setError(tError(data.error, t.login.genericError));
         return;
       }
 
       setDone(true);
       setTimeout(() => router.push("/connexion"), 3000);
     } catch {
-      setError("Une erreur est survenue. Veuillez réessayer.");
+      setError(t.login.genericError);
     } finally {
       setLoading(false);
     }
@@ -75,26 +78,25 @@ function ReinitialiserMotDePasseForm() {
         </div>
 
         <h1 className="text-2xl font-extrabold text-[#1A1A2E] mb-2">
-          Réinitialiser le mot de passe
+          {r.title}
         </h1>
 
         {done ? (
           <div className="mt-6 px-4 py-4 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700 flex items-start gap-2">
             <CheckCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-            <p>Votre mot de passe a été modifié. Redirection vers la connexion...</p>
+            <p>{r.done}</p>
           </div>
         ) : !token ? (
           <div className="mt-6 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
-            Ce lien de réinitialisation est invalide. Merci de refaire une
-            demande depuis la page{" "}
+            {r.linkInvalidStart}{" "}
             <Link href="/mot-de-passe-oublie" className="underline font-semibold">
-              mot de passe oublié
+              {r.linkInvalidPage}
             </Link>
             .
           </div>
         ) : (
           <>
-            <p className="text-gray-500 mb-8">Choisissez votre nouveau mot de passe.</p>
+            <p className="text-gray-500 mb-8">{r.intro}</p>
 
             {error && (
               <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
@@ -105,7 +107,7 @@ function ReinitialiserMotDePasseForm() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  Nouveau mot de passe
+                  {r.newPassword}
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -122,6 +124,7 @@ function ReinitialiserMotDePasseForm() {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    aria-label={showPassword ? t.login.hidePassword : t.login.showPassword}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -130,7 +133,7 @@ function ReinitialiserMotDePasseForm() {
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  Confirmer le nouveau mot de passe
+                  {r.confirmPassword}
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -148,7 +151,7 @@ function ReinitialiserMotDePasseForm() {
 
               <Button type="submit" className="w-full" size="lg" disabled={loading}>
                 {loading && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
-                {loading ? "Modification en cours..." : "Réinitialiser le mot de passe"}
+                {loading ? r.submitting : r.submit}
               </Button>
             </form>
           </>

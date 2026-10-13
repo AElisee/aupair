@@ -6,6 +6,7 @@ import { CheckCircle, X, Eye, EyeOff, Ban, Trash2, Clock, Loader2, Flag } from "
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import { useI18n } from "@/i18n";
 
 type PendingProfile = {
   userId: string;
@@ -40,6 +41,9 @@ export default function ModerationPage() {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [processingReportId, setProcessingReportId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PendingProfile | null>(null);
+  const { t, locale, tValue } = useI18n();
+  const c = t.adminCommon;
+  const m = t.adminModeration;
 
   useEffect(() => {
     Promise.all([
@@ -103,20 +107,20 @@ export default function ModerationPage() {
     <AdminLayout>
       <div className="space-y-5">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">File de modération</h1>
-          <Badge variant="warning">{profiles.length} profil(s) en attente</Badge>
+          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{m.title}</h1>
+          <Badge variant="warning">{m.pendingCount(profiles.length)}</Badge>
         </div>
 
         {loading ? (
           <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
             <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
-            <p className="text-gray-500">Chargement...</p>
+            <p className="text-gray-500">{c.loading}</p>
           </div>
         ) : profiles.length === 0 ? (
           <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
             <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
-            <h2 className="font-bold text-[#1A1A2E] text-lg">File vide !</h2>
-            <p className="text-gray-500">Tous les profils ont été traités.</p>
+            <h2 className="font-bold text-[#1A1A2E] text-lg">{m.emptyTitle}</h2>
+            <p className="text-gray-500">{m.emptyText}</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -137,22 +141,22 @@ export default function ModerationPage() {
                         <h3 className="font-bold text-[#1A1A2E]">{p.name}</h3>
                         <span className="text-lg">{p.flag}</span>
                         <Badge variant={p.role === "AU_PAIR" ? "default" : "secondary"}>
-                          {p.role === "AU_PAIR" ? "Au pair" : "Famille"}
+                          {p.role === "AU_PAIR" ? c.roleAuPair : c.roleFamily}
                         </Badge>
                       </div>
                       <p className="text-sm text-gray-500 mb-3">{p.description}</p>
                       <div className="flex items-center gap-3 text-xs">
                         <span className={`flex items-center gap-1 ${p.hasPhoto ? "text-green-600" : "text-red-500"}`}>
                           {p.hasPhoto ? <CheckCircle className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
-                          Photo
+                          {m.photo}
                         </span>
                         <span className={`flex items-center gap-1 ${p.hasId ? "text-green-600" : "text-red-500"}`}>
                           {p.hasId ? <CheckCircle className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
-                          Pièce d'identité
+                          {m.idDocument}
                         </span>
                         <span className="flex items-center gap-1 text-gray-400">
                           <Clock className="w-3.5 h-3.5" />
-                          {p.waitingDays === 0 ? "Aujourd'hui" : `${p.waitingDays} jour(s)`}
+                          {p.waitingDays === 0 ? m.today : m.days(p.waitingDays)}
                         </span>
                       </div>
                     </div>
@@ -164,22 +168,22 @@ export default function ModerationPage() {
                       rel="noopener noreferrer"
                       className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-semibold transition-all duration-200 h-8 px-3 text-xs border-2 border-blue-200 text-blue-600 bg-transparent hover:bg-blue-50"
                     >
-                      <Eye className="w-3.5 h-3.5 mr-1" /> Voir profil
+                      <Eye className="w-3.5 h-3.5 mr-1" /> {c.viewProfile}
                     </Link>
                     <Button size="sm" disabled={processingId === p.userId} onClick={() => handleAction(p, "validate")}
                       className="bg-green-500 hover:bg-green-600 text-white">
-                      <CheckCircle className="w-3.5 h-3.5 mr-1" /> Valider
+                      <CheckCircle className="w-3.5 h-3.5 mr-1" /> {c.validate}
                     </Button>
                     <Button size="sm" variant="outline" className="text-gray-600 border-gray-200 hover:bg-gray-50"
                       disabled={processingId === p.userId} onClick={() => handleAction(p, "hide")}>
-                      <EyeOff className="w-3.5 h-3.5 mr-1" /> Masquer
+                      <EyeOff className="w-3.5 h-3.5 mr-1" /> {c.hide}
                     </Button>
                     <Button size="sm" variant="outline" className="text-amber-600 border-amber-200 hover:bg-amber-50"
                       disabled={processingId === p.userId} onClick={() => handleAction(p, "suspend")}>
-                      <Ban className="w-3.5 h-3.5 mr-1" /> Suspendre
+                      <Ban className="w-3.5 h-3.5 mr-1" /> {c.suspend}
                     </Button>
                     <Button size="sm" variant="destructive" disabled={processingId === p.userId} onClick={() => handleAction(p, "delete")}>
-                      <Trash2 className="w-3.5 h-3.5 mr-1" /> Supprimer
+                      <Trash2 className="w-3.5 h-3.5 mr-1" /> {c.delete}
                     </Button>
                   </div>
                 </div>
@@ -192,19 +196,19 @@ export default function ModerationPage() {
       {/* Signalements */}
       <div className="space-y-4 mt-8">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-extrabold text-[#1A1A2E]">Signalements</h2>
-          <Badge variant="destructive">{reports.length} signalement(s) ouvert(s)</Badge>
+          <h2 className="text-xl font-extrabold text-[#1A1A2E]">{m.reportsTitle}</h2>
+          <Badge variant="destructive">{m.openReports(reports.length)}</Badge>
         </div>
 
         {loading ? (
           <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
             <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
-            <p className="text-gray-500">Chargement...</p>
+            <p className="text-gray-500">{c.loading}</p>
           </div>
         ) : reports.length === 0 ? (
           <div className="bg-white rounded-2xl p-8 text-center border border-gray-100">
             <CheckCircle className="w-10 h-10 text-green-500 mx-auto mb-2" />
-            <p className="text-gray-500 text-sm">Aucun signalement en attente.</p>
+            <p className="text-gray-500 text-sm">{m.noReports}</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -214,16 +218,16 @@ export default function ModerationPage() {
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <Flag className="w-4 h-4 text-red-500" />
-                      <span className="font-bold text-[#1A1A2E]">{r.reason}</span>
+                      <span className="font-bold text-[#1A1A2E]">{tValue(r.reason)}</span>
                     </div>
                     <p className="text-sm text-gray-600 mb-2">
-                      <span className="font-semibold">{r.reporter?.name ?? "Utilisateur"}</span> a signalé{" "}
-                      <span className="font-semibold">{r.reported?.name ?? "Utilisateur"}</span>
+                      <span className="font-semibold">{r.reporter?.name ?? c.unknownUser}</span> {m.reported}{" "}
+                      <span className="font-semibold">{r.reported?.name ?? c.unknownUser}</span>
                     </p>
                     {r.description && (
                       <p className="text-sm text-gray-500 italic mb-2">&laquo; {r.description} &raquo;</p>
                     )}
-                    <p className="text-xs text-gray-400">{new Date(r.createdAt).toLocaleString("fr-FR")}</p>
+                    <p className="text-xs text-gray-400">{new Date(r.createdAt).toLocaleString(locale)}</p>
                   </div>
                   <Button
                     size="sm"
@@ -231,7 +235,7 @@ export default function ModerationPage() {
                     onClick={() => handleResolveReport(r.id)}
                     className="bg-green-500 hover:bg-green-600 text-white flex-shrink-0"
                   >
-                    <CheckCircle className="w-3.5 h-3.5 mr-1" /> Marquer comme traité
+                    <CheckCircle className="w-3.5 h-3.5 mr-1" /> {m.markResolved}
                   </Button>
                 </div>
               </div>
@@ -242,15 +246,15 @@ export default function ModerationPage() {
 
       {deleteTarget && (
         <ConfirmDialog
-          title="Supprimer ce profil ?"
+          title={m.deleteTitle}
           description={
             <>
-              Le profil de{" "}
+              {m.profileOf}{" "}
               <span className="font-semibold text-[#1A1A2E]">{deleteTarget.name}</span>{" "}
-              sera définitivement supprimé. Cette action est irréversible.
+              {c.willBeDeleted} {c.irreversible}
             </>
           }
-          confirmLabel="Supprimer"
+          confirmLabel={c.delete}
           loading={processingId === deleteTarget.userId}
           onConfirm={confirmDelete}
           onCancel={() => setDeleteTarget(null)}

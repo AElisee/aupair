@@ -6,21 +6,9 @@ import Link from "next/link";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  ArrowLeft, CheckCircle, X, Loader2, Phone, Languages, Star, CalendarRange,
-  Home, User, Search, MessageCircle, Bell, Settings, Heart,
-} from "lucide-react";
+import { ArrowLeft, CheckCircle, X, Loader2, Phone, Languages, Star, CalendarRange, MessageCircle, Heart } from "lucide-react";
 import { formatDate } from "@/lib/utils";
-
-const navItems = [
-  { href: "/dashboard/famille", icon: Home, label: "Tableau de bord" },
-  { href: "/dashboard/famille/profil", icon: User, label: "Mon profil" },
-  { href: "/dashboard/famille/recherche", icon: Search, label: "Rechercher un au pair" },
-  { href: "/dashboard/famille/favoris", icon: Heart, label: "Mes favoris" },
-  { href: "/dashboard/famille/messages", icon: MessageCircle, label: "Messages" },
-  { href: "/dashboard/famille/notifications", icon: Bell, label: "Notifications" },
-  { href: "/dashboard/famille/parametres", icon: Settings, label: "Paramètres" },
-];
+import { useI18n } from "@/i18n";
 
 type AuPairProfile = {
   available: boolean;
@@ -60,10 +48,11 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 function YesNo({ value }: { value: boolean }) {
+  const { t } = useI18n();
   return value ? (
-    <span className="inline-flex items-center gap-1 text-green-600 text-sm"><CheckCircle className="w-4 h-4" /> Oui</span>
+    <span className="inline-flex items-center gap-1 text-green-600 text-sm"><CheckCircle className="w-4 h-4" /> {t.common.yes}</span>
   ) : (
-    <span className="inline-flex items-center gap-1 text-gray-400 text-sm"><X className="w-4 h-4" /> Non</span>
+    <span className="inline-flex items-center gap-1 text-gray-400 text-sm"><X className="w-4 h-4" /> {t.common.no}</span>
   );
 }
 
@@ -74,6 +63,8 @@ export default function AuPairProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const { t, locale, tValue, tList } = useI18n();
+  const td = t.auPairDetail;
 
   useEffect(() => {
     let cancelled = false;
@@ -112,20 +103,20 @@ export default function AuPairProfilePage() {
   };
 
   return (
-    <DashboardLayout navItems={navItems} role="famille" userName={session?.user?.name ?? ""}>
+    <DashboardLayout role="famille" userName={session?.user?.name ?? ""}>
       <div className="space-y-6 pb-24">
         <Link href="/trouver-au-pair" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-[#E87722] transition-colors">
-          <ArrowLeft className="w-4 h-4" /> Retour à la recherche
+          <ArrowLeft className="w-4 h-4" /> {td.back}
         </Link>
 
         {loading ? (
           <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
             <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
-            <p className="text-gray-500">Chargement...</p>
+            <p className="text-gray-500">{t.common.loading}</p>
           </div>
         ) : error || !data ? (
           <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
-            <p className="text-gray-500">Impossible de charger ce profil.</p>
+            <p className="text-gray-500">{t.common.loadProfileError}</p>
           </div>
         ) : (
           <>
@@ -143,27 +134,27 @@ export default function AuPairProfilePage() {
                     </div>
                   )}
                   <div className="absolute top-3 right-3">
-                    {data.available ? <Badge variant="success">Disponible</Badge> : <Badge variant="warning">Indisponible</Badge>}
+                    {data.available ? <Badge variant="success">{t.common.available}</Badge> : <Badge variant="warning">{t.common.unavailable}</Badge>}
                   </div>
                 </div>
                 <div className="p-5">
                   <h1 className="font-bold text-[#1A1A2E] text-xl">{data.firstName} {data.lastName}</h1>
-                  <p className="text-gray-500 text-sm mb-4">{data.age} ans · {data.cityOfOrigin ? `${data.cityOfOrigin}, ` : ""}{data.countryOfOrigin}</p>
+                  <p className="text-gray-500 text-sm mb-4">{t.common.age(data.age)} · {data.cityOfOrigin ? `${data.cityOfOrigin}, ` : ""}{tValue(data.countryOfOrigin)}</p>
 
                   <div className="space-y-2 text-sm text-gray-600">
                     <div className="flex items-center gap-2">
                       <Languages className="w-4 h-4 text-[#E87722] flex-shrink-0" />
-                      <span>{data.languages.join(", ") || "—"}</span>
+                      <span>{tList(data.languages) || "—"}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Star className="w-4 h-4 text-[#E87722] flex-shrink-0" />
-                      <span>{data.childcareYears != null ? `${data.childcareYears} ${data.childcareYears >= 5 ? "ans ou plus" : "an(s)"} d'expérience` : "Expérience non renseignée"}</span>
+                      <span>{data.childcareYears != null ? td.experienceLine(data.childcareYears) : td.experienceUnknown}</span>
                     </div>
                     {(data.availableFrom || data.availableTo) && (
                       <div className="flex items-center gap-2">
                         <CalendarRange className="w-4 h-4 text-[#E87722] flex-shrink-0" />
                         <span>
-                          {data.availableFrom ? formatDate(data.availableFrom) : "—"} → {data.availableTo ? formatDate(data.availableTo) : "—"}
+                          {data.availableFrom ? formatDate(data.availableFrom, locale) : "—"} → {data.availableTo ? formatDate(data.availableTo, locale) : "—"}
                         </span>
                       </div>
                     )}
@@ -175,51 +166,51 @@ export default function AuPairProfilePage() {
             {/* Colonne droite : détails */}
             <div className="lg:col-span-2 space-y-6">
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <h2 className="font-bold text-[#1A1A2E] mb-3">Informations générales</h2>
+                <h2 className="font-bold text-[#1A1A2E] mb-3">{td.general}</h2>
                 <div className="grid grid-cols-2 gap-4">
-                  <Field label="Genre" value={data.gender} />
-                  <Field label="Nationalité" value={data.nationality} />
-                  <Field label="Langues" value={data.languages.join(", ")} />
-                  <Field label="Niveau d'études" value={data.educationLevel} />
+                  <Field label={td.gender} value={tValue(data.gender)} />
+                  <Field label={td.nationality} value={data.nationality} />
+                  <Field label={td.languages} value={tList(data.languages)} />
+                  <Field label={td.educationLevel} value={tValue(data.educationLevel)} />
                 </div>
               </div>
 
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <h2 className="font-bold text-[#1A1A2E] mb-3">Expérience & qualifications</h2>
+                <h2 className="font-bold text-[#1A1A2E] mb-3">{td.experienceQualifications}</h2>
                 <div className="grid grid-cols-2 gap-4">
-                  <Field label="Années d'expérience" value={data.childcareYears != null ? `${data.childcareYears} ${data.childcareYears >= 5 ? "ans ou plus" : "an(s)"}` : null} />
-                  <Field label="Premiers secours" value={<YesNo value={data.firstAidCertified} />} />
-                  <Field label="Permis de conduire" value={<YesNo value={data.drivingLicense} />} />
-                  <Field label="Fumeur" value={<YesNo value={data.isSmoker} />} />
+                  <Field label={td.yearsOfExperience} value={data.childcareYears != null ? td.experienceYears(data.childcareYears) : null} />
+                  <Field label={td.firstAid} value={<YesNo value={data.firstAidCertified} />} />
+                  <Field label={td.drivingLicense} value={<YesNo value={data.drivingLicense} />} />
+                  <Field label={td.smoker} value={<YesNo value={data.isSmoker} />} />
                 </div>
                 {data.childcareExperience && (
                   <div className="mt-3">
-                    <Field label="Expérience en garde d'enfants" value={<span className="whitespace-pre-wrap">{data.childcareExperience}</span>} />
+                    <Field label={td.childcareExperience} value={<span className="whitespace-pre-wrap">{data.childcareExperience}</span>} />
                   </div>
                 )}
               </div>
 
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <h2 className="font-bold text-[#1A1A2E] mb-3">Disponibilité & destination</h2>
+                <h2 className="font-bold text-[#1A1A2E] mb-3">{td.availability}</h2>
                 <div className="grid grid-cols-2 gap-4">
-                  <Field label="Pays ciblés" value={data.targetCountries.join(", ")} />
-                  <Field label="Durée souhaitée" value={data.preferredDuration} />
-                  <Field label="Disponible du" value={data.availableFrom ? formatDate(data.availableFrom) : null} />
-                  <Field label="Disponible jusqu'au" value={data.availableTo ? formatDate(data.availableTo) : null} />
+                  <Field label={td.targetCountries} value={tList(data.targetCountries)} />
+                  <Field label={td.preferredDuration} value={tValue(data.preferredDuration)} />
+                  <Field label={td.availableFrom} value={data.availableFrom ? formatDate(data.availableFrom, locale) : null} />
+                  <Field label={td.availableTo} value={data.availableTo ? formatDate(data.availableTo, locale) : null} />
                 </div>
               </div>
 
               {(data.description || data.motivation) && (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                  <h2 className="font-bold text-[#1A1A2E] mb-3">Présentation</h2>
-                  {data.description && <Field label="Description" value={<span className="whitespace-pre-wrap">{data.description}</span>} />}
-                  {data.motivation && <div className="mt-3"><Field label="Motivation" value={<span className="whitespace-pre-wrap">{data.motivation}</span>} /></div>}
+                  <h2 className="font-bold text-[#1A1A2E] mb-3">{td.presentation}</h2>
+                  {data.description && <Field label={td.description} value={<span className="whitespace-pre-wrap">{data.description}</span>} />}
+                  {data.motivation && <div className="mt-3"><Field label={td.motivation} value={<span className="whitespace-pre-wrap">{data.motivation}</span>} /></div>}
                 </div>
               )}
 
               {(data.phoneWhatsapp1 || data.phoneWhatsapp2) && (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                  <h2 className="font-bold text-[#1A1A2E] mb-3">Contact</h2>
+                  <h2 className="font-bold text-[#1A1A2E] mb-3">{td.contact}</h2>
                   <div className="grid grid-cols-2 gap-4">
                     {data.phoneWhatsapp1 && <Field label="WhatsApp" value={<span className="inline-flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-[#E87722]" /> {data.phoneWhatsapp1}</span>} />}
                     {data.phoneWhatsapp2 && <Field label="WhatsApp (2)" value={<span className="inline-flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-[#E87722]" /> {data.phoneWhatsapp2}</span>} />}
@@ -238,12 +229,12 @@ export default function AuPairProfilePage() {
                 className="sm:w-64"
               >
                 <Heart className={`w-4 h-4 mr-2 ${data.isFavorite ? "fill-current" : ""}`} />
-                {data.isFavorite ? "Retirer des favoris" : "Mettre en favoris"}
+                {data.isFavorite ? t.common.removeFromFavorites : td.addToFavorites}
               </Button>
               <Link href={`/dashboard/famille/messages?userId=${id}`} className="sm:w-64">
                 <Button className="w-full">
                   <MessageCircle className="w-4 h-4 mr-2" />
-                  Discuter
+                  {t.common.chat}
                 </Button>
               </Link>
             </div>

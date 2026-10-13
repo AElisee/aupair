@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import AdminLayout from "@/components/layout/AdminLayout";
+import Pagination from "@/components/admin/Pagination";
 import { Badge } from "@/components/ui/badge";
 import {
   Search,
@@ -14,6 +15,7 @@ import {
   Loader2,
 } from "lucide-react";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import { useI18n } from "@/i18n";
 
 type AdminUser = {
   id: string;
@@ -42,6 +44,9 @@ export default function UtilisateursPage() {
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null);
   const [purgeTarget, setPurgeTarget] = useState<AdminUser | null>(null);
   const [page, setPage] = useState(1);
+  const { t, locale } = useI18n();
+  const c = t.adminCommon;
+  const tu = t.adminUsers;
 
   useEffect(() => {
     fetch("/api/admin/users")
@@ -135,11 +140,11 @@ export default function UtilisateursPage() {
   );
 
   const statusBadge = (s: string) => {
-    if (s === "ACTIVE") return <Badge variant="success">Actif</Badge>;
-    if (s === "PENDING") return <Badge variant="warning">En attente</Badge>;
-    if (s === "SUSPENDED") return <Badge variant="destructive">Suspendu</Badge>;
-    if (s === "HIDDEN") return <Badge variant="secondary">Masqué</Badge>;
-    if (s === "DELETED") return <Badge variant="destructive">Supprimé</Badge>;
+    if (s === "ACTIVE") return <Badge variant="success">{c.profileStatus.ACTIVE}</Badge>;
+    if (s === "PENDING") return <Badge variant="warning">{c.profileStatus.PENDING}</Badge>;
+    if (s === "SUSPENDED") return <Badge variant="destructive">{c.profileStatus.SUSPENDED}</Badge>;
+    if (s === "HIDDEN") return <Badge variant="secondary">{c.profileStatus.HIDDEN}</Badge>;
+    if (s === "DELETED") return <Badge variant="destructive">{c.profileStatus.DELETED}</Badge>;
     return <Badge variant="secondary">{s}</Badge>;
   };
 
@@ -147,12 +152,8 @@ export default function UtilisateursPage() {
     <AdminLayout>
       <div className="space-y-5">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">
-            Utilisateurs
-          </h1>
-          <div className="text-sm text-gray-500">
-            {filtered.length} utilisateur(s)
-          </div>
+          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{tu.title}</h1>
+          <div className="text-sm text-gray-500">{tu.count(filtered.length)}</div>
         </div>
 
         {/* Onglets */}
@@ -166,7 +167,7 @@ export default function UtilisateursPage() {
               view === "active" ? "bg-[#1A1A2E] text-white" : "bg-white text-gray-500 border border-gray-200 hover:border-[#E87722]"
             }`}
           >
-            Utilisateurs
+            {tu.tabUsers}
           </button>
           <button
             onClick={() => {
@@ -178,7 +179,7 @@ export default function UtilisateursPage() {
             }`}
           >
             <Trash2 className="w-4 h-4" />
-            Corbeille
+            {tu.tabTrash}
             {trashCount > 0 && (
               <span className={`text-xs rounded-full px-1.5 ${view === "trash" ? "bg-white/20" : "bg-gray-100"}`}>
                 {trashCount}
@@ -193,7 +194,7 @@ export default function UtilisateursPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Rechercher..."
+              placeholder={tu.search}
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -210,9 +211,9 @@ export default function UtilisateursPage() {
             }}
             className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none bg-white"
           >
-            <option value="">Tous les rôles</option>
-            <option value="AU_PAIR">Au pair</option>
-            <option value="FAMILLE">Famille</option>
+            <option value="">{tu.allRoles}</option>
+            <option value="AU_PAIR">{c.roleAuPair}</option>
+            <option value="FAMILLE">{c.roleFamily}</option>
           </select>
           {view === "active" && (
             <select
@@ -223,11 +224,11 @@ export default function UtilisateursPage() {
               }}
               className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none bg-white"
             >
-              <option value="">Tous les statuts</option>
-              <option value="ACTIVE">Actif</option>
-              <option value="PENDING">En attente</option>
-              <option value="HIDDEN">Masqué</option>
-              <option value="SUSPENDED">Suspendu</option>
+              <option value="">{tu.allStatuses}</option>
+              <option value="ACTIVE">{c.profileStatus.ACTIVE}</option>
+              <option value="PENDING">{c.profileStatus.PENDING}</option>
+              <option value="HIDDEN">{c.profileStatus.HIDDEN}</option>
+              <option value="SUSPENDED">{c.profileStatus.SUSPENDED}</option>
             </select>
           )}
         </div>
@@ -237,7 +238,7 @@ export default function UtilisateursPage() {
           {loading ? (
             <div className="p-12 text-center">
               <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
-              <p className="text-gray-500">Chargement...</p>
+              <p className="text-gray-500">{c.loading}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -245,22 +246,22 @@ export default function UtilisateursPage() {
                 <thead className="bg-gray-50 border-b border-gray-100">
                   <tr>
                     <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Utilisateur
+                      {tu.colUser}
                     </th>
                     <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Rôle
+                      {tu.colRole}
                     </th>
                     <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Statut
+                      {c.status}
                     </th>
                     <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Abonnement
+                      {tu.colSubscription}
                     </th>
                     <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Inscrit le
+                      {tu.colSignedUp}
                     </th>
                     <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Actions
+                      {c.actions}
                     </th>
                   </tr>
                 </thead>
@@ -298,7 +299,7 @@ export default function UtilisateursPage() {
                             u.role === "AU_PAIR" ? "default" : "secondary"
                           }
                         >
-                          {u.role === "AU_PAIR" ? "Au pair" : "Famille"}
+                          {u.role === "AU_PAIR" ? c.roleAuPair : c.roleFamily}
                         </Badge>
                       </td>
                       <td className="px-5 py-3.5">{statusBadge(u.status)}</td>
@@ -306,14 +307,14 @@ export default function UtilisateursPage() {
                         {u.subscribed ? (
                           <span className="text-green-600 text-xs font-semibold flex items-center gap-1">
                             <CheckCircle className="w-3.5 h-3.5" />
-                            Actif
+                            {c.active}
                           </span>
                         ) : (
                           <span className="text-gray-400 text-xs">—</span>
                         )}
                       </td>
                       <td className="px-5 py-3.5 text-gray-500 text-xs">
-                        {u.createdAt}
+                        {new Date(u.createdAt).toLocaleDateString(locale)}
                       </td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center justify-end gap-1">
@@ -322,7 +323,7 @@ export default function UtilisateursPage() {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Voir profil"
+                            title={c.viewProfile}
                           >
                             <Eye className="w-4 h-4" />
                           </Link>
@@ -332,7 +333,7 @@ export default function UtilisateursPage() {
                                 disabled={processingId === u.id}
                                 onClick={() => handleAction(u, "restore")}
                                 className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
-                                title="Restaurer"
+                                title={tu.restore}
                               >
                                 <RotateCcw className="w-4 h-4" />
                               </button>
@@ -340,7 +341,7 @@ export default function UtilisateursPage() {
                                 disabled={processingId === u.id}
                                 onClick={() => handleAction(u, "purge")}
                                 className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                                title="Supprimer définitivement"
+                                title={tu.purge}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -352,7 +353,7 @@ export default function UtilisateursPage() {
                                   disabled={processingId === u.id}
                                   onClick={() => handleAction(u, "validate")}
                                   className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
-                                  title="Valider"
+                                  title={c.validate}
                                 >
                                   <CheckCircle className="w-4 h-4" />
                                 </button>
@@ -362,7 +363,7 @@ export default function UtilisateursPage() {
                                   disabled={processingId === u.id}
                                   onClick={() => handleAction(u, "unhide")}
                                   className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
-                                  title="Démasquer"
+                                  title={c.unhide}
                                 >
                                   <Eye className="w-4 h-4" />
                                 </button>
@@ -371,14 +372,14 @@ export default function UtilisateursPage() {
                                   disabled={processingId === u.id}
                                   onClick={() => handleAction(u, "hide")}
                                   className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
-                                  title="Masquer"
+                                  title={c.hide}
                                 >
                                   <EyeOff className="w-4 h-4" />
                                 </button>
                               )}
                               <button
                                 className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-                                title="Envoyer email"
+                                title={tu.sendEmail}
                               >
                                 <Mail className="w-4 h-4" />
                               </button>
@@ -386,7 +387,7 @@ export default function UtilisateursPage() {
                                 disabled={processingId === u.id}
                                 onClick={() => handleAction(u, "delete")}
                                 className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                                title="Déplacer vers la corbeille"
+                                title={tu.moveToTrash}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -401,58 +402,30 @@ export default function UtilisateursPage() {
             </div>
           )}
           {!loading && filtered.length > 0 && (
-            <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100">
-              <div className="text-xs text-gray-500">
-                {(currentPage - 1) * PAGE_SIZE + 1}–
-                {Math.min(currentPage * PAGE_SIZE, filtered.length)} sur{" "}
-                {filtered.length}
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:border-[#E87722] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  Précédent
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (p) => (
-                    <button
-                      key={p}
-                      onClick={() => setPage(p)}
-                      className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${p === currentPage ? "bg-[#E87722] text-white" : "border border-gray-200 text-gray-600 hover:border-[#E87722]"}`}
-                    >
-                      {p}
-                    </button>
-                  ),
-                )}
-                <button
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:border-[#E87722] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  Suivant
-                </button>
-              </div>
-            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={PAGE_SIZE}
+              totalItems={filtered.length}
+              onPageChange={setPage}
+            />
           )}
         </div>
       </div>
 
       {deleteTarget && (
         <ConfirmDialog
-          title="Déplacer ce compte vers la corbeille ?"
+          title={tu.trashTitle}
           description={
             <>
-              Le compte de{" "}
+              {tu.accountOf}{" "}
               <span className="font-semibold text-[#1A1A2E]">
                 {deleteTarget.name}
               </span>{" "}
-              sera déplacé dans la corbeille et l&apos;utilisateur ne pourra plus se connecter.
-              Vous pourrez le restaurer ou le supprimer définitivement depuis la corbeille.
+              {tu.trashText}
             </>
           }
-          confirmLabel="Déplacer vers la corbeille"
+          confirmLabel={tu.moveToTrash}
           loading={processingId === deleteTarget.id}
           onConfirm={confirmDelete}
           onCancel={() => setDeleteTarget(null)}
@@ -461,18 +434,17 @@ export default function UtilisateursPage() {
 
       {purgeTarget && (
         <ConfirmDialog
-          title="Supprimer définitivement ce compte ?"
+          title={tu.purgeTitle}
           description={
             <>
-              Le compte de{" "}
+              {tu.accountOf}{" "}
               <span className="font-semibold text-[#1A1A2E]">
                 {purgeTarget.name}
               </span>{" "}
-              et toutes ses données (profil, messages, abonnements, favoris...) seront
-              définitivement supprimés. Cette action est irréversible.
+              {tu.purgeText} {c.irreversible}
             </>
           }
-          confirmLabel="Supprimer définitivement"
+          confirmLabel={tu.purge}
           loading={processingId === purgeTarget.id}
           onConfirm={confirmPurge}
           onCancel={() => setPurgeTarget(null)}

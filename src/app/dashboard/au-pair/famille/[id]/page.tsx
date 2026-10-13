@@ -6,27 +6,8 @@ import Link from "next/link";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { SubscriptionLockCard } from "@/components/dashboard/SubscriptionLock";
-import {
-  ArrowLeft, Loader2, Phone, Languages, Users, Wallet,
-  Home, User, Search, MessageCircle, Bell, CreditCard, Settings, CheckCircle, X,
-} from "lucide-react";
-
-const navItems = [
-  { href: "/dashboard/au-pair", icon: Home, label: "Tableau de bord" },
-  { href: "/dashboard/au-pair/profil", icon: User, label: "Mon profil" },
-  { href: "/dashboard/au-pair/recherche", icon: Search, label: "Rechercher une famille" },
-  { href: "/dashboard/au-pair/messages", icon: MessageCircle, label: "Messages" },
-  { href: "/dashboard/au-pair/notifications", icon: Bell, label: "Notifications" },
-  { href: "/dashboard/au-pair/abonnement", icon: CreditCard, label: "Mon abonnement" },
-  { href: "/dashboard/au-pair/parametres", icon: Settings, label: "Paramètres" },
-];
-
-const MARITAL_LABELS: Record<string, string> = {
-  MARRIED: "Marié(e)",
-  SINGLE: "Célibataire",
-  DIVORCED: "Divorcé(e)",
-  OTHER: "Autre",
-};
+import { ArrowLeft, Loader2, Phone, Languages, Users, Wallet, MessageCircle, CheckCircle, X } from "lucide-react";
+import { useI18n } from "@/i18n";
 
 type FamilyProfile = {
   locked: boolean;
@@ -62,10 +43,11 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 function YesNo({ value }: { value: boolean }) {
+  const { t } = useI18n();
   return value ? (
-    <span className="inline-flex items-center gap-1 text-green-600 text-sm"><CheckCircle className="w-4 h-4" /> Oui</span>
+    <span className="inline-flex items-center gap-1 text-green-600 text-sm"><CheckCircle className="w-4 h-4" /> {t.common.yes}</span>
   ) : (
-    <span className="inline-flex items-center gap-1 text-gray-400 text-sm"><X className="w-4 h-4" /> Non</span>
+    <span className="inline-flex items-center gap-1 text-gray-400 text-sm"><X className="w-4 h-4" /> {t.common.no}</span>
   );
 }
 
@@ -75,6 +57,8 @@ export default function FamilyProfilePage() {
   const [data, setData] = useState<FamilyProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const { t, tValue, tList } = useI18n();
+  const td = t.familyDetail;
 
   useEffect(() => {
     let cancelled = false;
@@ -95,20 +79,20 @@ export default function FamilyProfilePage() {
   }, [id]);
 
   return (
-    <DashboardLayout navItems={navItems} role="au-pair" userName={session?.user?.name ?? ""}>
+    <DashboardLayout role="au-pair" userName={session?.user?.name ?? ""}>
       <div className="space-y-6 pb-24">
         <Link href="/dashboard/au-pair" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-[#E87722] transition-colors">
-          <ArrowLeft className="w-4 h-4" /> Retour au tableau de bord
+          <ArrowLeft className="w-4 h-4" /> {td.back}
         </Link>
 
         {loading ? (
           <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
             <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
-            <p className="text-gray-500">Chargement...</p>
+            <p className="text-gray-500">{t.common.loading}</p>
           </div>
         ) : error || !data ? (
           <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
-            <p className="text-gray-500">Impossible de charger ce profil.</p>
+            <p className="text-gray-500">{t.common.loadProfileError}</p>
           </div>
         ) : (
           <>
@@ -128,26 +112,26 @@ export default function FamilyProfilePage() {
                 </div>
                 <div className="p-5">
                   <h1 className="font-bold text-[#1A1A2E] text-xl">{data.name}</h1>
-                  <p className="text-gray-500 text-sm mb-4">{data.city}, {data.country}</p>
+                  <p className="text-gray-500 text-sm mb-4">{data.city}, {tValue(data.country)}</p>
 
                   <div className="space-y-2 text-sm text-gray-600">
                     <div className="flex items-center gap-2">
                       <Users className="w-4 h-4 text-[#E87722] shrink-0" />
                       <span>
-                        {data.numberOfKids} enfant{data.numberOfKids > 1 ? "s" : ""}
-                        {data.kidsAges.length > 0 ? ` (${data.kidsAges.join(", ")} ans)` : ""}
+                        {t.common.kids(data.numberOfKids)}
+                        {data.kidsAges.length > 0 ? t.common.kidsAges(data.kidsAges.join(", ")) : ""}
                       </span>
                     </div>
                     {data.hoursPerWeek != null && (
                       <div className="flex items-center gap-2">
                         <Languages className="w-4 h-4 text-[#E87722] shrink-0" />
-                        <span>{data.hoursPerWeek}h/semaine</span>
+                        <span>{t.common.hoursPerWeek(data.hoursPerWeek)}</span>
                       </div>
                     )}
                     {data.pocketMoney != null && (
                       <div className="flex items-center gap-2">
                         <Wallet className="w-4 h-4 text-[#E87722] shrink-0" />
-                        <span>{data.pocketMoney}€/mois</span>
+                        <span>{t.common.pocketMoney(data.pocketMoney)}</span>
                       </div>
                     )}
                   </div>
@@ -159,65 +143,65 @@ export default function FamilyProfilePage() {
             <div className="lg:col-span-2 space-y-6">
               {data.locked ? (
                 <SubscriptionLockCard
-                  title="Profil complet réservé aux abonnés"
-                  message="Abonnez-vous pour consulter le profil complet de cette famille et accéder à ses coordonnées."
+                  title={td.lockedTitle}
+                  message={td.lockedMessage}
                 />
               ) : (
                 <>
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                    <h2 className="font-bold text-[#1A1A2E] mb-3">Informations générales</h2>
+                    <h2 className="font-bold text-[#1A1A2E] mb-3">{td.general}</h2>
                     <div className="grid grid-cols-2 gap-4">
-                      <Field label="Pays" value={data.country} />
-                      <Field label="Ville" value={data.city} />
-                      <Field label="Adresse" value={data.address ?? null} />
-                      <Field label="Situation familiale" value={data.maritalStatus ? (MARITAL_LABELS[data.maritalStatus] ?? data.maritalStatus) : null} />
-                      <Field label="Âge des parents" value={data.parentsAges && data.parentsAges.length > 0 ? data.parentsAges.join(", ") + " ans" : null} />
+                      <Field label={td.country} value={tValue(data.country)} />
+                      <Field label={td.city} value={data.city} />
+                      <Field label={td.address} value={data.address ?? null} />
+                      <Field label={td.maritalStatus} value={data.maritalStatus ? (t.maritalStatus[data.maritalStatus as keyof typeof t.maritalStatus] ?? data.maritalStatus) : null} />
+                      <Field label={td.parentsAges} value={data.parentsAges && data.parentsAges.length > 0 ? t.common.ages(data.parentsAges.join(", ")) : null} />
                     </div>
                   </div>
 
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                    <h2 className="font-bold text-[#1A1A2E] mb-3">Enfants & quotidien</h2>
+                    <h2 className="font-bold text-[#1A1A2E] mb-3">{td.kidsDaily}</h2>
                     <div className="grid grid-cols-2 gap-4">
-                      <Field label="Nombre d'enfants" value={data.numberOfKids} />
-                      <Field label="Âge des enfants" value={data.kidsAges.length > 0 ? data.kidsAges.join(", ") + " ans" : null} />
-                      <Field label="Heures par semaine" value={data.hoursPerWeek != null ? `${data.hoursPerWeek}h` : null} />
-                      <Field label="Argent de poche" value={data.pocketMoney != null ? `${data.pocketMoney}€/mois` : null} />
-                      <Field label="Logement proposé" value={data.accommodation ?? null} />
-                      <Field label="Repas fournis" value={<YesNo value={!!data.mealsProvided} />} />
+                      <Field label={td.numberOfKids} value={data.numberOfKids} />
+                      <Field label={td.kidsAges} value={data.kidsAges.length > 0 ? t.common.ages(data.kidsAges.join(", ")) : null} />
+                      <Field label={td.hoursPerWeek} value={data.hoursPerWeek != null ? `${data.hoursPerWeek}h` : null} />
+                      <Field label={td.pocketMoney} value={data.pocketMoney != null ? t.common.pocketMoney(data.pocketMoney) : null} />
+                      <Field label={td.accommodation} value={data.accommodation ?? null} />
+                      <Field label={td.mealsProvided} value={<YesNo value={!!data.mealsProvided} />} />
                     </div>
                     {data.auPairTasks && (
                       <div className="mt-3">
-                        <Field label="Tâches confiées à l'au pair" value={<span className="whitespace-pre-wrap">{data.auPairTasks}</span>} />
+                        <Field label={td.tasks} value={<span className="whitespace-pre-wrap">{data.auPairTasks}</span>} />
                       </div>
                     )}
                   </div>
 
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                    <h2 className="font-bold text-[#1A1A2E] mb-3">Préférences pour l'au pair</h2>
+                    <h2 className="font-bold text-[#1A1A2E] mb-3">{td.preferences}</h2>
                     <div className="grid grid-cols-2 gap-4">
-                      <Field label="Genre préféré" value={data.preferredGender ?? null} />
+                      <Field label={td.preferredGender} value={data.preferredGender ? tValue(data.preferredGender) : null} />
                       <Field
-                        label="Tranche d'âge préférée"
+                        label={td.preferredAgeRange}
                         value={
                           data.preferredAgeMin != null || data.preferredAgeMax != null
-                            ? `${data.preferredAgeMin ?? "—"} - ${data.preferredAgeMax ?? "—"} ans`
+                            ? td.ageRange(String(data.preferredAgeMin ?? "—"), String(data.preferredAgeMax ?? "—"))
                             : null
                         }
                       />
-                      <Field label="Langues souhaitées" value={data.preferredLanguages?.join(", ") ?? null} />
+                      <Field label={td.preferredLanguages} value={data.preferredLanguages ? tList(data.preferredLanguages) : null} />
                     </div>
                   </div>
 
                   {data.description && (
                     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                      <h2 className="font-bold text-[#1A1A2E] mb-3">Présentation</h2>
-                      <Field label="Description" value={<span className="whitespace-pre-wrap">{data.description}</span>} />
+                      <h2 className="font-bold text-[#1A1A2E] mb-3">{td.presentation}</h2>
+                      <Field label={td.description} value={<span className="whitespace-pre-wrap">{data.description}</span>} />
                     </div>
                   )}
 
                   {data.phoneWhatsapp && (
                     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                      <h2 className="font-bold text-[#1A1A2E] mb-3">Contact</h2>
+                      <h2 className="font-bold text-[#1A1A2E] mb-3">{td.contact}</h2>
                       <Field label="WhatsApp" value={<span className="inline-flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-[#E87722]" /> {data.phoneWhatsapp}</span>} />
                     </div>
                   )}
@@ -231,7 +215,7 @@ export default function FamilyProfilePage() {
               <Link href={`/dashboard/au-pair/messages?userId=${id}`} className="sm:w-64">
                 <Button className="w-full">
                   <MessageCircle className="w-4 h-4 mr-2" />
-                  Discuter
+                  {t.common.chat}
                 </Button>
               </Link>
             </div>

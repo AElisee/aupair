@@ -1,10 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
+import Pagination from "@/components/admin/Pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Plus, Pencil, Trash2, Eye, EyeOff, Loader2, HelpCircle, Search } from "lucide-react";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import { useI18n } from "@/i18n";
 
 type FaqItem = {
   id: string;
@@ -40,6 +42,9 @@ export default function AdminFaqPage() {
   const [deleteTarget, setDeleteTarget] = useState<FaqItem | null>(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const { t, tError } = useI18n();
+  const c = t.adminCommon;
+  const tf = t.adminFaq;
 
   const load = () => {
     fetch("/api/admin/faq")
@@ -77,7 +82,7 @@ export default function AdminFaqPage() {
     setError("");
 
     if (!form.question.trim() || !form.answer.trim() || !form.category.trim()) {
-      setError("Question, réponse et catégorie sont obligatoires.");
+      setError(tf.required);
       return;
     }
 
@@ -101,7 +106,7 @@ export default function AdminFaqPage() {
         });
         const data = await res.json();
         if (!res.ok) {
-          setError(data.error ?? "Erreur lors de la modification.");
+          setError(tError(data.error, c.editError));
           return;
         }
         setItems((prev) => prev.map((i) => (i.id === editingId ? data.item : i)));
@@ -114,7 +119,7 @@ export default function AdminFaqPage() {
         });
         const data = await res.json();
         if (!res.ok) {
-          setError(data.error ?? "Erreur lors de l'ajout.");
+          setError(tError(data.error, c.addError));
           return;
         }
         setItems((prev) => [...prev, data.item]);
@@ -171,29 +176,29 @@ export default function AdminFaqPage() {
     <AdminLayout>
       <div className="space-y-5">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">FAQ</h1>
-          <div className="text-sm text-gray-500">{filtered.length} question(s)</div>
+          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{tf.title}</h1>
+          <div className="text-sm text-gray-500">{tf.count(filtered.length)}</div>
         </div>
 
         {/* Formulaire */}
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
           <h2 className="font-bold text-[#1A1A2E] mb-3 flex items-center gap-2">
             {editingId ? <Pencil className="w-4 h-4 text-[#E87722]" /> : <HelpCircle className="w-4 h-4 text-[#E87722]" />}
-            {editingId ? "Modifier la question" : "Nouvelle question"}
+            {editingId ? tf.editTitle : tf.newTitle}
           </h2>
           <form onSubmit={handleSubmit} className="space-y-3">
             <div className="grid sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Question (FR)</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">{tf.questionFr}</label>
                 <input
                   type="text" value={form.question}
                   onChange={(e) => setForm({ ...form, question: e.target.value })}
                   className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
-                  placeholder="Comment fonctionne..."
+                  placeholder={tf.questionPlaceholder}
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Question (EN)</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">{tf.questionEn}</label>
                 <input
                   type="text" value={form.questionEn}
                   onChange={(e) => setForm({ ...form, questionEn: e.target.value })}
@@ -204,16 +209,16 @@ export default function AdminFaqPage() {
             </div>
             <div className="grid sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Réponse (FR)</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">{tf.answerFr}</label>
                 <textarea
                   value={form.answer} rows={3}
                   onChange={(e) => setForm({ ...form, answer: e.target.value })}
                   className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] resize-none"
-                  placeholder="Réponse complète"
+                  placeholder={tf.answerPlaceholder}
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Réponse (EN)</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">{tf.answerEn}</label>
                 <textarea
                   value={form.answerEn} rows={3}
                   onChange={(e) => setForm({ ...form, answerEn: e.target.value })}
@@ -224,7 +229,7 @@ export default function AdminFaqPage() {
             </div>
             <div className="flex flex-wrap items-end gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Catégorie</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">{tf.category}</label>
                 <input
                   type="text" value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
@@ -233,7 +238,7 @@ export default function AdminFaqPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Ordre</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">{tf.order}</label>
                 <input
                   type="number" value={form.order}
                   onChange={(e) => setForm({ ...form, order: parseInt(e.target.value, 10) || 0 })}
@@ -246,16 +251,16 @@ export default function AdminFaqPage() {
                   onChange={(e) => setForm({ ...form, isPublished: e.target.checked })}
                   className="w-4 h-4 rounded border-gray-300 text-[#E87722] focus:ring-[#E87722]"
                 />
-                Publiée
+                {tf.published}
               </label>
               <div className="ml-auto flex items-center gap-2">
                 {editingId && (
                   <Button type="button" variant="outline" onClick={cancelEdit} disabled={submitting}>
-                    Annuler
+                    {c.cancel}
                   </Button>
                 )}
                 <Button type="submit" disabled={submitting}>
-                  {editingId ? <><Pencil className="w-4 h-4 mr-1" /> Enregistrer</> : <><Plus className="w-4 h-4 mr-1" /> Ajouter</>}
+                  {editingId ? <><Pencil className="w-4 h-4 mr-1" /> {c.save}</> : <><Plus className="w-4 h-4 mr-1" /> {c.add}</>}
                 </Button>
               </div>
             </div>
@@ -269,7 +274,7 @@ export default function AdminFaqPage() {
           <input
             type="text" value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            placeholder="Rechercher une question..."
+            placeholder={tf.searchPlaceholder}
             className="w-full pl-9 pr-3 py-1.5 rounded-full border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
           />
         </div>
@@ -279,24 +284,24 @@ export default function AdminFaqPage() {
           {loading ? (
             <div className="p-12 text-center">
               <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
-              <p className="text-gray-500">Chargement...</p>
+              <p className="text-gray-500">{c.loading}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b border-gray-100">
                   <tr>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Question</th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Catégorie</th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ordre</th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Statut</th>
-                    <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{tf.colQuestion}</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{tf.category}</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{tf.order}</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{c.status}</th>
+                    <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{c.actions}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {paginated.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-5 py-8 text-center text-gray-400">Aucune question.</td>
+                      <td colSpan={5} className="px-5 py-8 text-center text-gray-400">{tf.none}</td>
                     </tr>
                   ) : (
                     paginated.map((item) => (
@@ -309,7 +314,7 @@ export default function AdminFaqPage() {
                         </td>
                         <td className="px-5 py-3.5 text-gray-500">{item.order}</td>
                         <td className="px-5 py-3.5">
-                          {item.isPublished ? <Badge variant="success">Publiée</Badge> : <Badge variant="warning">Masquée</Badge>}
+                          {item.isPublished ? <Badge variant="success">{tf.published}</Badge> : <Badge variant="warning">{tf.hidden}</Badge>}
                         </td>
                         <td className="px-5 py-3.5">
                           <div className="flex items-center justify-end gap-1">
@@ -317,7 +322,7 @@ export default function AdminFaqPage() {
                               disabled={processingId === item.id}
                               onClick={() => startEdit(item)}
                               className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
-                              title="Modifier"
+                              title={c.edit}
                             >
                               <Pencil className="w-4 h-4" />
                             </button>
@@ -325,7 +330,7 @@ export default function AdminFaqPage() {
                               disabled={processingId === item.id}
                               onClick={() => togglePublish(item)}
                               className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
-                              title={item.isPublished ? "Masquer" : "Publier"}
+                              title={item.isPublished ? c.hide : c.publish}
                             >
                               {item.isPublished ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                             </button>
@@ -333,7 +338,7 @@ export default function AdminFaqPage() {
                               disabled={processingId === item.id}
                               onClick={() => setDeleteTarget(item)}
                               className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                              title="Supprimer"
+                              title={c.delete}
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -347,49 +352,26 @@ export default function AdminFaqPage() {
             </div>
           )}
           {!loading && filtered.length > 0 && (
-            <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100">
-              <div className="text-xs text-gray-500">
-                {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} sur {filtered.length}
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:border-[#E87722] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  Précédent
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setPage(p)}
-                    className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${p === currentPage ? "bg-[#E87722] text-white" : "border border-gray-200 text-gray-600 hover:border-[#E87722]"}`}
-                  >
-                    {p}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:border-[#E87722] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  Suivant
-                </button>
-              </div>
-            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={PAGE_SIZE}
+              totalItems={filtered.length}
+              onPageChange={setPage}
+            />
           )}
         </div>
       </div>
 
       {deleteTarget && (
         <ConfirmDialog
-          title="Supprimer cette question ?"
+          title={tf.deleteTitle}
           description={
             <>
-              <span className="font-semibold text-[#1A1A2E]">{deleteTarget.question}</span> sera définitivement supprimée. Cette action est irréversible.
+              <span className="font-semibold text-[#1A1A2E]">{deleteTarget.question}</span> {tf.willBeDeleted} {c.irreversible}
             </>
           }
-          confirmLabel="Supprimer"
+          confirmLabel={c.delete}
           loading={processingId === deleteTarget.id}
           onConfirm={confirmDelete}
           onCancel={() => setDeleteTarget(null)}

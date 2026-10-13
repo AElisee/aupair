@@ -17,6 +17,7 @@ import {
   ListChecks,
   Image as ImageIcon,
 } from "lucide-react";
+import { useI18n } from "@/i18n";
 
 interface Settings {
   languages: string[];
@@ -42,6 +43,7 @@ function EditableList({
   onChange: (items: string[]) => void;
 }) {
   const [draft, setDraft] = useState("");
+  const { t } = useI18n();
 
   const add = () => {
     const value = draft.trim();
@@ -60,7 +62,7 @@ function EditableList({
       </h2>
       <div className="flex flex-wrap gap-2 mb-3">
         {items.length === 0 && (
-          <p className="text-sm text-gray-400">Aucun élément.</p>
+          <p className="text-sm text-gray-400">{t.adminSettings.noItems}</p>
         )}
         {items.map((item) => (
           <Badge key={item} className="gap-1.5 pr-1.5">
@@ -69,7 +71,7 @@ function EditableList({
               type="button"
               onClick={() => remove(item)}
               className="hover:bg-black/10 rounded-full p-0.5 transition-colors"
-              title="Retirer"
+              title={t.adminSettings.removeItem}
             >
               <X className="w-3 h-3" />
             </button>
@@ -87,7 +89,7 @@ function EditableList({
               add();
             }
           }}
-          placeholder="Ajouter un élément..."
+          placeholder={t.adminSettings.addItem}
           className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
         />
         <Button type="button" variant="outline" onClick={add}>
@@ -106,6 +108,9 @@ export default function AdminConstantesPage() {
   const [saved, setSaved] = useState(false);
   const [heroUploading, setHeroUploading] = useState(false);
   const [heroError, setHeroError] = useState("");
+  const { t, tError } = useI18n();
+  const c = t.adminCommon;
+  const ts = t.adminSettings;
 
   useEffect(() => {
     fetch("/api/admin/constants")
@@ -127,14 +132,14 @@ export default function AdminConstantesPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Erreur lors de l'enregistrement.");
+        setError(tError(data.error, c.saveError));
         return;
       }
       setSettings(data.settings);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch {
-      setError("Erreur réseau, veuillez réessayer.");
+      setError(c.networkError);
     } finally {
       setSaving(false);
     }
@@ -152,12 +157,12 @@ export default function AdminConstantesPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setHeroError(data.error ?? "Échec de l'envoi de l'image.");
+        setHeroError(tError(data.error, ts.heroUploadError));
         return;
       }
       setSettings((prev) => (prev ? { ...prev, heroImageUrl: data.url } : prev));
     } catch {
-      setHeroError("Erreur réseau, veuillez réessayer.");
+      setHeroError(c.networkError);
     } finally {
       setHeroUploading(false);
     }
@@ -168,7 +173,7 @@ export default function AdminConstantesPage() {
       <AdminLayout>
         <div className="p-12 text-center">
           <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
-          <p className="text-gray-500">Chargement...</p>
+          <p className="text-gray-500">{c.loading}</p>
         </div>
       </AdminLayout>
     );
@@ -179,7 +184,7 @@ export default function AdminConstantesPage() {
       <div className="space-y-5">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-extrabold text-[#1A1A2E]">
-            Paramètres — Constantes
+            {ts.constantsTitle}
           </h1>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? (
@@ -187,27 +192,29 @@ export default function AdminConstantesPage() {
             ) : (
               <Save className="w-4 h-4 mr-1" />
             )}
-            Enregistrer
+            {c.save}
           </Button>
         </div>
+
+        <p className="text-sm text-gray-500">{ts.constantsHint}</p>
 
         {error && <p className="text-red-500 text-sm">{error}</p>}
         {saved && (
           <p className="text-green-600 text-sm flex items-center gap-1.5">
             <CheckCircle className="w-4 h-4" />
-            Modifications enregistrées.
+            {c.saved}
           </p>
         )}
 
         <div className="grid md:grid-cols-2 gap-5">
           <EditableList
-            title="Langues parlées"
+            title={ts.languages}
             icon={<Languages className="w-4 h-4 text-[#E87722]" />}
             items={settings.languages}
             onChange={(languages) => setSettings({ ...settings, languages })}
           />
           <EditableList
-            title="Niveaux d'études"
+            title={ts.educationLevels}
             icon={<GraduationCap className="w-4 h-4 text-[#E87722]" />}
             items={settings.educationLevels}
             onChange={(educationLevels) =>
@@ -215,13 +222,13 @@ export default function AdminConstantesPage() {
             }
           />
           <EditableList
-            title="Durées de séjour"
+            title={ts.durations}
             icon={<Clock className="w-4 h-4 text-[#E87722]" />}
             items={settings.durations}
             onChange={(durations) => setSettings({ ...settings, durations })}
           />
           <EditableList
-            title="Motifs de signalement"
+            title={ts.reportReasons}
             icon={<Flag className="w-4 h-4 text-[#E87722]" />}
             items={settings.reportReasons}
             onChange={(reportReasons) =>
@@ -233,12 +240,12 @@ export default function AdminConstantesPage() {
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
           <h2 className="font-bold text-[#1A1A2E] mb-4 flex items-center gap-2">
             <CreditCard className="w-4 h-4 text-[#E87722]" />
-            Abonnement Au Pair
+            {ts.subscription}
           </h2>
           <div className="grid sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">
-                Prix (EUR)
+                {ts.priceEur}
               </label>
               <input
                 type="number"
@@ -256,7 +263,7 @@ export default function AdminConstantesPage() {
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">
-                Prix (XOF)
+                {ts.priceXof}
               </label>
               <input
                 type="number"
@@ -274,7 +281,7 @@ export default function AdminConstantesPage() {
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">
-                Durée (jours)
+                {ts.durationDays}
               </label>
               <input
                 type="number"
@@ -296,12 +303,12 @@ export default function AdminConstantesPage() {
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
           <h2 className="font-bold text-[#1A1A2E] mb-4 flex items-center gap-2">
             <ImageIcon className="w-4 h-4 text-[#E87722]" />
-            Image de fond — Page d&apos;accueil
+            {ts.heroImageTitle}
           </h2>
           <div className="grid sm:grid-cols-2 gap-4 items-start">
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">
-                Image de fond
+                {ts.heroImage}
               </label>
               <input
                 type="file"
@@ -317,12 +324,12 @@ export default function AdminConstantesPage() {
               {heroUploading && (
                 <p className="text-xs text-gray-400 mt-1 flex items-center gap-1.5">
                   <Loader2 className="w-3 h-3 animate-spin" />
-                  Envoi en cours...
+                  {c.uploading}
                 </p>
               )}
               {heroError && <p className="text-xs text-red-500 mt-1">{heroError}</p>}
               <p className="text-xs text-gray-400 mt-1">
-                JPG, PNG ou WEBP, 5 Mo maximum. L&apos;image est enregistrée immédiatement.
+                {ts.heroImageHint}
               </p>
             </div>
             <div className="rounded-xl overflow-hidden border border-gray-100 aspect-video bg-[#1A1A2E]">
@@ -330,7 +337,7 @@ export default function AdminConstantesPage() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={settings.heroImageUrl}
-                  alt="Aperçu image de fond"
+                  alt={ts.heroImageAlt}
                   className="w-full h-full object-cover"
                 />
               )}
@@ -339,7 +346,7 @@ export default function AdminConstantesPage() {
         </div>
 
         <EditableList
-          title="Avantages de l'abonnement"
+          title={ts.subscriptionFeatures}
           icon={<ListChecks className="w-4 h-4 text-[#E87722]" />}
           items={settings.subscriptionFeatures}
           onChange={(subscriptionFeatures) =>

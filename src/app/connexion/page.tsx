@@ -12,6 +12,7 @@ import {
 } from "@/lib/safe-redirect";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
+import { useI18n } from "@/i18n";
 
 function ConnexionForm() {
   const searchParams = useSearchParams();
@@ -20,6 +21,8 @@ function ConnexionForm() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useI18n();
+  const l = t.login;
 
   // Validation côté client du callbackUrl dès le chargement de la page.
   // getSafeCallbackUrl rejette toute URL externe, schéma dangereux
@@ -42,7 +45,7 @@ function ConnexionForm() {
       });
 
       if (result?.error) {
-        setError("Email ou mot de passe incorrect.");
+        setError(l.invalidCredentials);
         return;
       }
 
@@ -60,7 +63,7 @@ function ConnexionForm() {
         router.replace(destination);
       }
     } catch {
-      setError("Une erreur est survenue. Veuillez réessayer.");
+      setError(l.genericError);
     } finally {
       setLoading(false);
     }
@@ -90,20 +93,15 @@ function ConnexionForm() {
             />
           </div>
           <h2 className="text-3xl font-extrabold mb-4">
-            Bienvenue sur AuPair A.EU
+            {l.welcomeTitle}
           </h2>
           <p className="text-gray-300 text-lg">
-            La première plateforme mondiale dédiée aux au pairs africains.
+            {l.welcomeText}
           </p>
           <div className="mt-8 space-y-3 text-left">
-            {[
-              "✅ 5 000+ au pairs africains",
-              "✅ 1 200+ familles d'accueil",
-              "✅ 6 pays européens",
-              "✅ Profils vérifiés",
-            ].map((t) => (
-              <p key={t} className="text-gray-300">
-                {t}
+            {l.highlights.map((item) => (
+              <p key={item} className="text-gray-300">
+                {item}
               </p>
             ))}
           </div>
@@ -121,9 +119,9 @@ function ConnexionForm() {
           </div> */}
 
           <h1 className="text-2xl font-extrabold text-[#1A1A2E] mb-2">
-            Connexion
+            {l.title}
           </h1>
-          <p className="text-gray-500 mb-8">Accédez à votre espace personnel</p>
+          <p className="text-gray-500 mb-8">{l.subtitle}</p>
 
           {/* OAuth */}
           <div className="space-y-3 mb-6">
@@ -132,20 +130,20 @@ function ConnexionForm() {
               className="w-full flex items-center justify-center gap-3 border border-gray-200 rounded-xl py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
             >
               <FcGoogle className="w-5 h-5" />
-              Continuer avec Google
+              {l.continueGoogle}
             </button>
             <button
               onClick={() => handleOAuth("facebook")}
               className="w-full flex items-center justify-center gap-3 bg-[#1877F2] text-white rounded-xl py-3 text-sm font-medium hover:bg-[#166fe5] transition-colors"
             >
               <FaFacebook className="w-5 h-5" />
-              Continuer avec Facebook
+              {l.continueFacebook}
             </button>
           </div>
 
           <div className="flex items-center gap-3 mb-6">
             <div className="flex-1 h-px bg-gray-200" />
-            <span className="text-xs text-gray-400">ou avec email</span>
+            <span className="text-xs text-gray-400">{l.orEmail}</span>
             <div className="flex-1 h-px bg-gray-200" />
           </div>
 
@@ -160,7 +158,7 @@ function ConnexionForm() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Adresse email
+                {l.email}
               </label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -170,7 +168,7 @@ function ConnexionForm() {
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] focus:border-transparent"
-                  placeholder="votre@email.com"
+                  placeholder={l.emailPlaceholder}
                   autoComplete="email"
                 />
               </div>
@@ -178,13 +176,13 @@ function ConnexionForm() {
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-sm font-semibold text-gray-700">
-                  Mot de passe
+                  {l.password}
                 </label>
                 <Link
                   href="/mot-de-passe-oublie"
                   className="text-xs text-[#E87722] hover:underline"
                 >
-                  Mot de passe oublié ?
+                  {l.forgotPassword}
                 </Link>
               </div>
               <div className="relative">
@@ -204,6 +202,7 @@ function ConnexionForm() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  aria-label={showPassword ? l.hidePassword : l.showPassword}
                 >
                   {showPassword ? (
                     <EyeOff className="w-4 h-4" />
@@ -220,17 +219,17 @@ function ConnexionForm() {
               size="lg"
               disabled={loading}
             >
-              {loading ? "Connexion en cours..." : "Se connecter"}
+              {loading ? l.submitting : l.submit}
             </Button>
           </form>
 
           <p className="text-center text-sm text-gray-500 mt-6">
-            Pas encore de compte ?{" "}
+            {l.noAccount}{" "}
             <Link
               href="/inscription"
               className="text-[#E87722] font-semibold hover:underline"
             >
-              S&apos;inscrire
+              {l.signUp}
             </Link>
           </p>
         </div>

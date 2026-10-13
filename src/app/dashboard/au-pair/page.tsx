@@ -4,52 +4,11 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SubscriptionBanner } from "@/components/dashboard/SubscriptionLock";
-import {
-  User,
-  Search,
-  MessageCircle,
-  Bell,
-  CreditCard,
-  Settings,
-  Home,
-  MapPin,
-  Clock,
-  Eye,
-  Heart,
-} from "lucide-react";
+import { MessageCircle, MapPin, Clock, Eye, Heart } from "lucide-react";
 import Link from "next/link";
+import { useI18n } from "@/i18n";
 
 const VIEWS_POLL_INTERVAL_MS = 5000;
-
-const navItems = [
-  { href: "/dashboard/au-pair", icon: Home, label: "Tableau de bord" },
-  { href: "/dashboard/au-pair/profil", icon: User, label: "Mon profil" },
-  {
-    href: "/dashboard/au-pair/recherche",
-    icon: Search,
-    label: "Rechercher une famille",
-  },
-  {
-    href: "/dashboard/au-pair/messages",
-    icon: MessageCircle,
-    label: "Messages",
-  },
-  {
-    href: "/dashboard/au-pair/notifications",
-    icon: Bell,
-    label: "Notifications",
-  },
-  {
-    href: "/dashboard/au-pair/abonnement",
-    icon: CreditCard,
-    label: "Mon abonnement",
-  },
-  {
-    href: "/dashboard/au-pair/parametres",
-    icon: Settings,
-    label: "Paramètres",
-  },
-];
 
 interface SuggestedFamily {
   id: string;
@@ -81,6 +40,7 @@ export default function AuPairDashboard() {
   const [isAvailable, setIsAvailable] = useState(true);
   const [togglingAvailability, setTogglingAvailability] = useState(false);
   const [availabilityError, setAvailabilityError] = useState("");
+  const { t, tValue, tError } = useI18n();
 
   useEffect(() => {
     let cancelled = false;
@@ -129,10 +89,10 @@ export default function AuPairDashboard() {
       if (res.ok) {
         setIsAvailable(next);
       } else {
-        setAvailabilityError(json?.error ?? "Erreur lors de la mise à jour de la disponibilité.");
+        setAvailabilityError(tError(json?.error, t.auPairHome.availabilityError));
       }
     } catch {
-      setAvailabilityError("Erreur réseau. Veuillez réessayer.");
+      setAvailabilityError(t.common.networkError);
     } finally {
       setTogglingAvailability(false);
     }
@@ -151,52 +111,47 @@ export default function AuPairDashboard() {
   const isHiddenByAdmin = data?.status === "HIDDEN";
 
   const stats = [
-    { icon: Eye, label: "Vues du profil", value: data?.profileViews ?? 0 },
-    { icon: Heart, label: "Mis en favoris", value: data?.favoritesCount ?? 0 },
+    { icon: Eye, label: t.auPairHome.statViews, value: data?.profileViews ?? 0 },
+    { icon: Heart, label: t.auPairHome.statFavorited, value: data?.favoritesCount ?? 0 },
     {
       icon: MessageCircle,
-      label: "Messages reçus",
+      label: t.auPairHome.statMessages,
       value: data?.totalMessages ?? 0,
-      trend:
-        data && data.unreadMessages > 0
-          ? `${data.unreadMessages} non lu${data.unreadMessages > 1 ? "s" : ""}`
-          : undefined,
+      trend: data && data.unreadMessages > 0 ? t.common.unread(data.unreadMessages) : undefined,
     },
   ];
 
   return (
-    <DashboardLayout navItems={navItems} role="au-pair" userName={userName}>
+    <DashboardLayout role="au-pair" userName={userName}>
       <div className="space-y-6">
         {/* En-tête */}
         <div>
           <h1 className="text-2xl font-extrabold text-[#1A1A2E]">
-            Bonjour, {data?.firstName ?? ""} 👋
+            {t.common.greeting(data?.firstName ?? "")}
           </h1>
-          <p className="text-gray-500">
-            Voici un résumé de votre activité sur AuPair A.EU
-          </p>
+          <p className="text-gray-500">{t.common.activitySummary}</p>
         </div>
 
         {/* Abonnement inactif */}
         {data && !subscriptionActive && (
-          <SubscriptionBanner message="Abonnez-vous pour profiter de tous les avantages : profil visible par les familles, messagerie, coordonnées des familles, favoris..." />
+          <SubscriptionBanner message={t.auPairHome.subscribeBanner} />
         )}
 
         {/* Disponibilité */}
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center justify-between gap-4 flex-wrap">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-semibold text-[#1A1A2E]">Visibilité auprès des familles</h3>
+              <h3 className="font-semibold text-[#1A1A2E]">{t.auPairHome.visibilityTitle}</h3>
               <Badge variant={isAvailable ? "success" : "warning"}>
-                {isAvailable ? "Disponible" : "Indisponible"}
+                {isAvailable ? t.common.available : t.common.unavailable}
               </Badge>
             </div>
             <p className="text-sm text-gray-500">
               {isHiddenByAdmin
-                ? "Votre profil a été masqué par notre équipe. Contactez le support pour plus d'informations."
+                ? t.auPairHome.hiddenByAdmin
                 : isAvailable
-                  ? "Votre profil apparaît comme disponible dans l'annuaire des familles."
-                  : "Votre profil apparaît comme indisponible. Activez-le quand vous êtes prêt(e) à recevoir des contacts."}
+                  ? t.auPairHome.visibleAvailable
+                  : t.auPairHome.visibleUnavailable}
             </p>
             {availabilityError && <p className="text-xs text-red-500 mt-1">{availabilityError}</p>}
           </div>
@@ -224,7 +179,7 @@ export default function AuPairDashboard() {
           <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-[#1A1A2E]">
-                Complétion du profil
+                {t.auPairHome.completionTitle}
               </h3>
               <span className={`font-bold text-lg ${completionColor.text}`}>
                 {profileCompletion}%
@@ -237,11 +192,11 @@ export default function AuPairDashboard() {
               />
             </div>
             <p className="text-sm text-gray-500 mb-3">
-              Un profil complet attire 3x plus de familles.
+              {t.auPairHome.completionHint}
             </p>
             <Link href="/dashboard/au-pair/profil">
               <Button size="sm" variant="outline">
-                Compléter mon profil
+                {t.auPairHome.completeProfile}
               </Button>
             </Link>
           </div>
@@ -251,7 +206,7 @@ export default function AuPairDashboard() {
             className={`rounded-2xl p-5 border shadow-sm ${!subscriptionActive ? "bg-red-50 border-red-200" : daysLeft <= 7 ? "bg-yellow-50 border-yellow-200" : "bg-white border-gray-100"}`}
           >
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-[#1A1A2E]">Mon abonnement</h3>
+              <h3 className="font-semibold text-[#1A1A2E]">{t.auPairHome.subscriptionTitle}</h3>
               <Badge
                 variant={
                   !subscriptionActive
@@ -261,7 +216,7 @@ export default function AuPairDashboard() {
                       : "success"
                 }
               >
-                {subscriptionActive ? "Actif" : "Inactif"}
+                {subscriptionActive ? t.auPairHome.active : t.auPairHome.inactive}
               </Badge>
             </div>
             <div className="flex items-center gap-2 mb-3">
@@ -269,7 +224,7 @@ export default function AuPairDashboard() {
               <span className="font-bold text-2xl text-[#1A1A2E]">
                 {daysLeft}
               </span>
-              <span className="text-gray-500">jours restants</span>
+              <span className="text-gray-500">{t.auPairHome.daysLeft}</span>
             </div>
             <Link href="/dashboard/au-pair/abonnement">
               <Button
@@ -280,9 +235,9 @@ export default function AuPairDashboard() {
               >
                 {subscriptionActive
                   ? daysLeft <= 7
-                    ? "Renouveler maintenant"
-                    : "Gérer l'abonnement"
-                  : "S'abonner"}
+                    ? t.auPairHome.renewNow
+                    : t.auPairHome.manageSubscription
+                  : t.auPairHome.subscribe}
               </Button>
             </Link>
           </div>
@@ -318,19 +273,18 @@ export default function AuPairDashboard() {
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between gap-2 flex-wrap mb-4">
             <h3 className="font-bold text-[#1A1A2E]">
-              Familles suggérées pour vous
+              {t.auPairHome.suggestedTitle}
             </h3>
             <Link
               href="/dashboard/au-pair/recherche"
               className="text-[#E87722] text-sm font-semibold whitespace-nowrap"
             >
-              Voir toutes →
+              {t.auPairHome.seeAll}
             </Link>
           </div>
           {data && data.suggestedFamilies.length === 0 ? (
             <p className="text-sm text-gray-500">
-              Aucune suggestion pour le moment. Complétez votre profil pour de
-              meilleures recommandations.
+              {t.auPairHome.noSuggestions}
             </p>
           ) : (
             <div className="space-y-3">
@@ -348,17 +302,16 @@ export default function AuPairDashboard() {
                       </p>
                       <p className="text-xs text-gray-500 flex items-center gap-1">
                         <MapPin className="w-3 h-3 shrink-0" />
-                        <span className="truncate">{f.city}, {f.country}</span>
+                        <span className="truncate">{f.city}, {tValue(f.country)}</span>
                       </p>
                     </div>
                   </div>
                   <div className="text-right shrink-0">
                     <p className="text-sm font-bold text-[#E87722]">
-                      {f.pocketMoney}€/mois
+                      {t.common.pocketMoney(f.pocketMoney)}
                     </p>
                     <p className="text-xs text-gray-400">
-                      {f.kids} enfant{f.kids > 1 ? "s" : ""} · {f.hoursPerWeek}
-                      h/sem
+                      {t.common.kids(f.kids)} · {t.common.hoursPerWeekShort(f.hoursPerWeek)}
                     </p>
                   </div>
                 </Link>

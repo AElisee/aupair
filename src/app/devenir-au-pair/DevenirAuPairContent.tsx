@@ -1,0 +1,147 @@
+"use client";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { CheckCircle, Globe, Heart, DollarSign, Home, ArrowRight } from "lucide-react";
+import { CountryFlag } from "@/components/ui/CountryFlag";
+import { useI18n } from "@/i18n";
+
+// Icônes des avantages, dans le même ordre que `becomeAuPair.advantages` (src/i18n/site.ts)
+const advantageIcons = [Globe, Heart, DollarSign, Home];
+
+export default function DevenirAuPairContent({ originCountries }: { originCountries: { name: string; flag: string }[] }) {
+  const { t, tValue } = useI18n();
+  const p = t.becomeAuPair;
+
+  return (
+    <div>
+      {/* Hero */}
+      <section className="bg-[#E87722] py-20">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4">{p.heroTitle}</h1>
+          <p className="text-white/90 text-xl mb-8 max-w-2xl mx-auto">{p.heroSubtitle}</p>
+          <Link href="/inscription?role=au-pair">
+            <Button size="lg" className="bg-white text-[#E87722] hover:bg-gray-100 px-8 text-base font-bold">
+              {p.heroCta} <ArrowRight className="w-5 h-5" />
+            </Button>
+          </Link>
+        </div>
+      </section>
+
+      {/* Avantages */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-extrabold text-[#1A1A2E] mb-3">{p.whyTitle}</h2>
+            <p className="text-gray-500">{p.whySubtitle}</p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {p.advantages.map((a, i) => {
+              const Icon = advantageIcons[i];
+              return (
+                <div key={i} className="bg-[#FFF3E0] rounded-2xl p-6 text-center">
+                  <div className="w-14 h-14 bg-[#E87722] rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Icon className="w-7 h-7 text-white" />
+                  </div>
+                  <h3 className="font-bold text-[#1A1A2E] mb-2">{a.title}</h3>
+                  <p className="text-gray-500 text-sm">{a.desc}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Conditions */}
+      <section className="py-20 bg-[#F5F5F5]">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-extrabold text-[#1A1A2E] mb-3">{p.whoTitle}</h2>
+          </div>
+          <div className="bg-white rounded-2xl p-8 shadow-sm">
+            <div className="grid sm:grid-cols-2 gap-4">
+              {p.conditions.map((c) => (
+                <div key={c} className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-[#E87722] flex-shrink-0" />
+                  <span className="text-gray-700">{c}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Processus */}
+      <section className="py-20 bg-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-extrabold text-[#1A1A2E] mb-3">{p.howTitle}</h2>
+            <p className="text-gray-500">{p.howSubtitle}</p>
+          </div>
+          <div className="relative">
+            <div className="space-y-8">
+              {p.steps.map((s, i) => (
+                <div key={i} className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                  <div className="flex-shrink-0 w-16 h-16 bg-[#E87722] rounded-full flex items-center justify-center text-white text-2xl font-extrabold shadow-lg">
+                    {i + 1}
+                  </div>
+                  <div className="bg-[#FFF3E0] rounded-xl p-5 flex-1">
+                    <h3 className="font-bold text-[#1A1A2E] text-lg mb-1">{s.title}</h3>
+                    <p className="text-gray-500">{s.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pays d'origine */}
+      <section className="py-20 bg-[#F5F5F5]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-extrabold text-[#1A1A2E] mb-3">{p.countriesTitle}</h2>
+            <p className="text-gray-500">{p.countriesSubtitle}</p>
+          </div>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
+            {originCountries.map((c) => (
+              <div key={c.name} className="bg-white rounded-xl p-4 text-center shadow-sm hover:shadow-md transition-shadow">
+                <CountryFlag flag={c.flag} className="h-8 w-auto rounded-sm mx-auto mb-2" />
+                <div className="text-sm font-medium text-[#1A1A2E]">{tValue(c.name)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="py-20 bg-white">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-extrabold text-[#1A1A2E] mb-3">{p.faqTitle}</h2>
+          </div>
+          <div className="space-y-4">
+            {p.faqs.map((f, i) => (
+              <div key={i} className="bg-[#FFF3E0] rounded-xl p-6">
+                <h3 className="font-bold text-[#1A1A2E] mb-2">{f.q}</h3>
+                <p className="text-gray-600 text-sm">{f.a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA final */}
+      <section className="py-16 bg-[#1A1A2E]">
+        <div className="max-w-2xl mx-auto px-4 text-center">
+          <h2 className="text-3xl font-extrabold text-white mb-4">{p.finalTitle}</h2>
+          <p className="text-gray-400 mb-8">{p.finalSubtitle}</p>
+          <Link href="/inscription?role=au-pair">
+            <Button size="lg" className="px-10">
+              {p.finalCta} <ArrowRight className="w-5 h-5" />
+            </Button>
+          </Link>
+        </div>
+      </section>
+    </div>
+  );
+}

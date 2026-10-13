@@ -1,6 +1,7 @@
 "use client";
 import { AlertTriangle, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/i18n";
 
 interface ConfirmDialogProps {
   title: string;
@@ -16,13 +17,14 @@ interface ConfirmDialogProps {
 export default function ConfirmDialog({
   title,
   description,
-  confirmLabel = "Confirmer",
-  cancelLabel = "Annuler",
+  confirmLabel,
+  cancelLabel,
   loading = false,
   variant = "destructive",
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const { t } = useI18n();
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
@@ -50,13 +52,14 @@ export default function ConfirmDialog({
             onClick={onCancel}
             disabled={loading}
             className="p-1 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0 disabled:opacity-50"
+            aria-label={t.adminCommon.close}
           >
             <X className="w-4 h-4" />
           </button>
         </div>
         <div className="flex justify-end gap-2 mt-5">
           <Button variant="outline" onClick={onCancel} disabled={loading}>
-            {cancelLabel}
+            {cancelLabel ?? t.adminCommon.cancel}
           </Button>
           <Button
             variant={variant === "destructive" ? "destructive" : "default"}
@@ -64,7 +67,7 @@ export default function ConfirmDialog({
             disabled={loading}
           >
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-            {confirmLabel}
+            {confirmLabel ?? t.adminCommon.confirm}
           </Button>
         </div>
       </div>

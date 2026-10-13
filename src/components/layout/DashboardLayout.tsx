@@ -6,17 +6,13 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { LogOut, ChevronRight, Menu, X } from "lucide-react";
 import { PendingValidationGate } from "@/components/dashboard/PendingValidationGate";
-
-interface NavItem {
-  href: string;
-  icon: React.ElementType;
-  label: string;
-}
+import { useI18n } from "@/i18n";
+import { LanguageToggle } from "./LanguageToggle";
+import { DASHBOARD_NAV, type DashboardNavItem, type DashboardRole } from "./dashboard-nav";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
-  navItems: NavItem[];
-  role: "au-pair" | "famille";
+  role: DashboardRole;
   userName?: string;
 }
 
@@ -35,17 +31,18 @@ function SidebarContent({
   onNavigate,
   onClose,
 }: {
-  navItems: NavItem[];
+  navItems: DashboardNavItem[];
   pathname: string;
   photoUrl: string;
   userName?: string;
-  role: "au-pair" | "famille";
+  role: DashboardRole;
   favoritesCount: number;
   unreadMessages: number;
   unreadNotifications: number;
   onNavigate?: () => void;
   onClose?: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <>
       {/* Logo */}
@@ -61,7 +58,7 @@ function SidebarContent({
           <span className="text-white font-bold">AuPair<span className="text-[#E87722]">A.EU</span></span>
         </Link>
         {onClose && (
-          <button onClick={onClose} className="text-gray-400 hover:text-white p-1" aria-label="Fermer le menu">
+          <button onClick={onClose} className="text-gray-400 hover:text-white p-1" aria-label={t.layout.closeMenu}>
             <X className="w-5 h-5" />
           </button>
         )}
@@ -79,8 +76,8 @@ function SidebarContent({
             )}
           </div>
           <div className="min-w-0">
-            <p className="text-white text-sm font-semibold truncate">{userName || "Mon compte"}</p>
-            <p className="text-gray-400 text-xs capitalize">{role === "au-pair" ? "Au pair" : "Famille d'accueil"}</p>
+            <p className="text-white text-sm font-semibold truncate">{userName || t.layout.myAccount}</p>
+            <p className="text-gray-400 text-xs">{role === "au-pair" ? t.layout.roleAuPair : t.layout.roleFamily}</p>
           </div>
         </div>
       </div>
@@ -103,7 +100,7 @@ function SidebarContent({
               }`}
             >
               <Icon className="w-4 h-4" />
-              {item.label}
+              {t.nav[item.labelKey]}
               {item.href === "/dashboard/famille/favoris" && favoritesCount > 0 && (
                 <span className="ml-auto bg-[#E87722] text-white text-xs font-bold rounded-full px-2 py-0.5 min-w-5 text-center">
                   {favoritesCount}
@@ -125,22 +122,25 @@ function SidebarContent({
         })}
       </nav>
 
-      {/* Déconnexion */}
-      <div className="p-4 border-t border-white/10">
+      {/* Langue + déconnexion */}
+      <div className="p-4 border-t border-white/10 space-y-1">
+        <LanguageToggle tone="dark" className="px-2 pb-1" />
         <button
           onClick={() => signOut({ callbackUrl: "/connexion" })}
           className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:bg-white/10 hover:text-white w-full transition-all"
         >
           <LogOut className="w-4 h-4" />
-          Se déconnecter
+          {t.layout.signOut}
         </button>
       </div>
     </>
   );
 }
 
-export default function DashboardLayout({ children, navItems, role, userName }: DashboardLayoutProps) {
+export default function DashboardLayout({ children, role, userName }: DashboardLayoutProps) {
   const pathname = usePathname();
+  const { t } = useI18n();
+  const navItems = DASHBOARD_NAV[role];
   const [photoUrl, setPhotoUrl] = useState("");
   const [profileStatus, setProfileStatus] = useState<string | null | undefined>(undefined);
   const [favoritesCount, setFavoritesCount] = useState(0);
@@ -284,7 +284,7 @@ export default function DashboardLayout({ children, navItems, role, userName }: 
           <button
             onClick={() => setMobileMenuOpen(true)}
             className="relative p-2 -ml-2 text-white"
-            aria-label="Ouvrir le menu"
+            aria-label={t.layout.openMenu}
           >
             <Menu className="w-5 h-5" />
             {unreadMessages > 0 && (
@@ -301,7 +301,7 @@ export default function DashboardLayout({ children, navItems, role, userName }: 
             />
             <span className="text-white font-bold text-sm">AuPair<span className="text-[#E87722]">A.EU</span></span>
           </Link>
-          <div className="w-9" aria-hidden="true" />
+          <LanguageToggle tone="dark" className="-mr-1" />
         </div>
 
         <div className="p-4 sm:p-6">{children}</div>

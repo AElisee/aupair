@@ -3,33 +3,16 @@
 import { useSession } from "next-auth/react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import ChangePasswordForm from "@/components/settings/ChangePasswordForm";
-import {
-  Home,
-  User,
-  Search,
-  Heart,
-  MessageCircle,
-  Bell,
-  Settings,
-} from "lucide-react";
-
-const navItems = [
-  { href: "/dashboard/famille", icon: Home, label: "Tableau de bord" },
-  { href: "/dashboard/famille/profil", icon: User, label: "Mon profil" },
-  { href: "/dashboard/famille/recherche", icon: Search, label: "Rechercher un au pair" },
-  { href: "/dashboard/famille/favoris", icon: Heart, label: "Mes favoris" },
-  { href: "/dashboard/famille/messages", icon: MessageCircle, label: "Messages" },
-  { href: "/dashboard/famille/notifications", icon: Bell, label: "Notifications" },
-  { href: "/dashboard/famille/parametres", icon: Settings, label: "Paramètres" },
-];
+import { useI18n } from "@/i18n";
 
 export default function FamilleParametresPage() {
   const { data: session } = useSession();
+  const { t } = useI18n();
 
   return (
-    <DashboardLayout navItems={navItems} role="famille" userName={session?.user?.name ?? ""}>
+    <DashboardLayout role="famille" userName={session?.user?.name ?? ""}>
       <div className="space-y-5">
-        <h1 className="text-2xl font-extrabold text-[#1A1A2E]">Paramètres</h1>
+        <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{t.settings.title}</h1>
         <ChangePasswordForm />
       </div>
     </DashboardLayout>

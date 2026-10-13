@@ -4,6 +4,7 @@ import AdminLayout from "@/components/layout/AdminLayout";
 import { Users, UserCheck, Home, Wallet, CreditCard, Shield, AlertTriangle, Loader2, Flag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { useI18n } from "@/i18n";
 
 type DashboardData = {
   kpis: {
@@ -11,7 +12,7 @@ type DashboardData = {
     totalAuPairs: number;
     totalFamilies: number;
     signups30d: number;
-    signupsChange: string;
+    signupsChangePct: number;
     revenue30d: string;
     totalRevenue: string;
     activeSubscriptions: number;
@@ -40,6 +41,9 @@ type DashboardData = {
 export default function AdminPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { t, relativeDate } = useI18n();
+  const c = t.adminCommon;
+  const d = t.adminDashboard;
 
   useEffect(() => {
     fetch("/api/admin/dashboard")
@@ -53,7 +57,7 @@ export default function AdminPage() {
       <AdminLayout>
         <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
           <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
-          <p className="text-gray-500">Chargement...</p>
+          <p className="text-gray-500">{c.loading}</p>
         </div>
       </AdminLayout>
     );
@@ -61,22 +65,24 @@ export default function AdminPage() {
 
   const { kpis, recentUsers, recentPayments } = data;
 
+  const signupsChange = `${kpis.signupsChangePct >= 0 ? "+" : ""}${kpis.signupsChangePct}%`;
+
   const kpiCards = [
-    { icon: Users, label: "Utilisateurs totaux", value: String(kpis.totalUsers), change: `+${kpis.signups30d} ce mois (${kpis.signupsChange})`, color: "text-blue-600", bg: "bg-blue-50" },
-    { icon: UserCheck, label: "Au pairs", value: String(kpis.totalAuPairs), change: "Profils au pair", color: "text-purple-600", bg: "bg-purple-50" },
-    { icon: Home, label: "Familles", value: String(kpis.totalFamilies), change: "Profils famille", color: "text-teal-600", bg: "bg-teal-50" },
-    { icon: Shield, label: "Profils en attente", value: String(kpis.pendingProfiles), change: "À valider", color: "text-red-600", bg: "bg-red-50" },
-    { icon: CreditCard, label: "Abonnements actifs", value: String(kpis.activeSubscriptions), change: `${kpis.revenue30d} sur 30 jours`, color: "text-indigo-600", bg: "bg-indigo-50" },
-    { icon: Wallet, label: "Revenus totaux", value: kpis.totalRevenue, change: `${kpis.revenue30d} ce mois-ci`, color: "text-[#E87722]", bg: "bg-[#FFF3E0]" },
-    { icon: Flag, label: "Signalements ouverts", value: String(kpis.openReports), change: "À traiter", color: "text-amber-600", bg: "bg-amber-50" },
+    { icon: Users, label: d.totalUsers, value: String(kpis.totalUsers), change: d.signupsThisMonth(kpis.signups30d, signupsChange), color: "text-blue-600", bg: "bg-blue-50" },
+    { icon: UserCheck, label: d.auPairs, value: String(kpis.totalAuPairs), change: d.auPairProfiles, color: "text-purple-600", bg: "bg-purple-50" },
+    { icon: Home, label: d.families, value: String(kpis.totalFamilies), change: d.familyProfiles, color: "text-teal-600", bg: "bg-teal-50" },
+    { icon: Shield, label: d.pendingProfiles, value: String(kpis.pendingProfiles), change: d.toValidate, color: "text-red-600", bg: "bg-red-50" },
+    { icon: CreditCard, label: d.activeSubscriptions, value: String(kpis.activeSubscriptions), change: d.over30Days(kpis.revenue30d), color: "text-indigo-600", bg: "bg-indigo-50" },
+    { icon: Wallet, label: d.totalRevenue, value: kpis.totalRevenue, change: d.thisMonth(kpis.revenue30d), color: "text-[#E87722]", bg: "bg-[#FFF3E0]" },
+    { icon: Flag, label: d.openReports, value: String(kpis.openReports), change: d.toHandle, color: "text-amber-600", bg: "bg-amber-50" },
   ];
 
   return (
     <AdminLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">Tableau de bord</h1>
-          <p className="text-gray-500 text-sm">Vue d'ensemble de la plateforme AuPair A.EU</p>
+          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{d.title}</h1>
+          <p className="text-gray-500 text-sm">{d.subtitle}</p>
         </div>
 
         {/* KPIs */}
@@ -101,12 +107,12 @@ export default function AdminPage() {
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3">
             <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
             <div className="flex-1">
-              <p className="font-semibold text-amber-800 text-sm">{kpis.pendingProfiles} profil(s) en attente de validation</p>
-              <p className="text-xs text-amber-600">Validez les profils pour les rendre visibles sur la plateforme.</p>
+              <p className="font-semibold text-amber-800 text-sm">{d.pendingAlert(kpis.pendingProfiles)}</p>
+              <p className="text-xs text-amber-600">{d.pendingAlertText}</p>
             </div>
             <Link href="/admin/moderation">
               <button className="bg-amber-600 text-white text-xs px-3 py-1.5 rounded-lg font-semibold hover:bg-amber-700 transition-colors">
-                Modérer
+                {d.moderate}
               </button>
             </Link>
           </div>
@@ -117,12 +123,12 @@ export default function AdminPage() {
           <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center gap-3">
             <Flag className="w-5 h-5 text-red-600 flex-shrink-0" />
             <div className="flex-1">
-              <p className="font-semibold text-red-800 text-sm">{kpis.openReports} signalement(s) en attente de traitement</p>
-              <p className="text-xs text-red-600">Examinez les signalements des utilisateurs.</p>
+              <p className="font-semibold text-red-800 text-sm">{d.reportsAlert(kpis.openReports)}</p>
+              <p className="text-xs text-red-600">{d.reportsAlertText}</p>
             </div>
             <Link href="/admin/moderation">
               <button className="bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg font-semibold hover:bg-red-700 transition-colors">
-                Voir
+                {c.see}
               </button>
             </Link>
           </div>
@@ -132,12 +138,12 @@ export default function AdminPage() {
           {/* Derniers utilisateurs */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
             <div className="flex items-center justify-between p-5 border-b border-gray-50">
-              <h2 className="font-bold text-[#1A1A2E]">Derniers inscrits</h2>
-              <Link href="/admin/utilisateurs" className="text-[#E87722] text-xs font-semibold">Voir tous →</Link>
+              <h2 className="font-bold text-[#1A1A2E]">{d.latestSignups}</h2>
+              <Link href="/admin/utilisateurs" className="text-[#E87722] text-xs font-semibold">{c.seeAll}</Link>
             </div>
             <div className="divide-y divide-gray-50">
               {recentUsers.length === 0 ? (
-                <p className="px-5 py-6 text-sm text-gray-400 text-center">Aucune inscription récente.</p>
+                <p className="px-5 py-6 text-sm text-gray-400 text-center">{d.noRecentSignups}</p>
               ) : recentUsers.map((u) => (
                 <div key={u.id} className="flex items-center justify-between px-5 py-3">
                   <div className="flex items-center gap-3">
@@ -146,20 +152,20 @@ export default function AdminPage() {
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={u.photoUrl} alt="" className="w-full h-full object-cover object-top" />
                       ) : (
-                        u.name.charAt(0)
+                        (u.name || "?").charAt(0)
                       )}
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-[#1A1A2E]">{u.name}</p>
-                      <p className="text-xs text-gray-400">{u.country} · {u.date}</p>
+                      <p className="text-sm font-semibold text-[#1A1A2E]">{u.name || (u.role === "AU_PAIR" ? c.roleAuPair : c.roleFamily)}</p>
+                      <p className="text-xs text-gray-400">{u.country} · {relativeDate(u.date)}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant={u.role === "AU_PAIR" ? "default" : "secondary"} className="text-xs">
-                      {u.role === "AU_PAIR" ? "Au pair" : "Famille"}
+                      {u.role === "AU_PAIR" ? c.roleAuPair : c.roleFamily}
                     </Badge>
                     <Badge variant={u.status === "ACTIVE" ? "success" : "warning"} className="text-xs">
-                      {u.status === "ACTIVE" ? "Actif" : "En attente"}
+                      {u.status === "ACTIVE" ? c.profileStatus.ACTIVE : c.profileStatus.PENDING}
                     </Badge>
                   </div>
                 </div>
@@ -170,22 +176,22 @@ export default function AdminPage() {
           {/* Derniers paiements */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
             <div className="flex items-center justify-between p-5 border-b border-gray-50">
-              <h2 className="font-bold text-[#1A1A2E]">Derniers paiements</h2>
-              <Link href="/admin/paiements" className="text-[#E87722] text-xs font-semibold">Voir tous →</Link>
+              <h2 className="font-bold text-[#1A1A2E]">{d.latestPayments}</h2>
+              <Link href="/admin/paiements" className="text-[#E87722] text-xs font-semibold">{c.seeAll}</Link>
             </div>
             <div className="divide-y divide-gray-50">
               {recentPayments.length === 0 ? (
-                <p className="px-5 py-6 text-sm text-gray-400 text-center">Aucun paiement récent.</p>
+                <p className="px-5 py-6 text-sm text-gray-400 text-center">{d.noRecentPayments}</p>
               ) : recentPayments.map((p) => (
                 <div key={p.id} className="flex items-center justify-between px-5 py-3">
                   <div>
-                    <p className="text-sm font-semibold text-[#1A1A2E]">{p.user}</p>
-                    <p className="text-xs text-gray-400">{p.method} · {p.date}</p>
+                    <p className="text-sm font-semibold text-[#1A1A2E]">{p.user || c.unknownUser}</p>
+                    <p className="text-xs text-gray-400">{t.adminPayments.methods[p.method as keyof typeof t.adminPayments.methods] ?? p.method} · {relativeDate(p.date)}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-[#E87722]">{p.amount}</span>
                     <Badge variant={p.status === "ACTIVE" ? "success" : "secondary"} className="text-xs">
-                      {p.status === "ACTIVE" ? "Payé" : p.status}
+                      {p.status === "ACTIVE" ? d.paid : (t.adminPayments.statuses[p.status as keyof typeof t.adminPayments.statuses] ?? p.status)}
                     </Badge>
                   </div>
                 </div>

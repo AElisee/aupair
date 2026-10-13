@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Eye, BarChart2, Loader2, Save, CheckCircle } from "lucide-react";
+import { useI18n } from "@/i18n";
 
 interface Settings {
   notifyProfileViewEnabled: boolean;
@@ -56,6 +57,9 @@ export default function AdminNotificationsSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const { t, tError } = useI18n();
+  const c = t.adminCommon;
+  const ts = t.adminSettings;
 
   useEffect(() => {
     fetch("/api/admin/constants")
@@ -77,14 +81,14 @@ export default function AdminNotificationsSettingsPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Erreur lors de l'enregistrement.");
+        setError(tError(data.error, c.saveError));
         return;
       }
       setSettings(data.settings);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch {
-      setError("Erreur réseau, veuillez réessayer.");
+      setError(c.networkError);
     } finally {
       setSaving(false);
     }
@@ -95,7 +99,7 @@ export default function AdminNotificationsSettingsPage() {
       <AdminLayout>
         <div className="p-12 text-center">
           <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
-          <p className="text-gray-500">Chargement...</p>
+          <p className="text-gray-500">{c.loading}</p>
         </div>
       </AdminLayout>
     );
@@ -106,7 +110,7 @@ export default function AdminNotificationsSettingsPage() {
       <div className="space-y-5">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-extrabold text-[#1A1A2E]">
-            Paramètres — Notifications
+            {ts.notificationsTitle}
           </h1>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? (
@@ -114,7 +118,7 @@ export default function AdminNotificationsSettingsPage() {
             ) : (
               <Save className="w-4 h-4 mr-1" />
             )}
-            Enregistrer
+            {c.save}
           </Button>
         </div>
 
@@ -122,15 +126,15 @@ export default function AdminNotificationsSettingsPage() {
         {saved && (
           <p className="text-green-600 text-sm flex items-center gap-1.5">
             <CheckCircle className="w-4 h-4" />
-            Modifications enregistrées.
+            {c.saved}
           </p>
         )}
 
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm divide-y divide-gray-100">
           <ToggleRow
             icon={<Eye className="w-4 h-4 text-[#E87722]" />}
-            title="Notification de vue de profil"
-            description="Avertir un utilisateur lorsqu'une autre personne consulte son profil."
+            title={ts.profileViewTitle}
+            description={ts.profileViewText}
             checked={settings.notifyProfileViewEnabled}
             onChange={(notifyProfileViewEnabled) =>
               setSettings({ ...settings, notifyProfileViewEnabled })
@@ -138,8 +142,8 @@ export default function AdminNotificationsSettingsPage() {
           />
           <ToggleRow
             icon={<BarChart2 className="w-4 h-4 text-[#E87722]" />}
-            title="Résumé hebdomadaire des vues"
-            description="Envoyer en début de semaine un résumé du nombre de vues de profil reçues la semaine précédente."
+            title={ts.weeklyDigestTitle}
+            description={ts.weeklyDigestText}
             checked={settings.notifyWeeklyViewsDigestEnabled}
             onChange={(notifyWeeklyViewsDigestEnabled) =>
               setSettings({ ...settings, notifyWeeklyViewsDigestEnabled })

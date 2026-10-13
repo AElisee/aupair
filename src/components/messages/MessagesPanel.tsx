@@ -5,9 +5,9 @@ import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Search, Send, Loader2, MessageCircle, Ban, Paperclip, FileText, Download, Flag, X, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { formatRelativeDate } from "@/lib/utils";
 import { useConstants } from "@/hooks/useConstants";
 import { SubscriptionBanner } from "@/components/dashboard/SubscriptionLock";
+import { useI18n, getDictionary, intlLocale, type Lang } from "@/i18n";
 
 interface ConversationSummary {
   userId: string;
@@ -39,13 +39,6 @@ interface OtherUser {
   role: string;
 }
 
-const ROLE_LABELS: Record<string, string> = {
-  AU_PAIR: "Au pair",
-  FAMILLE: "Famille d'accueil",
-  AGENCE: "Agence",
-  ADMIN: "Admin",
-};
-
 function Avatar({ name, avatar }: { name: string; avatar: string | null }) {
   return (
     <div className="w-10 h-10 rounded-full bg-[#1A1A2E] flex items-center justify-center text-white font-bold overflow-hidden flex-shrink-0">
@@ -59,25 +52,27 @@ function Avatar({ name, avatar }: { name: string; avatar: string | null }) {
   );
 }
 
-function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+function formatTime(iso: string, lang: Lang) {
+  return new Date(iso).toLocaleTimeString(intlLocale(lang), { hour: "2-digit", minute: "2-digit" });
 }
 
 // Étiquette du séparateur de jour affiché entre les messages (Aujourd'hui, Hier, jour de la semaine, Semaine dernière, ou date)
-function getDayLabel(iso: string): string {
+function getDayLabel(iso: string, lang: Lang): string {
+  const t = getDictionary(lang);
+  const locale = intlLocale(lang);
   const date = new Date(iso);
   const now = new Date();
   const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
   const diffDays = Math.round((startOfDay(now) - startOfDay(date)) / 86400000);
 
-  if (diffDays === 0) return "Aujourd'hui";
-  if (diffDays === 1) return "Hier";
+  if (diffDays === 0) return t.time.today;
+  if (diffDays === 1) return t.time.yesterday;
   if (diffDays < 7) {
-    const weekday = new Intl.DateTimeFormat("fr-FR", { weekday: "long" }).format(date);
+    const weekday = new Intl.DateTimeFormat(locale, { weekday: "long" }).format(date);
     return weekday.charAt(0).toUpperCase() + weekday.slice(1);
   }
-  if (diffDays < 14) return "Semaine dernière";
-  return new Intl.DateTimeFormat("fr-FR", {
+  if (diffDays < 14) return t.time.lastWeek;
+  return new Intl.DateTimeFormat(locale, {
     day: "numeric",
     month: "long",
     year: now.getFullYear() === date.getFullYear() ? undefined : "numeric",
@@ -89,6 +84,13 @@ export default function MessagesPanel() {
   const searchParams = useSearchParams();
   const myId = session?.user?.id;
   const { reportReasons: REPORT_REASONS } = useConstants();
+  const { t, lang, tValue, tError, relativeDate } = useI18n();
+  const roleLabels: Record<string, string> = {
+    AU_PAIR: t.messages.roleAuPair,
+    FAMILLE: t.messages.roleFamily,
+    AGENCE: t.messages.roleAgency,
+    ADMIN: t.messages.roleAdmin,
+  };
 
   const [conversations, setConversations] = useState<ConversationSummary[] | null>(null);
   const [activeUserId, setActiveUserId] = useState<string | null>(null);
@@ -224,14 +226,14 @@ export default function MessagesPanel() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setSendError(data.error || "Erreur lors de l'envoi du message.");
+        setSendError(tError(data.error, t.messages.sendError));
         return;
       }
       setMessages((prev) => [...prev, data.message as MessageItem]);
       setNewMessage("");
       bumpConversation(activeUserId, content);
     } catch {
-      setSendError("Erreur réseau, veuillez réessayer.");
+      setSendError(t.common.networkError);
     } finally {
       setSending(false);
     }
@@ -251,7 +253,7 @@ export default function MessagesPanel() {
       const res = await fetch("/api/messages/upload", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) {
-        setSendError(data.error || "Erreur lors de l'envoi du fichier.");
+        setSendError(tError(data.error, t.messages.fileSendError));
         return;
       }
       const sentMessage = data.message as MessageItem;
@@ -261,7 +263,7 @@ export default function MessagesPanel() {
         (sentMessage.attachmentType?.startsWith("image/") ? "📷 Photo" : "📄 Document");
       bumpConversation(activeUserId, lastMessage);
     } catch {
-      setSendError("Erreur réseau, veuillez réessayer.");
+      setSendError(t.common.networkError);
     } finally {
       setUploading(false);
     }
@@ -304,12 +306,12 @@ export default function MessagesPanel() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setReportError(data.error || "Erreur lors de l'envoi du signalement.");
+        setReportError(tError(data.error, t.messages.reportError));
         return;
       }
       setReportSent(true);
     } catch {
-      setReportError("Erreur réseau, veuillez réessayer.");
+      setReportError(t.common.networkError);
     } finally {
       setReportSubmitting(false);
     }
@@ -333,7 +335,7 @@ export default function MessagesPanel() {
             name: otherUser.name,
             avatar: otherUser.avatar,
             role: otherUser.role,
-            lastMessage: "Nouvelle conversation",
+            lastMessage: t.messages.newConversation,
             lastMessageAt: new Date().toISOString(),
             lastMessageFromMe: false,
             unreadCount: 0,
@@ -365,7 +367,7 @@ export default function MessagesPanel() {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Rechercher..."
+                placeholder={t.messages.searchPlaceholder}
                 className="w-full pl-9 pr-4 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
               />
             </div>
@@ -374,7 +376,7 @@ export default function MessagesPanel() {
             {filteredList.length === 0 ? (
               <div className="p-6 text-center text-sm text-gray-400">
                 <MessageCircle className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                Aucune conversation pour le moment.
+                {t.messages.noConversations}
               </div>
             ) : (
               filteredList.map((conv) => (
@@ -391,10 +393,10 @@ export default function MessagesPanel() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-0.5">
                         <p className="font-semibold text-[#1A1A2E] text-sm truncate">{conv.name}</p>
-                        <span className="text-xs text-gray-400 flex-shrink-0 ml-2">{formatRelativeDate(conv.lastMessageAt)}</span>
+                        <span className="text-xs text-gray-400 flex-shrink-0 ml-2">{relativeDate(conv.lastMessageAt)}</span>
                       </div>
                       <p className="text-xs text-gray-500 truncate">
-                        {conv.lastMessageFromMe && "Vous : "}{conv.lastMessage}
+                        {conv.lastMessageFromMe && t.messages.youPrefix}{tValue(conv.lastMessage)}
                       </p>
                     </div>
                     {conv.unreadCount > 0 && (
@@ -411,7 +413,7 @@ export default function MessagesPanel() {
         <div className={`flex-1 flex-col min-w-0 ${mobileShowChat ? "flex" : "hidden md:flex"}`}>
           {!activeUserId ? (
             <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">
-              Sélectionnez une conversation
+              {t.messages.selectConversation}
             </div>
           ) : !otherUser ? (
             <div className="flex-1 flex items-center justify-center">
@@ -425,15 +427,15 @@ export default function MessagesPanel() {
                   type="button"
                   onClick={() => setMobileShowChat(false)}
                   className="md:hidden -ml-1 p-1.5 text-gray-500 hover:text-[#1A1A2E] flex-shrink-0"
-                  title="Retour aux conversations"
-                  aria-label="Retour aux conversations"
+                  title={t.messages.backToConversations}
+                  aria-label={t.messages.backToConversations}
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
                 <Avatar name={otherUser.name} avatar={otherUser.avatar} />
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-[#1A1A2E] truncate">{otherUser.name}</p>
-                  <p className="text-xs text-gray-400">{ROLE_LABELS[otherUser.role] ?? otherUser.role}</p>
+                  <p className="text-xs text-gray-400">{roleLabels[otherUser.role] ?? otherUser.role}</p>
                 </div>
                 <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                   <Button
@@ -441,10 +443,10 @@ export default function MessagesPanel() {
                     variant="outline"
                     type="button"
                     onClick={() => setShowReportModal(true)}
-                    title="Signaler cet utilisateur"
+                    title={t.messages.reportUser}
                     className="h-7 px-2 text-xs gap-1"
                   >
-                    <Flag className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Signaler</span>
+                    <Flag className="w-3.5 h-3.5" /> <span className="hidden sm:inline">{t.messages.report}</span>
                   </Button>
                   <Button
                     size="sm"
@@ -452,11 +454,11 @@ export default function MessagesPanel() {
                     type="button"
                     onClick={handleToggleBlock}
                     disabled={blockProcessing}
-                    title={blockedByMe ? "Débloquer cet utilisateur" : "Bloquer cet utilisateur"}
+                    title={blockedByMe ? t.messages.unblockUser : t.messages.blockUser}
                     className={`h-7 px-2 text-xs gap-1 ${blockedByMe ? "bg-[#1A1A2E] text-white hover:bg-[#1A1A2E]/90" : "text-red-600 border-red-200 hover:bg-red-50"}`}
                   >
                     {blockProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Ban className="w-3.5 h-3.5" />}
-                    <span className="hidden sm:inline">{blockedByMe ? "Débloquer" : "Bloquer"}</span>
+                    <span className="hidden sm:inline">{blockedByMe ? t.messages.unblock : t.messages.block}</span>
                   </Button>
                 </div>
               </div>
@@ -469,12 +471,12 @@ export default function MessagesPanel() {
                   </div>
                 ) : messages.length === 0 ? (
                   <div className="text-center text-sm text-gray-400 pt-8">
-                    Aucun message. Lancez la conversation !
+                    {t.messages.noMessages}
                   </div>
                 ) : (
                   messages.map((msg, index) => {
-                    const dayLabel = getDayLabel(msg.createdAt);
-                    const showSeparator = index === 0 || getDayLabel(messages[index - 1].createdAt) !== dayLabel;
+                    const dayLabel = getDayLabel(msg.createdAt, lang);
+                    const showSeparator = index === 0 || getDayLabel(messages[index - 1].createdAt, lang) !== dayLabel;
                     return (
                       <div key={msg.id}>
                         {showSeparator && (
@@ -493,7 +495,7 @@ export default function MessagesPanel() {
                             {msg.attachmentUrl && msg.attachmentType?.startsWith("image/") ? (
                               <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={msg.attachmentUrl} alt={msg.attachmentName ?? "Image"} className="rounded-lg max-w-full max-h-48 object-cover mb-1" />
+                                <img src={msg.attachmentUrl} alt={msg.attachmentName ?? t.messages.image} className="rounded-lg max-w-full max-h-48 object-cover mb-1" />
                               </a>
                             ) : msg.attachmentUrl ? (
                               <a
@@ -505,13 +507,13 @@ export default function MessagesPanel() {
                                 }`}
                               >
                                 <FileText className="w-4 h-4 flex-shrink-0" />
-                                <span className="truncate text-sm underline">{msg.attachmentName ?? "Document"}</span>
+                                <span className="truncate text-sm underline">{msg.attachmentName ?? t.messages.document}</span>
                                 <Download className="w-3.5 h-3.5 flex-shrink-0 ml-auto" />
                               </a>
                             ) : null}
                             {msg.content && <p className="whitespace-pre-wrap break-words">{msg.content}</p>}
                           </div>
-                          <span className="text-[13px] text-gray-400 mt-1 px-1">{formatTime(msg.createdAt)}</span>
+                          <span className="text-[13px] text-gray-400 mt-1 px-1">{formatTime(msg.createdAt, lang)}</span>
                         </div>
                       </div>
                     );
@@ -525,10 +527,10 @@ export default function MessagesPanel() {
                 {isBlocked ? (
                   <div className="flex items-center justify-center gap-2 text-sm text-gray-400 py-2">
                     <Ban className="w-4 h-4" />
-                    Vous ne pouvez pas échanger de messages avec cet utilisateur.
+                    {t.messages.cannotMessage}
                   </div>
                 ) : session?.user?.role === "AU_PAIR" && !subscriptionActive ? (
-                  <SubscriptionBanner message="Abonnez-vous pour envoyer des messages aux familles." />
+                  <SubscriptionBanner message={t.messages.subscribeToMessage} />
                 ) : (
                   <>
                     {sendError && <p className="text-xs text-red-500 mb-2">{sendError}</p>}
@@ -546,7 +548,7 @@ export default function MessagesPanel() {
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={uploading || sending}
-                        title="Joindre une photo ou un document"
+                        title={t.messages.attach}
                       >
                         {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
                       </Button>
@@ -554,7 +556,7 @@ export default function MessagesPanel() {
                         type="text"
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder="Écrire un message..."
+                        placeholder={t.messages.writeMessage}
                         className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && !e.shiftKey) {
@@ -581,8 +583,8 @@ export default function MessagesPanel() {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-[#1A1A2E] text-lg">Signaler {otherUser.name}</h3>
-              <button onClick={closeReportModal} className="text-gray-400 hover:text-gray-600">
+              <h3 className="font-bold text-[#1A1A2E] text-lg">{t.messages.reportTitle(otherUser.name)}</h3>
+              <button onClick={closeReportModal} className="text-gray-400 hover:text-gray-600" aria-label={t.common.close}>
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -590,43 +592,43 @@ export default function MessagesPanel() {
             {reportSent ? (
               <div className="text-center py-4">
                 <Flag className="w-10 h-10 text-green-500 mx-auto mb-2" />
-                <p className="text-sm text-gray-600">Votre signalement a été envoyé. Merci, notre équipe va l&apos;examiner.</p>
-                <Button className="mt-4 w-full" onClick={closeReportModal}>Fermer</Button>
+                <p className="text-sm text-gray-600">{t.messages.reportSent}</p>
+                <Button className="mt-4 w-full" onClick={closeReportModal}>{t.common.close}</Button>
               </div>
             ) : (
               <>
-                <label className="block text-sm font-semibold text-[#1A1A2E] mb-1.5">Motif</label>
+                <label className="block text-sm font-semibold text-[#1A1A2E] mb-1.5">{t.messages.reason}</label>
                 <select
                   value={reportReason}
                   onChange={(e) => setReportReason(e.target.value)}
                   className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-[#E87722]"
                 >
-                  <option value="">Sélectionnez un motif</option>
+                  <option value="">{t.messages.selectReason}</option>
                   {REPORT_REASONS.map((reason) => (
-                    <option key={reason} value={reason}>{reason}</option>
+                    <option key={reason} value={reason}>{tValue(reason)}</option>
                   ))}
                 </select>
 
-                <label className="block text-sm font-semibold text-[#1A1A2E] mb-1.5">Description (optionnel)</label>
+                <label className="block text-sm font-semibold text-[#1A1A2E] mb-1.5">{t.messages.descriptionOptional}</label>
                 <textarea
                   value={reportDescription}
                   onChange={(e) => setReportDescription(e.target.value)}
                   rows={3}
                   className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-[#E87722] resize-none"
-                  placeholder="Détails utiles pour notre équipe de modération..."
+                  placeholder={t.messages.descriptionPlaceholder}
                 />
 
                 {reportError && <p className="text-xs text-red-500 mb-3">{reportError}</p>}
 
                 <div className="flex gap-2">
-                  <Button variant="outline" className="flex-1" onClick={closeReportModal}>Annuler</Button>
+                  <Button variant="outline" className="flex-1" onClick={closeReportModal}>{t.common.cancel}</Button>
                   <Button
                     className="flex-1 bg-red-600 hover:bg-red-700 text-white"
                     onClick={handleSubmitReport}
                     disabled={!reportReason || reportSubmitting}
                   >
                     {reportSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Flag className="w-4 h-4 mr-1" />}
-                    Envoyer
+                    {t.messages.send}
                   </Button>
                 </div>
               </>

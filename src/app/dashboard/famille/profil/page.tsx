@@ -3,35 +3,23 @@ import { useEffect, useRef, useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { User, Search, MessageCircle, Bell, Settings, Home, Camera, CheckCircle, Loader2, Heart } from "lucide-react";
+import { Camera, CheckCircle, Loader2 } from "lucide-react";
 import { useCountries } from "@/hooks/useCountries";
 import { useConstants } from "@/hooks/useConstants";
 import PhotoViewerModal from "@/components/ui/photo-viewer-modal";
+import { useI18n } from "@/i18n";
 
-const navItems = [
-  { href: "/dashboard/famille", icon: Home, label: "Tableau de bord" },
-  { href: "/dashboard/famille/profil", icon: User, label: "Mon profil" },
-  { href: "/dashboard/famille/recherche", icon: Search, label: "Rechercher un au pair" },
-  { href: "/dashboard/famille/favoris", icon: Heart, label: "Mes favoris" },
-  { href: "/dashboard/famille/messages", icon: MessageCircle, label: "Messages" },
-  { href: "/dashboard/famille/notifications", icon: Bell, label: "Notifications" },
-  { href: "/dashboard/famille/parametres", icon: Settings, label: "Paramètres" },
-];
+type ProfileStatus = "PENDING" | "ACTIVE" | "HIDDEN" | "SUSPENDED" | "DELETED";
 
-const STATUS_BADGES: Record<string, { variant: "warning" | "success" | "secondary" | "destructive"; label: string }> = {
-  PENDING: { variant: "warning", label: "En attente de validation" },
-  ACTIVE: { variant: "success", label: "Profil validé" },
-  HIDDEN: { variant: "secondary", label: "Profil masqué" },
-  SUSPENDED: { variant: "destructive", label: "Profil suspendu" },
-  DELETED: { variant: "destructive", label: "Profil supprimé" },
+const STATUS_VARIANTS: Record<ProfileStatus, "warning" | "success" | "secondary" | "destructive"> = {
+  PENDING: "warning",
+  ACTIVE: "success",
+  HIDDEN: "secondary",
+  SUSPENDED: "destructive",
+  DELETED: "destructive",
 };
 
-const MARITAL_STATUSES = [
-  { value: "MARRIED", label: "Marié(e)" },
-  { value: "SINGLE", label: "Célibataire" },
-  { value: "DIVORCED", label: "Divorcé(e)" },
-  { value: "OTHER", label: "Autre" },
-];
+const MARITAL_STATUSES = ["MARRIED", "SINGLE", "DIVORCED", "OTHER"] as const;
 
 type Profile = {
   status: string;
@@ -77,6 +65,8 @@ export default function FamilleProfilPage() {
   const [photoError, setPhotoError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showPhoto, setShowPhoto] = useState(false);
+  const { t, tValue, tError } = useI18n();
+  const tf = t.familyProfile;
 
   useEffect(() => {
     let cancelled = false;
@@ -107,10 +97,10 @@ export default function FamilleProfilPage() {
       if (res.ok) {
         setProfile((p) => ({ ...p, familyPhotoUrl: data.url }));
       } else {
-        setPhotoError(data.error ?? "Erreur lors de l'envoi de la photo.");
+        setPhotoError(tError(data.error, t.profileForm.photoUploadError));
       }
     } catch {
-      setPhotoError("Erreur lors de l'envoi de la photo.");
+      setPhotoError(t.profileForm.photoUploadError);
     } finally {
       setUploadingPhoto(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -134,37 +124,37 @@ export default function FamilleProfilPage() {
     }
   };
 
-  const statusBadge = STATUS_BADGES[profile.status] ?? STATUS_BADGES.PENDING;
+  const status: ProfileStatus = profile.status in STATUS_VARIANTS ? (profile.status as ProfileStatus) : "PENDING";
   const userName = profile.firstName ? `${profile.firstName} ${profile.lastName}`.trim() : "";
 
   if (loading) {
     return (
-      <DashboardLayout navItems={navItems} role="famille" userName={userName}>
-        <p className="text-gray-500">Chargement du profil...</p>
+      <DashboardLayout role="famille" userName={userName}>
+        <p className="text-gray-500">{t.profileForm.loading}</p>
       </DashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout navItems={navItems} role="famille" userName={userName}>
+    <DashboardLayout role="famille" userName={userName}>
       <div className="max-w-3xl space-y-6 pb-24">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-extrabold text-[#1A1A2E]">Mon profil</h1>
-            <p className="text-gray-500">Votre profil est visible après validation par notre équipe.</p>
+            <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{t.profileForm.title}</h1>
+            <p className="text-gray-500">{t.profileForm.visibleAfterValidation}</p>
           </div>
-          <Badge variant={statusBadge.variant}>{statusBadge.label}</Badge>
+          <Badge variant={STATUS_VARIANTS[status]}>{t.profileStatus[status]}</Badge>
         </div>
 
         {/* Photo de famille */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-4">Photo de famille</h2>
+          <h2 className="font-bold text-[#1A1A2E] mb-4">{tf.photoTitle}</h2>
           <div className="flex items-center gap-5">
             <div className="relative">
               <div className="w-20 h-20 bg-[#E87722] rounded-full flex items-center justify-center text-white text-2xl font-bold overflow-hidden">
                 {profile.familyPhotoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={profile.familyPhotoUrl} alt="Photo de famille" className="w-full h-full object-cover object-top" />
+                  <img src={profile.familyPhotoUrl} alt={tf.photoTitle} className="w-full h-full object-cover object-top" />
                 ) : (
                   profile.firstName.charAt(0)
                 )}
@@ -190,15 +180,15 @@ export default function FamilleProfilPage() {
               />
             </div>
             <div>
-              <p className="font-medium text-[#1A1A2E] text-sm mb-1">Ajouter une photo de famille</p>
-              <p className="text-xs text-gray-400 mb-2">JPG ou PNG, max 5 Mo. Une bonne photo augmente vos chances de contact.</p>
+              <p className="font-medium text-[#1A1A2E] text-sm mb-1">{tf.addPhoto}</p>
+              <p className="text-xs text-gray-400 mb-2">{t.profileForm.photoHint}</p>
               <div className="flex items-center gap-3 flex-wrap">
                 <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingPhoto}>
-                  {uploadingPhoto ? "Envoi en cours..." : "Télécharger une photo"}
+                  {uploadingPhoto ? t.profileForm.uploading : t.profileForm.uploadPhoto}
                 </Button>
                 {profile.familyPhotoUrl && (
                   <button type="button" onClick={() => setShowPhoto(true)} className="text-sm font-semibold text-[#E87722] hover:underline">
-                    Voir la photo
+                    {t.profileForm.viewPhoto}
                   </button>
                 )}
               </div>
@@ -209,47 +199,47 @@ export default function FamilleProfilPage() {
 
         {/* Infos générales */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-5">Informations générales</h2>
+          <h2 className="font-bold text-[#1A1A2E] mb-5">{tf.general}</h2>
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Prénom</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">{t.profileForm.firstName}</label>
               <input type="text" value={profile.firstName} onChange={e => setProfile({ ...profile, firstName: e.target.value })}
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]" />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Nom</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">{t.profileForm.lastName}</label>
               <input type="text" value={profile.lastName} onChange={e => setProfile({ ...profile, lastName: e.target.value })}
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]" />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Pays d&apos;accueil</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">{tf.hostCountry}</label>
               <select value={profile.country} onChange={e => setProfile({ ...profile, country: e.target.value })}
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
-                <option value="">Sélectionner un pays</option>
-                {hostCountries.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+                <option value="">{t.common.selectCountry}</option>
+                {hostCountries.map(c => <option key={c.name} value={c.name}>{tValue(c.name)}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Ville</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">{tf.city}</label>
               <input type="text" value={profile.city} onChange={e => setProfile({ ...profile, city: e.target.value })}
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]" />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Adresse</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">{tf.address}</label>
               <input type="text" value={profile.address} onChange={e => setProfile({ ...profile, address: e.target.value })}
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]" />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Statut marital</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">{tf.maritalStatus}</label>
               <select value={profile.maritalStatus} onChange={e => setProfile({ ...profile, maritalStatus: e.target.value })}
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
-                {MARITAL_STATUSES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                {MARITAL_STATUSES.map(m => <option key={m} value={m}>{t.maritalStatus[m]}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Âge des parents</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">{tf.parentsAges}</label>
               <input type="text" value={profile.parentsAges} onChange={e => setProfile({ ...profile, parentsAges: e.target.value })}
-                placeholder="ex : 35, 38"
+                placeholder={tf.parentsAgesPlaceholder}
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]" />
             </div>
           </div>
@@ -257,44 +247,44 @@ export default function FamilleProfilPage() {
 
         {/* Enfants & accueil */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-5">Enfants & accueil de l&apos;au pair</h2>
+          <h2 className="font-bold text-[#1A1A2E] mb-5">{tf.kidsHosting}</h2>
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Nombre d&apos;enfants</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">{tf.numberOfKids}</label>
               <input type="number" min={0} value={profile.numberOfKids} onChange={e => setProfile({ ...profile, numberOfKids: parseInt(e.target.value, 10) || 0 })}
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]" />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Âges des enfants</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">{tf.kidsAges}</label>
               <input type="text" value={profile.kidsAges} onChange={e => setProfile({ ...profile, kidsAges: e.target.value })}
-                placeholder="ex : 3, 6, 9"
+                placeholder={tf.kidsAgesPlaceholder}
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]" />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Heures par semaine</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">{tf.hoursPerWeek}</label>
               <input type="number" min={0} value={profile.hoursPerWeek} onChange={e => setProfile({ ...profile, hoursPerWeek: e.target.value })}
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]" />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Argent de poche (€/mois)</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">{tf.pocketMoney}</label>
               <input type="number" min={0} value={profile.pocketMoney} onChange={e => setProfile({ ...profile, pocketMoney: e.target.value })}
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]" />
             </div>
             <div className="sm:col-span-2">
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Logement proposé</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">{tf.accommodation}</label>
               <input type="text" value={profile.accommodation} onChange={e => setProfile({ ...profile, accommodation: e.target.value })}
-                placeholder="ex : Chambre privée avec salle de bain"
+                placeholder={tf.accommodationPlaceholder}
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]" />
             </div>
             <div className="sm:col-span-2">
               <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer">
                 <input type="checkbox" checked={profile.mealsProvided} onChange={e => setProfile({ ...profile, mealsProvided: e.target.checked })}
                   className="w-4 h-4 accent-[#E87722]" />
-                Repas fournis
+                {tf.mealsProvided}
               </label>
             </div>
             <div className="sm:col-span-2">
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Tâches confiées à l&apos;au pair</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">{tf.tasks}</label>
               <textarea value={profile.auPairTasks} onChange={e => setProfile({ ...profile, auPairTasks: e.target.value })}
                 rows={3} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] resize-none" />
             </div>
@@ -303,37 +293,37 @@ export default function FamilleProfilPage() {
 
         {/* Description */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-5">Description de la famille</h2>
+          <h2 className="font-bold text-[#1A1A2E] mb-5">{tf.familyDescription}</h2>
           <textarea value={profile.description} onChange={e => setProfile({ ...profile, description: e.target.value })}
             rows={3} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] resize-none" />
         </div>
 
         {/* Préférences au pair */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-5">Préférences pour l&apos;au pair</h2>
+          <h2 className="font-bold text-[#1A1A2E] mb-5">{tf.preferences}</h2>
           <div className="grid sm:grid-cols-3 gap-4 mb-5">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Genre préféré</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">{tf.preferredGender}</label>
               <select value={profile.preferredGender} onChange={e => setProfile({ ...profile, preferredGender: e.target.value })}
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
-                <option value="">Indifférent</option>
-                <option value="Femme">Femme</option>
-                <option value="Homme">Homme</option>
+                <option value="">{tf.noPreference}</option>
+                <option value="Femme">{tValue("Femme")}</option>
+                <option value="Homme">{tValue("Homme")}</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Âge minimum</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">{tf.minAge}</label>
               <input type="number" min={18} value={profile.preferredAgeMin} onChange={e => setProfile({ ...profile, preferredAgeMin: e.target.value })}
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]" />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Âge maximum</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">{tf.maxAge}</label>
               <input type="number" min={18} value={profile.preferredAgeMax} onChange={e => setProfile({ ...profile, preferredAgeMax: e.target.value })}
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]" />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Langues souhaitées</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">{tf.preferredLanguages}</label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {LANGUAGES.map(lang => (
                 <label key={lang} className={`flex items-center gap-2 border rounded-xl px-3 py-2 cursor-pointer text-sm transition-all ${
@@ -352,7 +342,7 @@ export default function FamilleProfilPage() {
                         : profile.preferredLanguages.filter(l => l !== lang),
                     })}
                   />
-                  {lang}
+                  {tValue(lang)}
                 </label>
               ))}
             </div>
@@ -361,14 +351,14 @@ export default function FamilleProfilPage() {
 
         {/* Contact */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-5">Contact WhatsApp</h2>
+          <h2 className="font-bold text-[#1A1A2E] mb-5">{t.profileForm.whatsappTitle}</h2>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Numéro WhatsApp</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">{tf.whatsappNumber}</label>
             <div className="flex flex-col sm:flex-row gap-2">
               <select value={profile.phoneCountryCode} onChange={e => setProfile({ ...profile, phoneCountryCode: e.target.value })}
                 className="w-full sm:w-auto min-w-0 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
                 {allCountries.map(c => (
-                  <option key={c.name} value={c.dialCode}>{c.name} ({c.dialCode})</option>
+                  <option key={c.name} value={c.dialCode}>{tValue(c.name)} ({c.dialCode})</option>
                 ))}
               </select>
               <input type="tel" value={profile.phoneNumber} onChange={e => setProfile({ ...profile, phoneNumber: e.target.value })}
@@ -384,11 +374,11 @@ export default function FamilleProfilPage() {
       <div className="fixed bottom-0 left-0 right-0 md:left-64 z-30 bg-white border-t border-gray-100 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] p-4">
         <div className="max-w-3xl mx-auto flex items-center gap-4">
           <Button size="lg" onClick={handleSave} disabled={saving}>
-            {saving ? "Sauvegarde..." : "Sauvegarder les modifications"}
+            {saving ? t.profileForm.saving : t.profileForm.saveChanges}
           </Button>
           {saved && (
             <div className="flex items-center gap-2 text-green-600 text-sm font-medium">
-              <CheckCircle className="w-4 h-4" /> Profil sauvegardé !
+              <CheckCircle className="w-4 h-4" /> {t.profileForm.saved}
             </div>
           )}
         </div>

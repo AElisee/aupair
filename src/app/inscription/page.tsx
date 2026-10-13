@@ -16,6 +16,7 @@ import { useConstants } from "@/hooks/useConstants";
 import { calculateAge } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { useI18n } from "@/i18n";
 
 type Role = "au-pair" | "famille" | null;
 
@@ -46,35 +47,34 @@ function InscriptionContent() {
     useConstants();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
+  const { t, tValue, tError } = useI18n();
+  const s = t.signup;
+  const e = s.errors;
 
-  const steps =
-    role === "au-pair"
-      ? ["Mon rôle", "Infos personnelles", "Mon profil", "Confirmation"]
-      : ["Mon rôle", "Infos famille", "Mes besoins", "Confirmation"];
+  const steps = role === "au-pair" ? s.stepsAuPair : s.stepsFamily;
 
   const requiredErrors = (() => {
     const errs: Record<string, string> = {};
     if (step === 1) {
-      if (!form.firstName) errs.firstName = "Le prénom est obligatoire.";
-      if (!form.lastName) errs.lastName = "Le nom est obligatoire.";
-      if (!form.email) errs.email = "L'adresse email est obligatoire.";
-      if (!form.password) errs.password = "Le mot de passe est obligatoire.";
+      if (!form.firstName) errs.firstName = e.firstName;
+      if (!form.lastName) errs.lastName = e.lastName;
+      if (!form.email) errs.email = e.email;
+      if (!form.password) errs.password = e.password;
     } else if (step === 2 && role === "au-pair") {
-      if (!form.country) errs.country = "Le pays d'origine est obligatoire.";
-      if (!form.gender) errs.gender = "Le genre est obligatoire.";
+      if (!form.country) errs.country = e.country;
+      if (!form.gender) errs.gender = e.gender;
       if (!form.dateOfBirth)
-        errs.dateOfBirth = "La date de naissance est obligatoire.";
+        errs.dateOfBirth = e.dateOfBirth;
       else if (calculateAge(form.dateOfBirth) < 18)
-        errs.dateOfBirth =
-          "Vous devez avoir au moins 18 ans pour vous inscrire.";
+        errs.dateOfBirth = e.tooYoung;
       if (form.languages.length === 0)
-        errs.languages = "Sélectionnez au moins une langue.";
+        errs.languages = e.languages;
     } else if (step === 2 && role === "famille") {
       if (!form.hostCountry)
-        errs.hostCountry = "Le pays d'accueil est obligatoire.";
-      if (!form.city) errs.city = "La ville est obligatoire.";
+        errs.hostCountry = e.hostCountry;
+      if (!form.city) errs.city = e.city;
       if (!form.numberOfKids)
-        errs.numberOfKids = "Le nombre d'enfants est obligatoire.";
+        errs.numberOfKids = e.numberOfKids;
     }
     return errs;
   })();
@@ -115,7 +115,7 @@ function InscriptionContent() {
       const data = await res.json();
 
       if (!res.ok) {
-        setSubmitError(data.error ?? "Une erreur est survenue.");
+        setSubmitError(tError(data.error, s.genericError));
         return;
       }
 
@@ -127,14 +127,12 @@ function InscriptionContent() {
       });
 
       if (signInResult?.error) {
-        setSubmitError(
-          "Compte créé, mais connexion automatique échouée. Connectez-vous via la page de connexion.",
-        );
+        setSubmitError(s.autoLoginFailed);
       }
 
       setDone(true);
     } catch {
-      setSubmitError("Une erreur réseau est survenue. Veuillez réessayer.");
+      setSubmitError(s.networkError);
     } finally {
       setSubmitting(false);
     }
@@ -148,20 +146,16 @@ function InscriptionContent() {
             <CheckCircle className="w-10 h-10 text-green-500" />
           </div>
           <h1 className="text-2xl font-extrabold text-[#1A1A2E] mb-3">
-            Inscription réussie !
+            {s.doneTitle}
           </h1>
           <p className="text-gray-500 mb-6">
-            {role === "au-pair"
-              ? "Votre profil est en cours de vérification. Vous recevrez un email dans les 24-48h."
-              : "Votre profil famille est en cours de vérification. Vous recevrez un email dans les 24-48h."}
+            {role === "au-pair" ? s.doneAuPair : s.doneFamily}
           </p>
           <Link
             href={role === "au-pair" ? "/trouver-famille" : "/trouver-au-pair"}
           >
             <Button size="lg">
-              {role === "au-pair"
-                ? "Consulter les familles d'accueil"
-                : "Consulter les au pairs"}
+              {role === "au-pair" ? s.browseFamilies : s.browseAuPairs}
             </Button>
           </Link>
         </div>
@@ -213,9 +207,9 @@ function InscriptionContent() {
           {step === 0 && (
             <div>
               <h1 className="text-2xl font-extrabold text-[#1A1A2E] mb-2">
-                Créer un compte
+                {s.createAccount}
               </h1>
-              <p className="text-gray-500 mb-8">Vous êtes...</p>
+              <p className="text-gray-500 mb-8">{s.youAre}</p>
               <div className="grid sm:grid-cols-2 gap-4">
                 <button
                   onClick={() => {
@@ -226,14 +220,10 @@ function InscriptionContent() {
                 >
                   <User className="w-8 h-8 text-[#E87722] mb-3" />
                   <h3 className="font-bold text-[#1A1A2E] text-lg mb-1">
-                    Au pair
+                    {s.auPair}
                   </h3>
-                  <p className="text-gray-500 text-sm">
-                    Je cherche une famille d'accueil en Europe
-                  </p>
-                  <p className="text-[#E87722] text-xs font-semibold mt-2">
-                    32€ / 30 jours
-                  </p>
+                  <p className="text-gray-500 text-sm">{s.auPairDesc}</p>
+                  <p className="text-[#E87722] text-xs font-semibold mt-2">{s.auPairPrice}</p>
                 </button>
                 <button
                   onClick={() => {
@@ -244,23 +234,19 @@ function InscriptionContent() {
                 >
                   <Home className="w-8 h-8 text-[#1A1A2E] mb-3" />
                   <h3 className="font-bold text-[#1A1A2E] text-lg mb-1">
-                    Famille d'accueil
+                    {s.family}
                   </h3>
-                  <p className="text-gray-500 text-sm">
-                    Je cherche un au pair africain qualifié
-                  </p>
-                  <p className="text-green-600 text-xs font-semibold mt-2">
-                    Inscription gratuite
-                  </p>
+                  <p className="text-gray-500 text-sm">{s.familyDesc}</p>
+                  <p className="text-green-600 text-xs font-semibold mt-2">{s.freeSignup}</p>
                 </button>
               </div>
               <p className="text-center text-sm text-gray-500 mt-6">
-                Déjà inscrit ?{" "}
+                {s.alreadyRegistered}{" "}
                 <Link
                   href="/connexion"
                   className="text-[#E87722] font-semibold"
                 >
-                  Se connecter
+                  {s.login}
                 </Link>
               </p>
             </div>
@@ -270,13 +256,13 @@ function InscriptionContent() {
           {step === 1 && (
             <div>
               <h2 className="text-xl font-extrabold text-[#1A1A2E] mb-6">
-                Informations de base
+                {s.basicInfo}
               </h2>
               <div className="space-y-4">
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">
-                      Prénom *
+                      {s.firstName}
                     </label>
                     <input
                       type="text"
@@ -295,7 +281,7 @@ function InscriptionContent() {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">
-                      Nom *
+                      {s.lastName}
                     </label>
                     <input
                       type="text"
@@ -315,7 +301,7 @@ function InscriptionContent() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Adresse email *
+                    {s.email}
                   </label>
                   <input
                     type="email"
@@ -324,7 +310,7 @@ function InscriptionContent() {
                       setForm({ ...form, email: e.target.value })
                     }
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
-                    placeholder="votre@email.com"
+                    placeholder={s.emailPlaceholder}
                   />
                   {fieldError("email") && (
                     <p className="text-xs text-red-500 mt-1">
@@ -334,7 +320,7 @@ function InscriptionContent() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Mot de passe *
+                    {s.password}
                   </label>
                   <input
                     type="password"
@@ -343,7 +329,7 @@ function InscriptionContent() {
                       setForm({ ...form, password: e.target.value })
                     }
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
-                    placeholder="Minimum 8 caractères"
+                    placeholder={s.passwordPlaceholder}
                   />
                   {fieldError("password") && (
                     <p className="text-xs text-red-500 mt-1">
@@ -359,12 +345,12 @@ function InscriptionContent() {
           {step === 2 && role === "au-pair" && (
             <div>
               <h2 className="text-xl font-extrabold text-[#1A1A2E] mb-6">
-                Votre profil au pair
+                {s.auPairProfile}
               </h2>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Pays d'origine *
+                    {s.countryOfOrigin}
                   </label>
                   <select
                     value={form.country}
@@ -373,10 +359,10 @@ function InscriptionContent() {
                     }
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
                   >
-                    <option value="">Sélectionner votre pays</option>
+                    <option value="">{s.selectYourCountry}</option>
                     {originCountries.map((c) => (
                       <option key={c.name} value={c.name}>
-                        {c.name}
+                        {tValue(c.name)}
                       </option>
                     ))}
                   </select>
@@ -388,7 +374,7 @@ function InscriptionContent() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Genre *
+                    {s.gender}
                   </label>
                   <select
                     value={form.gender}
@@ -397,9 +383,9 @@ function InscriptionContent() {
                     }
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
                   >
-                    <option value="">Sélectionner</option>
-                    <option value="Femme">Femme</option>
-                    <option value="Homme">Homme</option>
+                    <option value="">{s.select}</option>
+                    <option value="Femme">{tValue("Femme")}</option>
+                    <option value="Homme">{tValue("Homme")}</option>
                   </select>
                   {fieldError("gender") && (
                     <p className="text-xs text-red-500 mt-1">
@@ -409,7 +395,7 @@ function InscriptionContent() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Date de naissance *
+                    {s.dateOfBirth}
                   </label>
                   <input
                     type="date"
@@ -427,7 +413,7 @@ function InscriptionContent() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Langues parlées *
+                    {s.languages}
                   </label>
                   <div className="grid grid-cols-2 gap-2">
                     {LANGUAGES.map((lang) => (
@@ -452,7 +438,7 @@ function InscriptionContent() {
                             })
                           }
                         />
-                        {lang}
+                        {tValue(lang)}
                       </label>
                     ))}
                   </div>
@@ -464,7 +450,7 @@ function InscriptionContent() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Niveau d'études
+                    {s.educationLevel}
                   </label>
                   <select
                     value={form.educationLevel}
@@ -473,17 +459,17 @@ function InscriptionContent() {
                     }
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
                   >
-                    <option value="">Sélectionner</option>
-                    {EDUCATION_LEVELS.map((e) => (
-                      <option key={e} value={e}>
-                        {e}
+                    <option value="">{s.select}</option>
+                    {EDUCATION_LEVELS.map((level) => (
+                      <option key={level} value={level}>
+                        {tValue(level)}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Années d'expérience avec les enfants
+                    {s.experience}
                   </label>
                   <select
                     value={form.experience}
@@ -492,7 +478,7 @@ function InscriptionContent() {
                     }
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
                   >
-                    <option value="">Sélectionner</option>
+                    <option value="">{s.select}</option>
                     {[
                       "Moins d'1 an",
                       "1 an",
@@ -502,7 +488,7 @@ function InscriptionContent() {
                       "5 ans et plus",
                     ].map((v) => (
                       <option key={v} value={v}>
-                        {v}
+                        {tValue(v)}
                       </option>
                     ))}
                   </select>
@@ -514,12 +500,12 @@ function InscriptionContent() {
           {step === 2 && role === "famille" && (
             <div>
               <h2 className="text-xl font-extrabold text-[#1A1A2E] mb-6">
-                Votre profil famille
+                {s.familyProfile}
               </h2>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Pays d&apos;accueil *
+                    {s.hostCountry}
                   </label>
                   <select
                     value={form.hostCountry}
@@ -528,10 +514,10 @@ function InscriptionContent() {
                     }
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
                   >
-                    <option value="">Sélectionner un pays</option>
+                    <option value="">{s.selectCountry}</option>
                     {hostCountries.map((c) => (
                       <option key={c.name} value={c.name}>
-                        {c.name}
+                        {tValue(c.name)}
                       </option>
                     ))}
                   </select>
@@ -543,7 +529,7 @@ function InscriptionContent() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Ville *
+                    {s.city}
                   </label>
                   <input
                     type="text"
@@ -560,7 +546,7 @@ function InscriptionContent() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Nombre d'enfants *
+                    {s.numberOfKids}
                   </label>
                   <select
                     value={form.numberOfKids}
@@ -569,7 +555,7 @@ function InscriptionContent() {
                     }
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
                   >
-                    <option value="">Sélectionner</option>
+                    <option value="">{s.select}</option>
                     {["1", "2", "3", "4", "5+"].map((n) => (
                       <option key={n} value={n}>
                         {n}
@@ -593,25 +579,23 @@ function InscriptionContent() {
                 <CheckCircle className="w-8 h-8 text-[#E87722]" />
               </div>
               <h2 className="text-xl font-extrabold text-[#1A1A2E] mb-2">
-                Tout est prêt !
+                {s.readyTitle}
               </h2>
               <p className="text-gray-500 mb-6 text-sm">
-                {role === "au-pair"
-                  ? "En cliquant sur 'Créer mon compte', votre profil sera soumis à vérification. Vous recevrez un email de confirmation."
-                  : "En cliquant sur 'Créer mon compte', votre profil famille sera immédiatement actif."}
+                {role === "au-pair" ? s.readyAuPair : s.readyFamily}
               </p>
               <div className="bg-gray-50 rounded-xl p-4 text-left mb-6 space-y-2 text-sm">
                 <p>
-                  <span className="font-semibold text-gray-600">Nom :</span>{" "}
+                  <span className="font-semibold text-gray-600">{s.summaryName}</span>{" "}
                   {form.firstName} {form.lastName}
                 </p>
                 <p>
-                  <span className="font-semibold text-gray-600">Email :</span>{" "}
+                  <span className="font-semibold text-gray-600">{s.summaryEmail}</span>{" "}
                   {form.email}
                 </p>
                 <p>
-                  <span className="font-semibold text-gray-600">Rôle :</span>{" "}
-                  {role === "au-pair" ? "Au pair" : "Famille d'accueil"}
+                  <span className="font-semibold text-gray-600">{s.summaryRole}</span>{" "}
+                  {role === "au-pair" ? s.auPair : s.family}
                 </p>
               </div>
               {submitError && (
@@ -620,16 +604,16 @@ function InscriptionContent() {
                 </div>
               )}
               <p className="text-xs text-gray-400 mb-4">
-                En créant un compte, vous acceptez nos{" "}
+                {s.termsStart}{" "}
                 <Link href="/cgu" className="text-[#E87722] underline">
-                  CGU
+                  {s.terms}
                 </Link>{" "}
-                et notre{" "}
+                {s.termsAnd}{" "}
                 <Link
                   href="/confidentialite"
                   className="text-[#E87722] underline"
                 >
-                  politique de confidentialité
+                  {s.privacy}
                 </Link>
                 .
               </p>
@@ -646,7 +630,7 @@ function InscriptionContent() {
                 }}
                 className="flex items-center gap-2 text-gray-500 hover:text-[#1A1A2E] text-sm font-medium"
               >
-                <ArrowLeft className="w-4 h-4" /> Retour
+                <ArrowLeft className="w-4 h-4" /> {s.back}
               </button>
               {step < 3 ? (
                 <Button
@@ -659,11 +643,11 @@ function InscriptionContent() {
                     setStep(step + 1);
                   }}
                 >
-                  Continuer <ArrowRight className="w-4 h-4" />
+                  {s.continue} <ArrowRight className="w-4 h-4" />
                 </Button>
               ) : (
                 <Button onClick={handleSubmit} disabled={submitting}>
-                  {submitting ? "Création en cours..." : "Créer mon compte"}{" "}
+                  {submitting ? s.creating : s.createMyAccount}{" "}
                   {!submitting && <CheckCircle className="w-4 h-4" />}
                 </Button>
               )}

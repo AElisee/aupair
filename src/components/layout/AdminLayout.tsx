@@ -4,29 +4,36 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { Globe, LayoutDashboard, Users, Shield, DollarSign, BarChart2, FileText, HelpCircle, Mail, LogOut, Bell, Settings, ChevronDown, SlidersHorizontal, Menu, X, Send, Smartphone, KeyRound } from "lucide-react";
+import { useI18n } from "@/i18n";
+import type { admin } from "@/i18n/admin";
+import { LanguageToggle } from "./LanguageToggle";
+import { Globe, LayoutDashboard, Users, Shield, DollarSign, BarChart2, FileText, HelpCircle, Mail, LogOut, Bell, Settings, ChevronDown, SlidersHorizontal, Menu, X, Send, Smartphone, KeyRound, FileCheck } from "lucide-react";
 
-const navItems = [
-  { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/admin/utilisateurs", icon: Users, label: "Utilisateurs" },
-  { href: "/admin/moderation", icon: Shield, label: "Modération", badge: true },
-  { href: "/admin/paiements", icon: DollarSign, label: "Paiements" },
-  { href: "/admin/pays", icon: Globe, label: "Pays" },
-  { href: "/admin/analytics", icon: BarChart2, label: "Analytics" },
-  { href: "/admin/blog", icon: FileText, label: "Blog" },
-  { href: "/admin/faq", icon: HelpCircle, label: "FAQ" },
-  { href: "/admin/tickets", icon: Mail, label: "Tickets support" },
+// Libellés : section `adminNav` de src/i18n/admin.ts
+type NavKey = keyof typeof admin.adminNav;
+
+const navItems: { href: string; icon: React.ElementType; labelKey: NavKey; badge?: boolean }[] = [
+  { href: "/admin", icon: LayoutDashboard, labelKey: "dashboard" },
+  { href: "/admin/utilisateurs", icon: Users, labelKey: "users" },
+  { href: "/admin/moderation", icon: Shield, labelKey: "moderation", badge: true },
+  { href: "/admin/paiements", icon: DollarSign, labelKey: "payments" },
+  { href: "/admin/pays", icon: Globe, labelKey: "countries" },
+  { href: "/admin/analytics", icon: BarChart2, labelKey: "analytics" },
+  { href: "/admin/blog", icon: FileText, labelKey: "blog" },
+  { href: "/admin/faq", icon: HelpCircle, labelKey: "faq" },
+  { href: "/admin/tickets", icon: Mail, labelKey: "tickets" },
 ];
 
-const settingsNav = {
+const settingsNav: { icon: React.ElementType; labelKey: NavKey; children: { href: string; icon: React.ElementType; labelKey: NavKey }[] } = {
   icon: Settings,
-  label: "Paramètres",
+  labelKey: "settings",
   children: [
-    { href: "/admin/parametres/constantes", icon: SlidersHorizontal, label: "Constantes" },
-    { href: "/admin/parametres/notifications", icon: Bell, label: "Notifications" },
-    { href: "/admin/parametres/email", icon: Send, label: "Email" },
-    { href: "/admin/parametres/fedapay", icon: Smartphone, label: "FedaPay" },
-    { href: "/admin/parametres/compte", icon: KeyRound, label: "Mon compte" },
+    { href: "/admin/parametres/constantes", icon: SlidersHorizontal, labelKey: "constants" },
+    { href: "/admin/parametres/notifications", icon: Bell, labelKey: "notifications" },
+    { href: "/admin/parametres/email", icon: Send, labelKey: "email" },
+    { href: "/admin/parametres/fedapay", icon: Smartphone, labelKey: "fedapay" },
+    { href: "/admin/parametres/documents", icon: FileCheck, labelKey: "documents" },
+    { href: "/admin/parametres/compte", icon: KeyRound, labelKey: "account" },
   ],
 };
 
@@ -47,6 +54,7 @@ function SidebarContent({
   onNavigate?: () => void;
   onClose?: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <>
       <div className="p-5 border-b border-white/10 flex items-center justify-between">
@@ -62,7 +70,7 @@ function SidebarContent({
           <span className="ml-auto bg-red-500 text-white text-xs px-1.5 py-0.5 rounded font-bold">ADMIN</span>
         </Link>
         {onClose && (
-          <button onClick={onClose} className="text-gray-400 hover:text-white p-1 ml-2" aria-label="Fermer le menu">
+          <button onClick={onClose} className="text-gray-400 hover:text-white p-1 ml-2" aria-label={t.adminNav.closeMenu}>
             <X className="w-5 h-5" />
           </button>
         )}
@@ -78,7 +86,7 @@ function SidebarContent({
                 isActive ? "bg-[#E87722] text-white" : "text-gray-400 hover:bg-white/10 hover:text-white"
               }`}>
               <Icon className="w-4 h-4" />
-              {item.label}
+              {t.adminNav[item.labelKey]}
               {item.badge && pendingCount > 0 && (
                 <span className="ml-auto bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
                   {pendingCount > 99 ? "99+" : pendingCount}
@@ -98,7 +106,7 @@ function SidebarContent({
             }`}
           >
             <settingsNav.icon className="w-4 h-4" />
-            {settingsNav.label}
+            {t.adminNav[settingsNav.labelKey]}
             <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${settingsOpen ? "rotate-180" : ""}`} />
           </button>
           {settingsOpen && (
@@ -112,7 +120,7 @@ function SidebarContent({
                       isChildActive ? "text-[#E87722]" : "text-gray-400 hover:bg-white/10 hover:text-white"
                     }`}>
                     <ChildIcon className="w-4 h-4" />
-                    {child.label}
+                    {t.adminNav[child.labelKey]}
                   </Link>
                 );
               })}
@@ -127,7 +135,7 @@ function SidebarContent({
           className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-400 hover:bg-white/10 hover:text-white w-full transition-all"
         >
           <LogOut className="w-4 h-4" />
-          Déconnexion
+          {t.adminNav.signOut}
         </button>
       </div>
     </>
@@ -136,6 +144,7 @@ function SidebarContent({
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { t } = useI18n();
   const isSettingsActive = pathname.startsWith("/admin/parametres");
   const [settingsOpen, setSettingsOpen] = useState(isSettingsActive);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -209,15 +218,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <button
               onClick={() => setMobileMenuOpen(true)}
               className="md:hidden -ml-1 p-1 text-gray-500 hover:text-[#E87722]"
-              aria-label="Ouvrir le menu"
+              aria-label={t.adminNav.openMenu}
             >
               <Menu className="w-5 h-5" />
             </button>
             <h1 className="text-sm font-semibold text-gray-500">
-              <span className="hidden sm:inline">Administration — </span>AuPair A.EU
+              <span className="hidden sm:inline">{t.adminNav.topTitle}</span>AuPair A.EU
             </h1>
           </div>
           <div className="flex items-center gap-3">
+            <LanguageToggle />
             <button className="relative p-2 text-gray-500 hover:text-[#E87722]">
               <Bell className="w-5 h-5" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />

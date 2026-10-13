@@ -1,8 +1,8 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useCallback, useContext, useSyncExternalStore, ReactNode } from "react";
 
-type Lang = "fr" | "en";
+export type Lang = "fr" | "en";
 
 interface LangContextValue {
   lang: Lang;
@@ -16,22 +16,54 @@ const LanguageContext = createContext<LangContextValue>({
   t: (fr) => fr,
 });
 
+const STORAGE_KEY = "aupair-lang";
+
+// Langue choisie pendant la session : prend le relais si le localStorage est inaccessible (navigation privée…).
+let sessionLang: Lang | null = null;
+const listeners = new Set<() => void>();
+
+function readLang(): Lang {
+  if (sessionLang) return sessionLang;
+  try {
+    return window.localStorage.getItem(STORAGE_KEY) === "en" ? "en" : "fr";
+  } catch {
+    return "fr";
+  }
+}
+
+function subscribe(onChange: () => void) {
+  // Synchronise les autres onglets : la valeur du localStorage redevient la référence.
+  const onStorage = (e: StorageEvent) => {
+    if (e.key !== STORAGE_KEY) return;
+    sessionLang = null;
+    onChange();
+  };
+  listeners.add(onChange);
+  window.addEventListener("storage", onStorage);
+  return () => {
+    listeners.delete(onChange);
+    window.removeEventListener("storage", onStorage);
+  };
+}
+
+/**
+ * Le serveur rend toujours en français ; côté client, React bascule sur la langue enregistrée
+ * juste après l'hydratation (useSyncExternalStore évite ainsi toute erreur d'hydratation).
+ */
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>(() => {
-    if (typeof window === "undefined") return "fr";
+  const lang = useSyncExternalStore<Lang>(subscribe, readLang, () => "fr");
 
-    const saved = window.localStorage.getItem("aupair-lang");
-    return saved === "fr" || saved === "en" ? saved : "fr";
-  });
+  const setLang = useCallback((l: Lang) => {
+    sessionLang = l;
+    try {
+      window.localStorage.setItem(STORAGE_KEY, l);
+    } catch {
+      // stockage indisponible : la langue reste valable pour la session
+    }
+    listeners.forEach((notify) => notify());
+  }, []);
 
-  function setLang(l: Lang) {
-    setLangState(l);
-    window.localStorage.setItem("aupair-lang", l);
-  }
-
-  function t(fr: string, en: string) {
-    return lang === "en" ? en : fr;
-  }
+  const t = useCallback((fr: string, en: string) => (lang === "en" ? en : fr), [lang]);
 
   return (
     <LanguageContext.Provider value={{ lang, setLang, t }}>

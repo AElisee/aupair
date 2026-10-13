@@ -86,13 +86,26 @@ All of these call `auth()` first and return `401` if `!session?.user?.id`.
 - `/api/admin/profile/[userId]` (GET, `?role=AU_PAIR|FAMILLE`) — full profile detail, rendered by `src/app/admin/profil/[userId]/page.tsx` (full-page view, opened in a new tab via the "eye" icon in `/admin/utilisateurs` and `/admin/moderation`)
 - `/api/admin/countries` (GET/POST/PATCH/DELETE) — CRUD for the `Country` table, used by `/admin/pays`
 
+- `/api/admin/documents` (GET/POST/PATCH/DELETE) — CRUD for `LegalDocument` (CGU, privacy policy, …; FR/EN content stored as **HTML**), used by `/admin/parametres/documents`, which edits it with a Tiptap WYSIWYG editor (`src/components/admin/RichTextEditor.tsx`). HTML is sanitized server-side with `sanitize-html` (`sanitizeDocumentHtml()` in `src/lib/legal-documents.server.ts`, strict allowlist matching the editor's output) both on save and on public render. Older docs saved as a Markdown subset are detected (`isLegacyMarkdown`) and converted on the fly by `toDocumentHtml()` (`src/lib/legal-documents.ts`). Published docs are rendered publicly at `/cgu`, `/cgv`, `/confidentialite` (dedicated slugs in `DEDICATED_DOCUMENT_PATHS`; `/documents/<dedicated slug>` redirects there) or `/documents/[slug]`, via `LegalDocumentView` (`src/components/legal/`), styled by the `.legal-content` CSS class in `globals.css` (shared with the editor). Missing/unpublished → 404.
+
 `setProfileStatus()` (`src/lib/admin.ts`) sets `validatedAt`/`validatedBy` when transitioning a profile to `ACTIVE`.
 
 Only `/admin`, `/admin/utilisateurs`, `/admin/moderation`, `/admin/paiements`, `/admin/pays` have pages; Analytics, Blog, FAQ, Tickets in the sidebar nav are not yet implemented. `/admin/paiements` still renders with hardcoded/mock data.
 
 ## Internationalization
 
-`src/contexts/LanguageContext.tsx` provides `LanguageProvider` + `useLang()` returning `{ lang, setLang, t }`, where `t(fr, en)` returns the string for the current language (`"fr" | "en"`, persisted to `localStorage` under `aupair-lang`, defaults to `"fr"`). Wrapped around the app (alongside `SessionProvider`) in `PublicLayoutWrapper`. There is no `next-intl`-based routing despite it being a dependency.
+`src/contexts/LanguageContext.tsx` provides `LanguageProvider` + `useLang()` returning `{ lang, setLang, t }`, where `t(fr, en)` returns the string for the current language (`"fr" | "en"`, persisted to `localStorage` under `aupair-lang`, defaults to `"fr"`; read via `useSyncExternalStore` so SSR always renders FR without hydration mismatch). Wrapped around the app (alongside `SessionProvider`) in `PublicLayoutWrapper`. There is no `next-intl`-based routing despite it being a dependency.
+
+The whole UI (public site, auth pages, au pair/family dashboards, admin back-office) takes **all** its text from `src/i18n/`, never hardcoded strings. Use `useI18n()` (`src/i18n/index.ts`) in client components; it returns `{ t, tValue, tList, tError, relativeDate, locale, lang, setLang }`.
+
+- Dictionaries, each entry `{ fr, en }` side by side (functions for interpolated strings, arrays of objects for lists like steps/FAQ — their order matches icon arrays in the components): `site.ts` (public pages, navbar, footer, 404), `auth.ts` (login, signup, password pages), `dashboard.ts` (au pair/family spaces), `admin.ts` (back-office). They're merged into one `t`; `satisfies Dictionary` makes a missing language a type error and `_NoDuplicateSections` rejects two files declaring the same top-level section.
+- `src/i18n/values.ts` — display-only EN labels for French values stored in the DB (countries, languages, education levels, durations, report reasons, subscription features, gender) and for French API error messages (`tError`). Unknown values fall through unchanged. Values stay stored in French.
+- Blog articles (bilingual) live in `src/content/blog-articles.ts`, shared by `/blog`, `/blog/[slug]` and the home `BlogPreview`. The DB `BlogPost` / `FaqItem` tables (edited in `/admin/blog`, `/admin/faq`) are **not** displayed publicly yet; `/faq` content is in `site.ts`.
+- Server pages that need `metadata` or DB data stay server components and render a client `*Content.tsx` / `*View.tsx` for the text. Page `metadata` (SEO title/description) stays French since the server doesn't know the visitor's language.
+- APIs return raw values (ISO dates, enum keys, numbers) and the client formats them per language (e.g. `/api/admin/dashboard`, `/api/admin/analytics` months as `YYYY-MM`).
+- `LanguageToggle` (`src/components/layout/`) shows FR/GB flag buttons (images via `CountryFlag`, emoji flags don't render on Windows); used in the Navbar, dashboard sidebar + mobile header, admin top bar and pending-validation screen.
+- Sidebar nav for both dashboard roles is defined once in `src/components/layout/dashboard-nav.ts`; `DashboardLayout` takes only `role`. Admin table pagination is the shared `src/components/admin/Pagination.tsx`.
+- Notifications are stored in French; `NotificationsPanel` regenerates known types (`PROFILE_VIEW`, `WEEKLY_VIEWS_DIGEST`) in the current language from the stored text. Emails and the CSV payment export are still French-only.
 
 ## User roles and business rules
 

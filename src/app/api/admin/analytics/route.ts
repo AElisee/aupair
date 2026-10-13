@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin";
 import { getCountryFlagMap } from "@/lib/countries";
 
-const MONTH_LABELS = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"];
 const MONTHS_RANGE = 6;
 
 function monthKey(date: Date) {
@@ -14,7 +13,8 @@ function lastMonths(count: number) {
   const now = new Date();
   return Array.from({ length: count }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - (count - 1 - i), 1);
-    return { key: monthKey(d), label: MONTH_LABELS[d.getMonth()] };
+    // `label` = mois au format AAAA-MM, mis en forme côté client selon la langue
+    return { key: monthKey(d), label: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}` };
   });
 }
 

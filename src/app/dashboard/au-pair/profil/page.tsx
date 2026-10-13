@@ -3,67 +3,20 @@ import { useEffect, useRef, useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  User,
-  Search,
-  MessageCircle,
-  Bell,
-  CreditCard,
-  Settings,
-  Home,
-  Camera,
-  CheckCircle,
-  Loader2,
-  FileText,
-  Upload,
-  X,
-} from "lucide-react";
+import { Camera, CheckCircle, Loader2, FileText, Upload, X } from "lucide-react";
 import { useCountries } from "@/hooks/useCountries";
 import { useConstants } from "@/hooks/useConstants";
 import PhotoViewerModal from "@/components/ui/photo-viewer-modal";
+import { useI18n } from "@/i18n";
 
-const navItems = [
-  { href: "/dashboard/au-pair", icon: Home, label: "Tableau de bord" },
-  { href: "/dashboard/au-pair/profil", icon: User, label: "Mon profil" },
-  {
-    href: "/dashboard/au-pair/recherche",
-    icon: Search,
-    label: "Rechercher une famille",
-  },
-  {
-    href: "/dashboard/au-pair/messages",
-    icon: MessageCircle,
-    label: "Messages",
-  },
-  {
-    href: "/dashboard/au-pair/notifications",
-    icon: Bell,
-    label: "Notifications",
-  },
-  {
-    href: "/dashboard/au-pair/abonnement",
-    icon: CreditCard,
-    label: "Mon abonnement",
-  },
-  {
-    href: "/dashboard/au-pair/parametres",
-    icon: Settings,
-    label: "Paramètres",
-  },
-];
+type ProfileStatus = "PENDING" | "ACTIVE" | "HIDDEN" | "SUSPENDED" | "DELETED";
 
-const STATUS_BADGES: Record<
-  string,
-  {
-    variant: "warning" | "success" | "secondary" | "destructive";
-    label: string;
-  }
-> = {
-  PENDING: { variant: "warning", label: "En attente de validation" },
-  ACTIVE: { variant: "success", label: "Profil validé" },
-  HIDDEN: { variant: "secondary", label: "Profil masqué" },
-  SUSPENDED: { variant: "destructive", label: "Profil suspendu" },
-  DELETED: { variant: "destructive", label: "Profil supprimé" },
+const STATUS_VARIANTS: Record<ProfileStatus, "warning" | "success" | "secondary" | "destructive"> = {
+  PENDING: "warning",
+  ACTIVE: "success",
+  HIDDEN: "secondary",
+  SUSPENDED: "destructive",
+  DELETED: "destructive",
 };
 
 type Profile = {
@@ -150,6 +103,8 @@ export default function AuPairProfilPage() {
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const [docError, setDocError] = useState("");
   const docInputRef = useRef<HTMLInputElement>(null);
+  const { t, tValue, tError } = useI18n();
+  const tp = t.auPairProfile;
 
   useEffect(() => {
     let cancelled = false;
@@ -183,10 +138,10 @@ export default function AuPairProfilPage() {
       if (res.ok) {
         setProfile((p) => ({ ...p, profilePhotoUrl: data.url }));
       } else {
-        setPhotoError(data.error ?? "Erreur lors de l'envoi de la photo.");
+        setPhotoError(tError(data.error, t.profileForm.photoUploadError));
       }
     } catch {
-      setPhotoError("Erreur lors de l'envoi de la photo.");
+      setPhotoError(t.profileForm.photoUploadError);
     } finally {
       setUploadingPhoto(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -212,10 +167,10 @@ export default function AuPairProfilPage() {
       if (res.ok) {
         setProfile((p) => ({ ...p, idDocumentUrls: data.idDocumentUrls }));
       } else {
-        setDocError(data.error ?? "Erreur lors de l'envoi du document.");
+        setDocError(tError(data.error, tp.docUploadError));
       }
     } catch {
-      setDocError("Erreur lors de l'envoi du document.");
+      setDocError(tp.docUploadError);
     } finally {
       setUploadingDoc(false);
       if (docInputRef.current) docInputRef.current.value = "";
@@ -234,10 +189,10 @@ export default function AuPairProfilPage() {
       if (res.ok) {
         setProfile((p) => ({ ...p, idDocumentUrls: data.idDocumentUrls }));
       } else {
-        setDocError(data.error ?? "Erreur lors de la suppression du document.");
+        setDocError(tError(data.error, tp.docDeleteError));
       }
     } catch {
-      setDocError("Erreur lors de la suppression du document.");
+      setDocError(tp.docDeleteError);
     }
   };
 
@@ -255,14 +210,14 @@ export default function AuPairProfilPage() {
         setTimeout(() => setSaved(false), 3000);
       } else {
         const data = await res.json().catch(() => null);
-        setSaveError(data?.error ?? "Erreur lors de la sauvegarde du profil.");
+        setSaveError(tError(data?.error, t.profileForm.saveError));
       }
     } finally {
       setSaving(false);
     }
   };
 
-  const statusBadge = STATUS_BADGES[profile.status] ?? STATUS_BADGES.PENDING;
+  const status: ProfileStatus = profile.status in STATUS_VARIANTS ? (profile.status as ProfileStatus) : "PENDING";
 
   const userName = profile.firstName
     ? `${profile.firstName} ${profile.lastName.charAt(0)}.`
@@ -270,30 +225,28 @@ export default function AuPairProfilPage() {
 
   if (loading) {
     return (
-      <DashboardLayout navItems={navItems} role="au-pair" userName={userName}>
-        <p className="text-gray-500">Chargement du profil...</p>
+      <DashboardLayout role="au-pair" userName={userName}>
+        <p className="text-gray-500">{t.profileForm.loading}</p>
       </DashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout navItems={navItems} role="au-pair" userName={userName}>
+    <DashboardLayout role="au-pair" userName={userName}>
       <div className="max-w-3xl space-y-6 pb-24">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-extrabold text-[#1A1A2E]">
-              Mon profil
+              {t.profileForm.title}
             </h1>
-            <p className="text-gray-500">
-              Votre profil est visible après validation par notre équipe.
-            </p>
+            <p className="text-gray-500">{t.profileForm.visibleAfterValidation}</p>
           </div>
-          <Badge variant={statusBadge.variant}>{statusBadge.label}</Badge>
+          <Badge variant={STATUS_VARIANTS[status]}>{t.profileStatus[status]}</Badge>
         </div>
 
         {/* Photo de profil */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-4">Photo de profil</h2>
+          <h2 className="font-bold text-[#1A1A2E] mb-4">{tp.photoTitle}</h2>
           <div className="flex items-center gap-5">
             <div className="relative">
               <div className="w-20 h-20 bg-[#E87722] rounded-full flex items-center justify-center text-white text-2xl font-bold overflow-hidden">
@@ -301,7 +254,7 @@ export default function AuPairProfilPage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={profile.profilePhotoUrl}
-                    alt="Photo de profil"
+                    alt={tp.photoTitle}
                     className="w-full h-full object-cover object-top"
                   />
                 ) : (
@@ -330,11 +283,10 @@ export default function AuPairProfilPage() {
             </div>
             <div>
               <p className="font-medium text-[#1A1A2E] text-sm mb-1">
-                Ajouter une photo professionnelle
+                {tp.addPhoto}
               </p>
               <p className="text-xs text-gray-400 mb-2">
-                JPG ou PNG, max 5 Mo. Une bonne photo augmente vos chances de
-                contact.
+                {t.profileForm.photoHint}
               </p>
               <div className="flex items-center gap-3 flex-wrap">
                 <Button
@@ -343,9 +295,7 @@ export default function AuPairProfilPage() {
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploadingPhoto}
                 >
-                  {uploadingPhoto
-                    ? "Envoi en cours..."
-                    : "Télécharger une photo"}
+                  {uploadingPhoto ? t.profileForm.uploading : t.profileForm.uploadPhoto}
                 </Button>
                 {profile.profilePhotoUrl && (
                   <button
@@ -353,7 +303,7 @@ export default function AuPairProfilPage() {
                     onClick={() => setShowPhoto(true)}
                     className="text-sm font-semibold text-[#E87722] hover:underline"
                   >
-                    Voir la photo
+                    {t.profileForm.viewPhoto}
                   </button>
                 )}
               </div>
@@ -366,7 +316,7 @@ export default function AuPairProfilPage() {
 
         {/* Pièce d'identité */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-4">Pièce d'identité</h2>
+          <h2 className="font-bold text-[#1A1A2E] mb-4">{tp.idTitle}</h2>
           <div className="flex items-start gap-5">
             <div className="w-20 h-20 rounded-2xl bg-[#FFF3E0] flex items-center justify-center flex-shrink-0">
               <FileText className="w-8 h-8 text-[#E87722]" />
@@ -374,13 +324,11 @@ export default function AuPairProfilPage() {
             <div className="flex-1">
               <p className="font-medium text-[#1A1A2E] text-sm mb-1">
                 {profile.idDocumentUrls.length > 0
-                  ? `${profile.idDocumentUrls.length} document${profile.idDocumentUrls.length > 1 ? "s" : ""} envoyé${profile.idDocumentUrls.length > 1 ? "s" : ""}`
-                  : "Aucun document envoyé"}
+                  ? tp.docsSent(profile.idDocumentUrls.length)
+                  : tp.noDocs}
               </p>
               <p className="text-xs text-gray-400 mb-2">
-                Carte d'identité, passeport ou titre de séjour (recto et verso).
-                JPG, PNG ou PDF, max 10 Mo par fichier, 4 documents maximum. Ces
-                documents ne sont visibles que par notre équipe.
+                {tp.idHint}
               </p>
 
               {profile.idDocumentUrls.length > 0 && (
@@ -393,13 +341,14 @@ export default function AuPairProfilPage() {
                         rel="noreferrer"
                         className="font-semibold text-[#E87722] hover:underline"
                       >
-                        Document {i + 1}
+                        {tp.documentN(i + 1)}
                       </a>
                       <button
                         type="button"
                         onClick={() => handleDocDelete(url)}
                         className="text-gray-400 hover:text-red-500"
-                        title="Supprimer"
+                        title={t.common.delete}
+                        aria-label={t.common.delete}
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -415,11 +364,11 @@ export default function AuPairProfilPage() {
                 disabled={uploadingDoc || profile.idDocumentUrls.length >= 4}
               >
                 {uploadingDoc ? (
-                  "Envoi en cours..."
+                  t.profileForm.uploading
                 ) : (
                   <>
                     <Upload className="w-3.5 h-3.5 mr-1.5" />
-                    Ajouter des documents
+                    {tp.addDocuments}
                   </>
                 )}
               </Button>
@@ -441,12 +390,12 @@ export default function AuPairProfilPage() {
         {/* Infos personnelles */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
           <h2 className="font-bold text-[#1A1A2E] mb-5">
-            Informations personnelles
+            {tp.personalInfo}
           </h2>
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Prénom
+                {t.profileForm.firstName}
               </label>
               <input
                 type="text"
@@ -459,7 +408,7 @@ export default function AuPairProfilPage() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Nom
+                {t.profileForm.lastName}
               </label>
               <input
                 type="text"
@@ -472,7 +421,7 @@ export default function AuPairProfilPage() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Date de naissance
+                {tp.dateOfBirth}
               </label>
               <input
                 type="date"
@@ -485,7 +434,7 @@ export default function AuPairProfilPage() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Genre *
+                {tp.genderRequired}
               </label>
               <select
                 value={profile.gender}
@@ -494,14 +443,14 @@ export default function AuPairProfilPage() {
                 }
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
               >
-                <option value="">Sélectionner</option>
-                <option value="Femme">Femme</option>
-                <option value="Homme">Homme</option>
+                <option value="">{t.common.select}</option>
+                <option value="Femme">{tValue("Femme")}</option>
+                <option value="Homme">{tValue("Homme")}</option>
               </select>
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Nationalité
+                {tp.nationality}
               </label>
               <input
                 type="text"
@@ -514,7 +463,7 @@ export default function AuPairProfilPage() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Pays d'origine
+                {tp.countryOfOrigin}
               </label>
               <select
                 value={profile.countryOfOrigin}
@@ -524,13 +473,13 @@ export default function AuPairProfilPage() {
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
               >
                 {originCountries.map((c) => (
-                  <option key={c.name}>{c.name}</option>
+                  <option key={c.name} value={c.name}>{tValue(c.name)}</option>
                 ))}
               </select>
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Ville d'origine
+                {tp.cityOfOrigin}
               </label>
               <input
                 type="text"
@@ -543,7 +492,7 @@ export default function AuPairProfilPage() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Niveau d'études
+                {tp.educationLevel}
               </label>
               <select
                 value={profile.educationLevel}
@@ -553,7 +502,7 @@ export default function AuPairProfilPage() {
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
               >
                 {EDUCATION_LEVELS.map((e) => (
-                  <option key={e}>{e}</option>
+                  <option key={e} value={e}>{tValue(e)}</option>
                 ))}
               </select>
             </div>
@@ -562,7 +511,7 @@ export default function AuPairProfilPage() {
 
         {/* Langues parlées */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-5">Langues parlées</h2>
+          <h2 className="font-bold text-[#1A1A2E] mb-5">{tp.spokenLanguages}</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {LANGUAGES.map((lang) => (
               <label
@@ -586,7 +535,7 @@ export default function AuPairProfilPage() {
                     })
                   }
                 />
-                {lang}
+                {tValue(lang)}
               </label>
             ))}
           </div>
@@ -595,13 +544,13 @@ export default function AuPairProfilPage() {
         {/* Expérience & qualifications */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
           <h2 className="font-bold text-[#1A1A2E] mb-5">
-            Expérience & qualifications
+            {tp.experienceQualifications}
           </h2>
           <div className="space-y-4">
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  Expérience (années)
+                  {tp.experienceYears}
                 </label>
                 <select
                   value={profile.childcareYears}
@@ -618,7 +567,7 @@ export default function AuPairProfilPage() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Décrivez votre expérience avec les enfants
+                {tp.describeExperience}
               </label>
               <textarea
                 value={profile.childcareExperience}
@@ -645,7 +594,7 @@ export default function AuPairProfilPage() {
                     })
                   }
                 />
-                Certifié(e) premiers secours
+                {tp.firstAidCertified}
               </label>
               <label className="flex items-center gap-2 border rounded-xl px-3 py-2 cursor-pointer text-sm transition-all border-gray-200 text-gray-700 hover:border-[#E87722]">
                 <input
@@ -656,7 +605,7 @@ export default function AuPairProfilPage() {
                     setProfile({ ...profile, drivingLicense: e.target.checked })
                   }
                 />
-                Permis de conduire
+                {tp.drivingLicense}
               </label>
             </div>
           </div>
@@ -665,13 +614,13 @@ export default function AuPairProfilPage() {
         {/* Disponibilité & destination */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
           <h2 className="font-bold text-[#1A1A2E] mb-5">
-            Disponibilité & destination
+            {tp.availability}
           </h2>
           <div className="space-y-4">
             <div className="grid sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  Disponible à partir du
+                  {tp.availableFrom}
                 </label>
                 <input
                   type="date"
@@ -684,7 +633,7 @@ export default function AuPairProfilPage() {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  Disponible jusqu'au
+                  {tp.availableTo}
                 </label>
                 <input
                   type="date"
@@ -697,7 +646,7 @@ export default function AuPairProfilPage() {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  Durée souhaitée
+                  {tp.preferredDuration}
                 </label>
                 <select
                   value={profile.preferredDuration}
@@ -709,16 +658,16 @@ export default function AuPairProfilPage() {
                   }
                   className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
                 >
-                  <option value="">Sélectionner</option>
+                  <option value="">{t.common.select}</option>
                   {DURATIONS.map((d) => (
-                    <option key={d}>{d}</option>
+                    <option key={d} value={d}>{tValue(d)}</option>
                   ))}
                 </select>
               </div>
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Pays de destination souhaités
+                {tp.targetCountries}
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {hostCountries.map(({ name: country }) => (
@@ -745,7 +694,7 @@ export default function AuPairProfilPage() {
                         })
                       }
                     />
-                    {country}
+                    {tValue(country)}
                   </label>
                 ))}
               </div>
@@ -756,12 +705,12 @@ export default function AuPairProfilPage() {
         {/* Description & Motivation */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
           <h2 className="font-bold text-[#1A1A2E] mb-5">
-            Description & Motivation
+            {tp.descriptionMotivation}
           </h2>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Présentation personnelle
+                {tp.personalPresentation}
               </label>
               <textarea
                 value={profile.description}
@@ -774,7 +723,7 @@ export default function AuPairProfilPage() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Pourquoi souhaitez-vous devenir au pair ?
+                {tp.whyAuPair}
               </label>
               <textarea
                 value={profile.motivation}
@@ -791,7 +740,7 @@ export default function AuPairProfilPage() {
         {/* Santé & déclarations */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
           <h2 className="font-bold text-[#1A1A2E] mb-5">
-            Santé & déclarations
+            {tp.healthDeclarations}
           </h2>
           <div className="space-y-4">
             <div className="flex flex-wrap gap-4">
@@ -804,7 +753,7 @@ export default function AuPairProfilPage() {
                     setProfile({ ...profile, isSmoker: e.target.checked })
                   }
                 />
-                Fumeur(se)
+                {tp.smoker}
               </label>
               <label className="flex items-center gap-2 border rounded-xl px-3 py-2 cursor-pointer text-sm transition-all border-gray-200 text-gray-700 hover:border-[#E87722]">
                 <input
@@ -818,12 +767,12 @@ export default function AuPairProfilPage() {
                     })
                   }
                 />
-                Casier judiciaire non vierge
+                {tp.criminalRecord}
               </label>
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Déclaration de santé (allergies, traitements, etc.)
+                {tp.healthDeclaration}
               </label>
               <textarea
                 value={profile.healthDeclaration}
@@ -839,11 +788,11 @@ export default function AuPairProfilPage() {
 
         {/* Contact */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-5">Contact WhatsApp</h2>
+          <h2 className="font-bold text-[#1A1A2E] mb-5">{t.profileForm.whatsappTitle}</h2>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Numéro WhatsApp principal
+                {tp.whatsappMain}
               </label>
               <div className="flex flex-col sm:flex-row gap-2">
                 <select
@@ -855,7 +804,7 @@ export default function AuPairProfilPage() {
                 >
                   {allCountries.map((c) => (
                     <option key={c.name} value={c.dialCode}>
-                      {c.name} ({c.dialCode})
+                      {tValue(c.name)} ({c.dialCode})
                     </option>
                   ))}
                 </select>
@@ -872,7 +821,7 @@ export default function AuPairProfilPage() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Numéro WhatsApp secondaire (optionnel)
+                {tp.whatsappSecondary}
               </label>
               <div className="flex flex-col sm:flex-row gap-2">
                 <select
@@ -887,7 +836,7 @@ export default function AuPairProfilPage() {
                 >
                   {allCountries.map((c) => (
                     <option key={c.name} value={c.dialCode}>
-                      {c.name} ({c.dialCode})
+                      {tValue(c.name)} ({c.dialCode})
                     </option>
                   ))}
                 </select>
@@ -911,11 +860,11 @@ export default function AuPairProfilPage() {
       <div className="fixed bottom-0 left-0 right-0 md:left-64 z-30 bg-white border-t border-gray-100 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] p-4">
         <div className="max-w-3xl mx-auto flex items-center gap-4">
           <Button size="lg" onClick={handleSave} disabled={saving}>
-            {saving ? "Sauvegarde..." : "Sauvegarder les modifications"}
+            {saving ? t.profileForm.saving : t.profileForm.saveChanges}
           </Button>
           {saved && (
             <div className="flex items-center gap-2 text-green-600 text-sm font-medium">
-              <CheckCircle className="w-4 h-4" /> Profil sauvegardé !
+              <CheckCircle className="w-4 h-4" /> {t.profileForm.saved}
             </div>
           )}
           {saveError && <p className="text-sm text-red-500">{saveError}</p>}

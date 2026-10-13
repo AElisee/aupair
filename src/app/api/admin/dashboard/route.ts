@@ -3,8 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin";
 import { ProfileStatus } from "@/generated/prisma/client";
 import { getCountryFlagMap } from "@/lib/countries";
-import { formatRelativeDate, formatCurrency, formatRevenueByCurrency } from "@/lib/utils";
-import { PAYMENT_METHOD_LABELS } from "@/lib/constants";
+import { formatCurrency, formatRevenueByCurrency } from "@/lib/utils";
 
 export async function GET() {
   const session = await requireAdminSession();
@@ -75,10 +74,11 @@ export async function GET() {
 
   const pendingProfiles = pendingAuPairs + pendingFamilies;
 
-  const signupsChange =
+  // Variation en % des inscriptions vs les 30 jours précédents (formatée côté client selon la langue)
+  const signupsChangePct =
     signupsPrev30d === 0
-      ? signups30d > 0 ? "+100% vs mois dernier" : "Stable vs mois dernier"
-      : `${signups30d >= signupsPrev30d ? "+" : ""}${Math.round(((signups30d - signupsPrev30d) / signupsPrev30d) * 100)}% vs mois dernier`;
+      ? signups30d > 0 ? 100 : 0
+      : Math.round(((signups30d - signupsPrev30d) / signupsPrev30d) * 100);
 
   const recentUsers = [
     ...recentAuPairs.map((p) => ({
@@ -87,17 +87,17 @@ export async function GET() {
       role: "AU_PAIR" as const,
       country: `${flagMap[p.countryOfOrigin] ?? ""} ${p.countryOfOrigin}`.trim(),
       status: p.status,
-      date: formatRelativeDate(p.createdAt),
+      date: p.createdAt.toISOString(),
       createdAt: p.createdAt,
       photoUrl: p.profilePhotoUrl ?? "",
     })),
     ...recentFamilies.map((p) => ({
       id: p.userId,
-      name: p.user.name ?? "Famille",
+      name: p.user.name ?? "",
       role: "FAMILLE" as const,
       country: `${flagMap[p.country] ?? ""} ${p.country}`.trim(),
       status: p.status,
-      date: formatRelativeDate(p.createdAt),
+      date: p.createdAt.toISOString(),
       createdAt: p.createdAt,
       photoUrl: p.familyPhotoUrl ?? "",
     })),
@@ -108,11 +108,11 @@ export async function GET() {
 
   const recentPayments = recentSubscriptions.map((s) => ({
     id: s.id,
-    user: s.user.name ?? "Utilisateur",
+    user: s.user.name ?? "",
     amount: formatCurrency(s.amount, s.currency),
-    method: PAYMENT_METHOD_LABELS[s.paymentMethod] ?? s.paymentMethod,
+    method: s.paymentMethod,
     status: s.status,
-    date: formatRelativeDate(s.createdAt),
+    date: s.createdAt.toISOString(),
   }));
 
   return NextResponse.json({
@@ -121,7 +121,7 @@ export async function GET() {
       totalAuPairs,
       totalFamilies,
       signups30d,
-      signupsChange,
+      signupsChangePct,
       revenue30d: formatRevenueByCurrency(revenueByCurrency30d),
       totalRevenue: formatRevenueByCurrency(totalRevenueByCurrency),
       activeSubscriptions,

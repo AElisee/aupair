@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { Eye, EyeOff, Lock, CheckCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/i18n";
 
 interface PasswordFieldProps {
   label: string;
@@ -14,6 +15,7 @@ interface PasswordFieldProps {
 
 function PasswordField({ label, value, onChange, autoComplete }: PasswordFieldProps) {
   const [show, setShow] = useState(false);
+  const { t } = useI18n();
 
   return (
     <div>
@@ -32,7 +34,7 @@ function PasswordField({ label, value, onChange, autoComplete }: PasswordFieldPr
           type="button"
           onClick={() => setShow(!show)}
           className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-          aria-label={show ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+          aria-label={show ? t.settings.hidePassword : t.settings.showPassword}
         >
           {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
         </button>
@@ -43,6 +45,7 @@ function PasswordField({ label, value, onChange, autoComplete }: PasswordFieldPr
 
 export default function ChangePasswordForm() {
   const { update } = useSession();
+  const { t, tError } = useI18n();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -56,11 +59,11 @@ export default function ChangePasswordForm() {
     setSuccess(false);
 
     if (newPassword.length < 8) {
-      setError("Le nouveau mot de passe doit contenir au moins 8 caractères.");
+      setError(t.settings.tooShort);
       return;
     }
     if (newPassword !== confirmPassword) {
-      setError("Les deux mots de passe ne correspondent pas.");
+      setError(t.settings.mismatch);
       return;
     }
 
@@ -74,7 +77,7 @@ export default function ChangePasswordForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error ?? "Une erreur est survenue.");
+        setError(tError(data.error, t.common.genericError));
         return;
       }
 
@@ -87,7 +90,7 @@ export default function ChangePasswordForm() {
       setNewPassword("");
       setConfirmPassword("");
     } catch {
-      setError("Erreur réseau, veuillez réessayer.");
+      setError(t.common.networkError);
     } finally {
       setLoading(false);
     }
@@ -95,26 +98,26 @@ export default function ChangePasswordForm() {
 
   return (
     <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-      <h2 className="font-bold text-[#1A1A2E] mb-1">Modifier mon mot de passe</h2>
+      <h2 className="font-bold text-[#1A1A2E] mb-1">{t.settings.changePasswordTitle}</h2>
       <p className="text-sm text-gray-500 mb-5">
-        Pour votre sécurité, toutes vos autres sessions actives seront déconnectées.
+        {t.settings.changePasswordHint}
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
         <PasswordField
-          label="Mot de passe actuel"
+          label={t.settings.currentPassword}
           value={currentPassword}
           onChange={setCurrentPassword}
           autoComplete="current-password"
         />
         <PasswordField
-          label="Nouveau mot de passe"
+          label={t.settings.newPassword}
           value={newPassword}
           onChange={setNewPassword}
           autoComplete="new-password"
         />
         <PasswordField
-          label="Confirmer le nouveau mot de passe"
+          label={t.settings.confirmPassword}
           value={confirmPassword}
           onChange={setConfirmPassword}
           autoComplete="new-password"
@@ -124,13 +127,13 @@ export default function ChangePasswordForm() {
         {success && (
           <p className="text-sm text-green-600 flex items-center gap-1.5">
             <CheckCircle className="w-4 h-4" />
-            Mot de passe modifié avec succès.
+            {t.settings.success}
           </p>
         )}
 
         <Button type="submit" disabled={loading}>
           {loading && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
-          {loading ? "Modification en cours..." : "Modifier le mot de passe"}
+          {loading ? t.settings.submitting : t.settings.submit}
         </Button>
       </form>
     </div>

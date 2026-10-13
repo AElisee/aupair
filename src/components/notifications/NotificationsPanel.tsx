@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, Eye, BarChart2, Loader2, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { formatRelativeDate } from "@/lib/utils";
+import { useI18n } from "@/i18n";
 
 interface NotificationItem {
   id: string;
@@ -21,8 +21,32 @@ const TYPE_ICONS: Record<string, React.ElementType> = {
   WEEKLY_VIEWS_DIGEST: BarChart2,
 };
 
+/**
+ * Les notifications sont stockées en base en français (titre + contenu). Pour les types connus,
+ * on régénère le texte dans la langue courante à partir des données qu'il contient ;
+ * pour un type inconnu, on affiche le texte stocké tel quel.
+ */
+function useLocalizedNotification() {
+  const { t } = useI18n();
+  return (n: NotificationItem): { title: string; content: string } => {
+    if (n.type === "PROFILE_VIEW") {
+      const name = n.content.replace(/ a consulté votre profil\.$/, "");
+      return { title: t.notifications.profileViewTitle, content: t.notifications.profileViewContent(name) };
+    }
+    if (n.type === "WEEKLY_VIEWS_DIGEST") {
+      const count = parseInt(n.content, 10);
+      if (!Number.isNaN(count)) {
+        return { title: t.notifications.weeklyDigestTitle, content: t.notifications.weeklyDigestContent(count) };
+      }
+    }
+    return { title: n.title, content: n.content };
+  };
+}
+
 export default function NotificationsPanel() {
   const router = useRouter();
+  const { t, relativeDate } = useI18n();
+  const localize = useLocalizedNotification();
   const [notifications, setNotifications] = useState<NotificationItem[] | null>(null);
   const [markingAll, setMarkingAll] = useState(false);
 
@@ -76,7 +100,7 @@ export default function NotificationsPanel() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-extrabold text-[#1A1A2E]">Notifications</h1>
+        <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{t.notifications.title}</h1>
         <Button
           variant="outline"
           size="sm"
@@ -88,24 +112,25 @@ export default function NotificationsPanel() {
           ) : (
             <CheckCheck className="w-4 h-4 mr-1.5" />
           )}
-          Tout marquer comme lu
+          {t.notifications.markAllRead}
         </Button>
       </div>
 
       {notifications === null ? (
         <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
           <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
-          <p className="text-gray-500">Chargement...</p>
+          <p className="text-gray-500">{t.common.loading}</p>
         </div>
       ) : notifications.length === 0 ? (
         <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
           <Bell className="w-8 h-8 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500">Vous n&apos;avez aucune notification pour le moment.</p>
+          <p className="text-gray-500">{t.notifications.empty}</p>
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-100">
           {notifications.map((notification) => {
             const Icon = TYPE_ICONS[notification.type] ?? Bell;
+            const { title, content } = localize(notification);
             return (
               <button
                 key={notification.id}
@@ -120,11 +145,11 @@ export default function NotificationsPanel() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="font-semibold text-[#1A1A2E] text-sm">{notification.title}</p>
+                    <p className="font-semibold text-[#1A1A2E] text-sm">{title}</p>
                     {!notification.isRead && <span className="w-2 h-2 rounded-full bg-[#E87722] flex-shrink-0" />}
                   </div>
-                  <p className="text-sm text-gray-600 mt-0.5">{notification.content}</p>
-                  <p className="text-xs text-gray-400 mt-1">{formatRelativeDate(notification.createdAt)}</p>
+                  <p className="text-sm text-gray-600 mt-0.5">{content}</p>
+                  <p className="text-xs text-gray-400 mt-1">{relativeDate(notification.createdAt)}</p>
                 </div>
               </button>
             );

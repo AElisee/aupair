@@ -5,17 +5,8 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
-import { Home, User, Search, Heart, MessageCircle, Bell, Settings, Languages, Star, MapPin, Loader2 } from "lucide-react";
-
-const navItems = [
-  { href: "/dashboard/famille", icon: Home, label: "Tableau de bord" },
-  { href: "/dashboard/famille/profil", icon: User, label: "Mon profil" },
-  { href: "/dashboard/famille/recherche", icon: Search, label: "Rechercher un au pair" },
-  { href: "/dashboard/famille/favoris", icon: Heart, label: "Mes favoris" },
-  { href: "/dashboard/famille/messages", icon: MessageCircle, label: "Messages" },
-  { href: "/dashboard/famille/notifications", icon: Bell, label: "Notifications" },
-  { href: "/dashboard/famille/parametres", icon: Settings, label: "Paramètres" },
-];
+import { Heart, Languages, Star, MapPin, Loader2 } from "lucide-react";
+import { useI18n } from "@/i18n";
 
 type AuPair = {
   id: string;
@@ -35,6 +26,7 @@ export default function FavorisPage() {
   const { data: session } = useSession();
   const [auPairs, setAuPairs] = useState<AuPair[]>([]);
   const [loading, setLoading] = useState(true);
+  const { t, tValue, tList } = useI18n();
 
   useEffect(() => {
     let cancelled = false;
@@ -52,24 +44,24 @@ export default function FavorisPage() {
   }, []);
 
   return (
-    <DashboardLayout navItems={navItems} role="famille" userName={session?.user?.name ?? ""}>
+    <DashboardLayout role="famille" userName={session?.user?.name ?? ""}>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">Mes au pairs favoris</h1>
-          <p className="text-gray-500">Retrouvez ici les profils que vous avez mis en favoris.</p>
+          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{t.favorites.title}</h1>
+          <p className="text-gray-500">{t.favorites.subtitle}</p>
         </div>
 
         {loading ? (
           <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
             <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
-            <p className="text-gray-500">Chargement...</p>
+            <p className="text-gray-500">{t.common.loading}</p>
           </div>
         ) : auPairs.length === 0 ? (
           <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
             <Heart className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 mb-4">Vous n&apos;avez encore ajouté aucun au pair en favoris.</p>
+            <p className="text-gray-500 mb-4">{t.favorites.empty}</p>
             <Link href="/trouver-au-pair" className="text-[#E87722] font-semibold text-sm">
-              Découvrir des au pairs →
+              {t.favorites.discover}
             </Link>
           </div>
         ) : (
@@ -87,15 +79,15 @@ export default function FavorisPage() {
                       </div>
                     )}
                     <div className="absolute top-3 right-3">
-                      {ap.available ? <Badge variant="success">Disponible</Badge> : <Badge variant="warning">Indisponible</Badge>}
+                      {ap.available ? <Badge variant="success">{t.common.available}</Badge> : <Badge variant="warning">{t.common.unavailable}</Badge>}
                     </div>
                   </div>
 
                   <div className="p-5">
-                    <h3 className="font-bold text-[#1A1A2E] text-lg">{ap.firstName}, {ap.age} ans</h3>
+                    <h3 className="font-bold text-[#1A1A2E] text-lg">{ap.firstName}, {t.common.age(ap.age)}</h3>
                     <div className="flex items-center gap-1 text-gray-500 text-sm mb-2">
                       <span>{ap.flag}</span>
-                      <span>{ap.country}</span>
+                      <span>{tValue(ap.country)}</span>
                     </div>
 
                     <p className="text-gray-500 text-sm mb-3 line-clamp-2">{ap.description}</p>
@@ -103,15 +95,15 @@ export default function FavorisPage() {
                     <div className="space-y-2 text-xs text-gray-500">
                       <div className="flex items-center gap-2">
                         <Languages className="w-3.5 h-3.5 text-[#E87722]" />
-                        <span>{ap.languages.join(", ")}</span>
+                        <span>{tList(ap.languages)}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Star className="w-3.5 h-3.5 text-[#E87722]" />
-                        <span>{ap.experience} an{ap.experience > 1 ? "s" : ""} d&apos;expérience</span>
+                        <span>{t.common.experience(ap.experience)}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <MapPin className="w-3.5 h-3.5 text-[#E87722]" />
-                        <span>Souhaite : {ap.targetCountries.join(", ")}</span>
+                        <span>{t.common.wishes(tList(ap.targetCountries))}</span>
                       </div>
                     </div>
                   </div>

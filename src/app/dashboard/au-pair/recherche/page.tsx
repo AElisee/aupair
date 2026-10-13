@@ -4,32 +4,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import {
-  Home,
-  User,
-  Search,
-  MessageCircle,
-  Bell,
-  CreditCard,
-  Settings,
-  Filter,
-  MapPin,
-  Users,
-  Clock,
-  Loader2,
-} from "lucide-react";
+import { Search, Filter, MapPin, Users, Clock, Loader2 } from "lucide-react";
 import { useCountries } from "@/hooks/useCountries";
 import { useConstants } from "@/hooks/useConstants";
-
-const navItems = [
-  { href: "/dashboard/au-pair", icon: Home, label: "Tableau de bord" },
-  { href: "/dashboard/au-pair/profil", icon: User, label: "Mon profil" },
-  { href: "/dashboard/au-pair/recherche", icon: Search, label: "Rechercher une famille" },
-  { href: "/dashboard/au-pair/messages", icon: MessageCircle, label: "Messages" },
-  { href: "/dashboard/au-pair/notifications", icon: Bell, label: "Notifications" },
-  { href: "/dashboard/au-pair/abonnement", icon: CreditCard, label: "Mon abonnement" },
-  { href: "/dashboard/au-pair/parametres", icon: Settings, label: "Paramètres" },
-];
+import { useI18n } from "@/i18n";
 
 type Family = {
   id: string;
@@ -48,6 +26,7 @@ type Family = {
 };
 
 function FamilyCard({ fam }: { fam: Family }) {
+  const { t, tValue } = useI18n();
   return (
     <Link href={`/dashboard/au-pair/famille/${fam.id}`} className="block">
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden group">
@@ -67,7 +46,7 @@ function FamilyCard({ fam }: { fam: Family }) {
           <h3 className="font-bold text-[#1A1A2E] text-lg mb-1">{fam.name}</h3>
           <div className="flex items-center gap-1 text-gray-500 text-sm mb-3">
             <MapPin className="w-3.5 h-3.5" />
-            <span>{fam.city}, {fam.country}</span>
+            <span>{fam.city}, {tValue(fam.country)}</span>
           </div>
 
           <p className="text-gray-500 text-sm mb-3 line-clamp-2">{fam.description}</p>
@@ -76,13 +55,13 @@ function FamilyCard({ fam }: { fam: Family }) {
             <div className="flex items-center gap-2">
               <Users className="w-3.5 h-3.5 text-[#E87722]" />
               <span>
-                {fam.kids} enfant{fam.kids > 1 ? "s" : ""}
-                {fam.kidsAges.length > 0 ? ` (${fam.kidsAges.join(", ")} ans)` : ""}
+                {t.common.kids(fam.kids)}
+                {fam.kidsAges.length > 0 ? t.common.kidsAges(fam.kidsAges.join(", ")) : ""}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <Clock className="w-3.5 h-3.5 text-[#E87722]" />
-              <span>{fam.hoursPerWeek}h/semaine · {fam.pocketMoney}€/mois</span>
+              <span>{t.common.hoursPerWeek(fam.hoursPerWeek)} · {t.common.pocketMoney(fam.pocketMoney)}</span>
             </div>
           </div>
         </div>
@@ -104,6 +83,7 @@ export default function RechercheFamillePage() {
   const [showFilters, setShowFilters] = useState(false);
   const { host: hostCountries } = useCountries();
   const { languages: LANGUAGES } = useConstants();
+  const { t, tValue } = useI18n();
 
   useEffect(() => {
     fetch("/api/families")
@@ -121,7 +101,12 @@ export default function RechercheFamillePage() {
   };
 
   const filtered = families.filter((f) => {
-    const matchSearch = f.name.toLowerCase().includes(search.toLowerCase()) || f.city.toLowerCase().includes(search.toLowerCase()) || f.country.toLowerCase().includes(search.toLowerCase());
+    const query = search.toLowerCase();
+    const matchSearch =
+      f.name.toLowerCase().includes(query) ||
+      f.city.toLowerCase().includes(query) ||
+      f.country.toLowerCase().includes(query) ||
+      tValue(f.country).toLowerCase().includes(query);
     const matchCountry = !filterCountry || f.country === filterCountry;
     const matchMinKids = !filterMinKids || f.kids >= Number(filterMinKids);
     const matchMinPocketMoney = !filterMinPocketMoney || f.pocketMoney >= Number(filterMinPocketMoney);
@@ -130,11 +115,11 @@ export default function RechercheFamillePage() {
   });
 
   return (
-    <DashboardLayout navItems={navItems} role="au-pair" userName={session?.user?.name ?? ""}>
+    <DashboardLayout role="au-pair" userName={session?.user?.name ?? ""}>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">Rechercher une famille d&apos;accueil</h1>
-          <p className="text-gray-500">{families.length} familles disponibles</p>
+          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{t.searchFamilies.title}</h1>
+          <p className="text-gray-500">{t.searchFamilies.availableCount(families.length)}</p>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3">
@@ -142,7 +127,7 @@ export default function RechercheFamillePage() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Rechercher par ville, pays..."
+              placeholder={t.searchFamilies.searchPlaceholder}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-11 pr-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
@@ -153,7 +138,7 @@ export default function RechercheFamillePage() {
             className="flex items-center gap-2 bg-white border border-gray-200 text-[#1A1A2E] px-5 py-3 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors"
           >
             <Filter className="w-4 h-4" />
-            Filtres
+            {t.common.filters}
           </button>
         </div>
 
@@ -164,23 +149,23 @@ export default function RechercheFamillePage() {
               onChange={(e) => setFilterCountry(e.target.value)}
               className="px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
             >
-              <option value="">Tous les pays d&apos;accueil</option>
-              {hostCountries.map((c) => <option key={c.name} value={c.name}>{c.name}</option>)}
+              <option value="">{t.searchFamilies.allHostCountries}</option>
+              {hostCountries.map((c) => <option key={c.name} value={c.name}>{tValue(c.name)}</option>)}
             </select>
             <select
               value={filterLang}
               onChange={(e) => setFilterLang(e.target.value)}
               className="px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
             >
-              <option value="">Toutes les langues souhaitées</option>
-              {LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
+              <option value="">{t.searchFamilies.allLanguagesWanted}</option>
+              {LANGUAGES.map((l) => <option key={l} value={l}>{tValue(l)}</option>)}
             </select>
             <select
               value={filterMinKids}
               onChange={(e) => setFilterMinKids(e.target.value)}
               className="px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
             >
-              <option value="">Nombre d&apos;enfants min.</option>
+              <option value="">{t.searchFamilies.minKids}</option>
               {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}+</option>)}
             </select>
             <select
@@ -188,7 +173,7 @@ export default function RechercheFamillePage() {
               onChange={(e) => setFilterMinPocketMoney(e.target.value)}
               className="px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
             >
-              <option value="">Argent de poche min.</option>
+              <option value="">{t.searchFamilies.minPocketMoney}</option>
               {[100, 200, 300, 400, 500].map((m) => <option key={m} value={m}>{m}€+</option>)}
             </select>
           </div>
@@ -197,11 +182,11 @@ export default function RechercheFamillePage() {
         {loading ? (
           <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
             <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
-            <p className="text-gray-500">Chargement...</p>
+            <p className="text-gray-500">{t.common.loading}</p>
           </div>
         ) : (
           <>
-            <p className="text-gray-500 text-sm">{filtered.length} familles trouvées</p>
+            <p className="text-gray-500 text-sm">{t.searchFamilies.foundCount(filtered.length)}</p>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filtered.map((f) => <FamilyCard key={f.id} fam={f} />)}
@@ -209,8 +194,8 @@ export default function RechercheFamillePage() {
 
             {filtered.length === 0 && (
               <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
-                <p className="text-gray-400">Aucune famille trouvée avec ces critères.</p>
-                <button onClick={resetFilters} className="mt-4 text-[#E87722] font-semibold text-sm">Réinitialiser les filtres</button>
+                <p className="text-gray-400">{t.searchFamilies.noneFound}</p>
+                <button onClick={resetFilters} className="mt-4 text-[#E87722] font-semibold text-sm">{t.common.resetFilters}</button>
               </div>
             )}
           </>

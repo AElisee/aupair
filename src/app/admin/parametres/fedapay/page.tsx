@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Smartphone, Key, Lock, ShieldCheck, Loader2, Save, CheckCircle, Trash2, ExternalLink } from "lucide-react";
+import { useI18n } from "@/i18n";
 
 interface Settings {
   fedapayPublicKeyConfigured: boolean;
@@ -21,6 +22,9 @@ export default function AdminFedapaySettingsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const { t, tError } = useI18n();
+  const c = t.adminCommon;
+  const ts = t.adminSettings;
 
   useEffect(() => {
     fetch("/api/admin/constants")
@@ -44,7 +48,7 @@ export default function AdminFedapaySettingsPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Erreur lors de l'enregistrement.");
+        setError(tError(data.error, c.saveError));
         return;
       }
       setSettings(data.settings);
@@ -54,7 +58,7 @@ export default function AdminFedapaySettingsPage() {
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch {
-      setError("Erreur réseau, veuillez réessayer.");
+      setError(c.networkError);
     } finally {
       setSaving(false);
     }
@@ -71,7 +75,7 @@ export default function AdminFedapaySettingsPage() {
   };
 
   const handleRemove = (field: "fedapayPublicKey" | "fedapaySecretKey" | "fedapayWebhookSecret", label: string) => {
-    if (!confirm(`Supprimer ${label} ? Le paiement FedaPay ne fonctionnera plus correctement.`)) return;
+    if (!confirm(ts.removeFedapayConfirm(label))) return;
     save({ [field]: "" });
   };
 
@@ -80,7 +84,7 @@ export default function AdminFedapaySettingsPage() {
       <AdminLayout>
         <div className="p-12 text-center">
           <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
-          <p className="text-gray-500">Chargement...</p>
+          <p className="text-gray-500">{c.loading}</p>
         </div>
       </AdminLayout>
     );
@@ -92,10 +96,10 @@ export default function AdminFedapaySettingsPage() {
     <AdminLayout>
       <div className="space-y-5">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">Paramètres — FedaPay (Mobile Money)</h1>
+          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{ts.fedapayTitle}</h1>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
-            Enregistrer
+            {c.save}
           </Button>
         </div>
 
@@ -103,7 +107,7 @@ export default function AdminFedapaySettingsPage() {
         {saved && (
           <p className="text-green-600 text-sm flex items-center gap-1.5">
             <CheckCircle className="w-4 h-4" />
-            Modifications enregistrées.
+            {c.saved}
           </p>
         )}
 
@@ -112,19 +116,18 @@ export default function AdminFedapaySettingsPage() {
           <div>
             <label className="font-semibold text-[#1A1A2E] flex items-center gap-2 mb-1">
               <ShieldCheck className="w-4 h-4 text-[#E87722]" />
-              Environnement
+              {ts.environment}
             </label>
             <p className="text-sm text-gray-500 mb-2">
-              FedaPay ne permet pas de déduire l&apos;environnement du préfixe de clé : sélectionnez-le explicitement.
-              Les clés sandbox et live sont totalement séparées (transactions, webhooks).
+              {ts.environmentHint}
             </p>
             <select
               value={environment}
               onChange={(e) => setEnvironment(e.target.value)}
               className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
             >
-              <option value="sandbox">Sandbox (test)</option>
-              <option value="live">Live (production)</option>
+              <option value="sandbox">{ts.sandbox}</option>
+              <option value="live">{ts.live}</option>
             </select>
           </div>
 
@@ -132,14 +135,14 @@ export default function AdminFedapaySettingsPage() {
           <div>
             <label className="font-semibold text-[#1A1A2E] flex items-center gap-2 mb-1">
               <Key className="w-4 h-4 text-[#E87722]" />
-              Clé publique
+              {ts.publicKey}
             </label>
             <p className="text-sm text-gray-500 mb-2">
-              Statut actuel :{" "}
+              {c.currentStatus}{" "}
               {settings.fedapayPublicKeyConfigured ? (
-                <span className="text-green-600 font-semibold">configurée</span>
+                <span className="text-green-600 font-semibold">{c.configured}</span>
               ) : (
-                <span className="text-red-500 font-semibold">non configurée — le paiement FedaPay est désactivé</span>
+                <span className="text-red-500 font-semibold">{ts.publicKeyMissing}</span>
               )}
             </p>
             <div className="flex gap-2">
@@ -149,14 +152,14 @@ export default function AdminFedapaySettingsPage() {
                 onChange={(e) => setPublicKeyInput(e.target.value)}
                 placeholder={
                   settings.fedapayPublicKeyConfigured
-                    ? "•••••••••••••••• (laisser vide pour ne pas changer)"
-                    : "pk_sandbox_... ou pk_live_..."
+                    ? c.keepEmpty
+                    : ts.publicKeyPlaceholder
                 }
                 autoComplete="off"
                 className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
               />
               {settings.fedapayPublicKeyConfigured && (
-                <Button type="button" variant="outline" onClick={() => handleRemove("fedapayPublicKey", "la clé publique")} disabled={saving} title="Supprimer la clé publique">
+                <Button type="button" variant="outline" onClick={() => handleRemove("fedapayPublicKey", ts.removePublicKey)} disabled={saving} title={ts.removePublicKey}>
                   <Trash2 className="w-4 h-4 text-red-500" />
                 </Button>
               )}
@@ -167,14 +170,14 @@ export default function AdminFedapaySettingsPage() {
           <div>
             <label className="font-semibold text-[#1A1A2E] flex items-center gap-2 mb-1">
               <Lock className="w-4 h-4 text-[#E87722]" />
-              Clé secrète
+              {ts.secretKey}
             </label>
             <p className="text-sm text-gray-500 mb-2">
-              Statut actuel :{" "}
+              {c.currentStatus}{" "}
               {settings.fedapaySecretKeyConfigured ? (
-                <span className="text-green-600 font-semibold">configurée</span>
+                <span className="text-green-600 font-semibold">{c.configured}</span>
               ) : (
-                <span className="text-red-500 font-semibold">non configurée — la création de paiement est désactivée</span>
+                <span className="text-red-500 font-semibold">{ts.secretKeyMissing}</span>
               )}
             </p>
             <div className="flex gap-2">
@@ -184,14 +187,14 @@ export default function AdminFedapaySettingsPage() {
                 onChange={(e) => setSecretKeyInput(e.target.value)}
                 placeholder={
                   settings.fedapaySecretKeyConfigured
-                    ? "•••••••••••••••• (laisser vide pour ne pas changer)"
-                    : "sk_sandbox_... ou sk_live_..."
+                    ? c.keepEmpty
+                    : ts.secretKeyPlaceholder
                 }
                 autoComplete="off"
                 className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
               />
               {settings.fedapaySecretKeyConfigured && (
-                <Button type="button" variant="outline" onClick={() => handleRemove("fedapaySecretKey", "la clé secrète")} disabled={saving} title="Supprimer la clé secrète">
+                <Button type="button" variant="outline" onClick={() => handleRemove("fedapaySecretKey", ts.removeSecretKey)} disabled={saving} title={ts.removeSecretKey}>
                   <Trash2 className="w-4 h-4 text-red-500" />
                 </Button>
               )}
@@ -202,14 +205,14 @@ export default function AdminFedapaySettingsPage() {
           <div>
             <label className="font-semibold text-[#1A1A2E] flex items-center gap-2 mb-1">
               <Lock className="w-4 h-4 text-[#E87722]" />
-              Clé secrète de webhook
+              {ts.webhookSecret}
             </label>
             <p className="text-sm text-gray-500 mb-2">
-              Distincte de la clé secrète API. Statut actuel :{" "}
+              {ts.webhookSecretHint} {c.currentStatus}{" "}
               {settings.fedapayWebhookSecretConfigured ? (
-                <span className="text-green-600 font-semibold">configurée</span>
+                <span className="text-green-600 font-semibold">{c.configured}</span>
               ) : (
-                <span className="text-red-500 font-semibold">non configurée — les webhooks seront rejetés</span>
+                <span className="text-red-500 font-semibold">{ts.webhookSecretMissing}</span>
               )}
             </p>
             <div className="flex gap-2">
@@ -219,20 +222,20 @@ export default function AdminFedapaySettingsPage() {
                 onChange={(e) => setWebhookSecretInput(e.target.value)}
                 placeholder={
                   settings.fedapayWebhookSecretConfigured
-                    ? "•••••••••••••••• (laisser vide pour ne pas changer)"
-                    : "wh_sandbox_... ou wh_live_..."
+                    ? c.keepEmpty
+                    : ts.webhookSecretPlaceholder
                 }
                 autoComplete="off"
                 className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
               />
               {settings.fedapayWebhookSecretConfigured && (
-                <Button type="button" variant="outline" onClick={() => handleRemove("fedapayWebhookSecret", "la clé de webhook")} disabled={saving} title="Supprimer la clé de webhook">
+                <Button type="button" variant="outline" onClick={() => handleRemove("fedapayWebhookSecret", ts.removeWebhookKey)} disabled={saving} title={ts.removeWebhookKey}>
                   <Trash2 className="w-4 h-4 text-red-500" />
                 </Button>
               )}
             </div>
             <p className="text-xs text-gray-400 mt-1">
-              Récupérez vos clés depuis{" "}
+              {ts.fedapayKeysHintStart}{" "}
               <a
                 href="https://live.fedapay.com"
                 target="_blank"
@@ -241,8 +244,7 @@ export default function AdminFedapaySettingsPage() {
               >
                 fedapay.com <ExternalLink className="w-3 h-3" />
               </a>{" "}
-              → Développeurs / API → clés publique et secrète, puis Webhooks → clé de signature. Les clés sandbox et
-              live sont séparées : basculez l&apos;environnement ci-dessus en conséquence.
+              {ts.fedapayKeysHintEnd}
             </p>
           </div>
 
@@ -251,21 +253,21 @@ export default function AdminFedapaySettingsPage() {
             <Smartphone className="w-4 h-4 text-[#E87722] mt-0.5 shrink-0" />
             <p>
               {configured ? (
-                <>FedaPay est <strong className="text-green-600">opérationnel</strong> en mode <strong>{settings.fedapayEnvironment}</strong>. Les utilisateurs sont redirigés vers la page de paiement hébergée FedaPay (Mobile Money, cartes).</>
+                <span className="text-green-700">{ts.fedapayOperational(settings.fedapayEnvironment)}</span>
               ) : (
-                <>FedaPay est <strong className="text-red-500">désactivé</strong>. Renseignez la clé publique et la clé secrète pour activer le paiement.</>
+                <span className="text-red-600">{ts.fedapayDisabled}</span>
               )}
             </p>
           </div>
 
           {/* URL Webhook */}
           <div>
-            <p className="text-xs font-semibold text-gray-500 mb-1">URL Webhook à configurer dans FedaPay :</p>
+            <p className="text-xs font-semibold text-gray-500 mb-1">{ts.webhookUrl}</p>
             <code className="block bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 break-all">
               {typeof window !== "undefined" ? window.location.origin : ""}/api/webhooks/fedapay
             </code>
             <p className="text-xs text-gray-400 mt-1">
-              Ajoutez cette URL dans votre tableau de bord FedaPay → Webhooks, puis copiez la clé de signature générée ci-dessus.
+              {ts.webhookUrlHint}
             </p>
           </div>
         </div>

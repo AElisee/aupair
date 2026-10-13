@@ -1,10 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
+import Pagination from "@/components/admin/Pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Plus, Pencil, Trash2, Eye, EyeOff, Loader2, FileText, Search, ExternalLink } from "lucide-react";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import { useI18n } from "@/i18n";
 
 type BlogPost = {
   id: string;
@@ -51,6 +53,9 @@ export default function AdminBlogPage() {
   const [deleteTarget, setDeleteTarget] = useState<BlogPost | null>(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const { t, tError } = useI18n();
+  const c = t.adminCommon;
+  const tb = t.adminBlog;
 
   const load = () => {
     fetch("/api/admin/blog")
@@ -92,7 +97,7 @@ export default function AdminBlogPage() {
     setError("");
 
     if (!form.title.trim() || !form.content.trim() || !form.category.trim() || !form.author.trim()) {
-      setError("Titre, contenu, catégorie et auteur sont obligatoires.");
+      setError(tb.required);
       return;
     }
 
@@ -120,7 +125,7 @@ export default function AdminBlogPage() {
         });
         const data = await res.json();
         if (!res.ok) {
-          setError(data.error ?? "Erreur lors de la modification.");
+          setError(tError(data.error, c.editError));
           return;
         }
         setPosts((prev) => prev.map((item) => (item.id === editingId ? data.post : item)));
@@ -133,7 +138,7 @@ export default function AdminBlogPage() {
         });
         const data = await res.json();
         if (!res.ok) {
-          setError(data.error ?? "Erreur lors de l'ajout.");
+          setError(tError(data.error, c.addError));
           return;
         }
         setPosts((prev) => [data.post, ...prev]);
@@ -190,29 +195,29 @@ export default function AdminBlogPage() {
     <AdminLayout>
       <div className="space-y-5">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">Blog</h1>
-          <div className="text-sm text-gray-500">{filtered.length} article(s)</div>
+          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{tb.title}</h1>
+          <div className="text-sm text-gray-500">{tb.count(filtered.length)}</div>
         </div>
 
         {/* Formulaire */}
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
           <h2 className="font-bold text-[#1A1A2E] mb-3 flex items-center gap-2">
             {editingId ? <Pencil className="w-4 h-4 text-[#E87722]" /> : <FileText className="w-4 h-4 text-[#E87722]" />}
-            {editingId ? "Modifier l'article" : "Nouvel article"}
+            {editingId ? tb.editTitle : tb.newTitle}
           </h2>
           <form onSubmit={handleSubmit} className="space-y-3">
             <div className="grid sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Titre (FR)</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">{tb.titleFr}</label>
                 <input
                   type="text" value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
-                  placeholder="Titre de l'article"
+                  placeholder={tb.titlePlaceholder}
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Titre (EN)</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">{tb.titleEn}</label>
                 <input
                   type="text" value={form.titleEn}
                   onChange={(e) => setForm({ ...form, titleEn: e.target.value })}
@@ -223,7 +228,7 @@ export default function AdminBlogPage() {
             </div>
             <div className="grid sm:grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Catégorie</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">{tb.category}</label>
                 <input
                   type="text" value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
@@ -232,7 +237,7 @@ export default function AdminBlogPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Auteur</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">{tb.author}</label>
                 <input
                   type="text" value={form.author}
                   onChange={(e) => setForm({ ...form, author: e.target.value })}
@@ -241,7 +246,7 @@ export default function AdminBlogPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Tags (séparés par virgule)</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">{tb.tags}</label>
                 <input
                   type="text" value={form.tags}
                   onChange={(e) => setForm({ ...form, tags: e.target.value })}
@@ -251,7 +256,7 @@ export default function AdminBlogPage() {
               </div>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Image de couverture (URL)</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">{tb.coverImage}</label>
               <input
                 type="text" value={form.coverImage}
                 onChange={(e) => setForm({ ...form, coverImage: e.target.value })}
@@ -261,16 +266,16 @@ export default function AdminBlogPage() {
             </div>
             <div className="grid sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Extrait (FR)</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">{tb.excerptFr}</label>
                 <textarea
                   value={form.excerpt} rows={2}
                   onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
                   className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] resize-none"
-                  placeholder="Court résumé affiché dans la liste des articles"
+                  placeholder={tb.excerptPlaceholder}
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Extrait (EN)</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">{tb.excerptEn}</label>
                 <textarea
                   value={form.excerptEn} rows={2}
                   onChange={(e) => setForm({ ...form, excerptEn: e.target.value })}
@@ -281,16 +286,16 @@ export default function AdminBlogPage() {
             </div>
             <div className="grid sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Contenu (FR)</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">{tb.contentFr}</label>
                 <textarea
                   value={form.content} rows={6}
                   onChange={(e) => setForm({ ...form, content: e.target.value })}
                   className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
-                  placeholder="Contenu complet de l'article"
+                  placeholder={tb.contentPlaceholder}
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Contenu (EN)</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">{tb.contentEn}</label>
                 <textarea
                   value={form.contentEn} rows={6}
                   onChange={(e) => setForm({ ...form, contentEn: e.target.value })}
@@ -306,16 +311,16 @@ export default function AdminBlogPage() {
                   onChange={(e) => setForm({ ...form, isPublished: e.target.checked })}
                   className="w-4 h-4 rounded border-gray-300 text-[#E87722] focus:ring-[#E87722]"
                 />
-                Publier immédiatement
+                {tb.publishNow}
               </label>
               <div className="flex items-center gap-2">
                 {editingId && (
                   <Button type="button" variant="outline" onClick={cancelEdit} disabled={submitting}>
-                    Annuler
+                    {c.cancel}
                   </Button>
                 )}
                 <Button type="submit" disabled={submitting}>
-                  {editingId ? <><Pencil className="w-4 h-4 mr-1" /> Enregistrer</> : <><Plus className="w-4 h-4 mr-1" /> Créer</>}
+                  {editingId ? <><Pencil className="w-4 h-4 mr-1" /> {c.save}</> : <><Plus className="w-4 h-4 mr-1" /> {c.create}</>}
                 </Button>
               </div>
             </div>
@@ -329,7 +334,7 @@ export default function AdminBlogPage() {
           <input
             type="text" value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            placeholder="Rechercher un article..."
+            placeholder={tb.searchPlaceholder}
             className="w-full pl-9 pr-3 py-1.5 rounded-full border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
           />
         </div>
@@ -339,25 +344,25 @@ export default function AdminBlogPage() {
           {loading ? (
             <div className="p-12 text-center">
               <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
-              <p className="text-gray-500">Chargement...</p>
+              <p className="text-gray-500">{c.loading}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b border-gray-100">
                   <tr>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Titre</th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Catégorie</th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Auteur</th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Vues</th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Statut</th>
-                    <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{tb.colTitle}</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{tb.category}</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{tb.author}</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{tb.colViews}</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{c.status}</th>
+                    <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{c.actions}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {paginated.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-5 py-8 text-center text-gray-400">Aucun article.</td>
+                      <td colSpan={6} className="px-5 py-8 text-center text-gray-400">{tb.none}</td>
                     </tr>
                   ) : (
                     paginated.map((p) => (
@@ -369,7 +374,7 @@ export default function AdminBlogPage() {
                         <td className="px-5 py-3.5 text-gray-500">{p.author}</td>
                         <td className="px-5 py-3.5 text-gray-500">{p.views}</td>
                         <td className="px-5 py-3.5">
-                          {p.isPublished ? <Badge variant="success">Publié</Badge> : <Badge variant="secondary">Brouillon</Badge>}
+                          {p.isPublished ? <Badge variant="success">{c.published}</Badge> : <Badge variant="secondary">{c.draft}</Badge>}
                         </td>
                         <td className="px-5 py-3.5">
                           <div className="flex items-center justify-end gap-1">
@@ -377,7 +382,7 @@ export default function AdminBlogPage() {
                               <a
                                 href={`/blog/${p.slug}`} target="_blank" rel="noopener noreferrer"
                                 className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors"
-                                title="Voir l'article"
+                                title={tb.viewArticle}
                               >
                                 <ExternalLink className="w-4 h-4" />
                               </a>
@@ -386,7 +391,7 @@ export default function AdminBlogPage() {
                               disabled={processingId === p.id}
                               onClick={() => startEdit(p)}
                               className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
-                              title="Modifier"
+                              title={c.edit}
                             >
                               <Pencil className="w-4 h-4" />
                             </button>
@@ -394,7 +399,7 @@ export default function AdminBlogPage() {
                               disabled={processingId === p.id}
                               onClick={() => togglePublish(p)}
                               className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
-                              title={p.isPublished ? "Dépublier" : "Publier"}
+                              title={p.isPublished ? c.unpublish : c.publish}
                             >
                               {p.isPublished ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                             </button>
@@ -402,7 +407,7 @@ export default function AdminBlogPage() {
                               disabled={processingId === p.id}
                               onClick={() => setDeleteTarget(p)}
                               className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                              title="Supprimer"
+                              title={c.delete}
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -416,49 +421,26 @@ export default function AdminBlogPage() {
             </div>
           )}
           {!loading && filtered.length > 0 && (
-            <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100">
-              <div className="text-xs text-gray-500">
-                {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} sur {filtered.length}
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:border-[#E87722] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  Précédent
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setPage(p)}
-                    className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${p === currentPage ? "bg-[#E87722] text-white" : "border border-gray-200 text-gray-600 hover:border-[#E87722]"}`}
-                  >
-                    {p}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:border-[#E87722] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  Suivant
-                </button>
-              </div>
-            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={PAGE_SIZE}
+              totalItems={filtered.length}
+              onPageChange={setPage}
+            />
           )}
         </div>
       </div>
 
       {deleteTarget && (
         <ConfirmDialog
-          title="Supprimer cet article ?"
+          title={tb.deleteTitle}
           description={
             <>
-              <span className="font-semibold text-[#1A1A2E]">{deleteTarget.title}</span> sera définitivement supprimé. Cette action est irréversible.
+              <span className="font-semibold text-[#1A1A2E]">{deleteTarget.title}</span> {c.willBeDeleted} {c.irreversible}
             </>
           }
-          confirmLabel="Supprimer"
+          confirmLabel={c.delete}
           loading={processingId === deleteTarget.id}
           onConfirm={confirmDelete}
           onCancel={() => setDeleteTarget(null)}
