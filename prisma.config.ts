@@ -1,9 +1,16 @@
+import { existsSync } from "node:fs";
 import { loadEnvConfig } from "@next/env";
 import { defineConfig } from "prisma/config";
 
-// En dev (ou sans NODE_ENV), force le chargement de .env (pas .env.production).
-// Sur Vercel, NODE_ENV=production → .env.production est chargé correctement.
-loadEnvConfig(process.cwd(), process.env.NODE_ENV !== "production");
+// En production, on charge uniquement .env.production : loadEnvConfig chargerait
+// aussi .env.local, prioritaire sur .env.production, et viserait la base de dev.
+// Sur Vercel (pas de fichier .env.*), les variables du dashboard sont utilisées.
+// En dev (ou sans NODE_ENV), loadEnvConfig charge .env / .env.local.
+if (process.env.NODE_ENV === "production") {
+  if (existsSync(".env.production")) process.loadEnvFile(".env.production");
+} else {
+  loadEnvConfig(process.cwd(), true);
+}
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
