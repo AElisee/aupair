@@ -1,8 +1,15 @@
-import type { Metadata } from "next";
-import SecuriteContent from "./SecuriteContent";
+import { notFound } from "next/navigation";
+import LegalDocumentView from "@/components/legal/LegalDocumentView";
+import { getDocumentMetadata, getPublishedDocument } from "@/lib/legal-documents.server";
 
-export const metadata: Metadata = { title: "Sécurité — AuPair A.EU" };
+export const dynamic = "force-dynamic";
 
-export default function SecuritePage() {
-  return <SecuriteContent />;
+export function generateMetadata() {
+  return getDocumentMetadata("securite");
+}
+
+export default async function SecuritePage() {
+  const document = await getPublishedDocument("securite");
+  if (!document) notFound();
+  return <LegalDocumentView document={document} />;
 }

@@ -7,6 +7,7 @@ export const DEDICATED_DOCUMENT_PATHS: Record<string, string> = {
   cgu: "/cgu",
   cgv: "/cgv",
   confidentialite: "/confidentialite",
+  securite: "/securite",
 };
 
 /** Identifiants suggérés dans le back-office lors de la création d'un document. */
@@ -14,6 +15,7 @@ export const SUGGESTED_DOCUMENTS = [
   { slug: "cgu", title: "Conditions générales d'utilisation", titleEn: "Terms of use" },
   { slug: "confidentialite", title: "Politique de confidentialité", titleEn: "Privacy policy" },
   { slug: "cgv", title: "Conditions générales de vente", titleEn: "Terms of sale" },
+  { slug: "securite", title: "Sécurité", titleEn: "Security" },
 ];
 
 /** Transforme un texte libre en identifiant d'URL : minuscules, sans accents, tirets. */

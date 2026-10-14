@@ -510,61 +510,6 @@ export const site = {
     authority: { fr: "Autorité de contrôle :", en: "Supervisory authority:" },
   },
 
-  // ─── Sécurité ──────────────────────────────────────────────────────────────
-  security: {
-    title: { fr: "Votre sécurité, notre priorité", en: "Your safety, our priority" },
-    subtitle: {
-      fr: "AuPair A.EU met tout en œuvre pour garantir un environnement sûr pour les au pairs et les familles.",
-      en: "AuPair A.EU does everything it can to guarantee a safe environment for au pairs and families.",
-    },
-    standards: [
-      {
-        title: { fr: "Vérification manuelle des profils", en: "Manual profile checks" },
-        desc: {
-          fr: "Chaque profil est vérifié manuellement par notre équipe avant publication : photo d'identité, cohérence des informations, détection des faux profils.",
-          en: "Every profile is manually checked by our team before publication: ID photo, consistency of information, detection of fake profiles.",
-        },
-      },
-      {
-        title: { fr: "Modération de la messagerie", en: "Message moderation" },
-        desc: {
-          fr: "Notre IA analyse les messages pour détecter les contenus inappropriés, le harcèlement et les tentatives d'arnaque.",
-          en: "Our AI analyses messages to detect inappropriate content, harassment and scam attempts.",
-        },
-      },
-      {
-        title: { fr: "Données chiffrées", en: "Encrypted data" },
-        desc: {
-          fr: "Toutes vos données sont chiffrées en transit (HTTPS/TLS) et au repos. Nous respectons les standards RGPD.",
-          en: "All your data is encrypted in transit (HTTPS/TLS) and at rest. We follow GDPR standards.",
-        },
-      },
-      {
-        title: { fr: "Signalement & suspension", en: "Reporting & suspension" },
-        desc: {
-          fr: "Chaque utilisateur peut signaler un profil ou un message. Les comptes signalés sont examinés sous 24h.",
-          en: "Any user can report a profile or a message. Reported accounts are reviewed within 24 hours.",
-        },
-      },
-      {
-        title: { fr: "Paiements sécurisés", en: "Secure payments" },
-        desc: {
-          fr: "Les paiements sont traités par FedaPay. Aucune donnée bancaire n'est stockée sur nos serveurs.",
-          en: "Payments are processed by FedaPay. No banking data is stored on our servers.",
-        },
-      },
-      {
-        title: { fr: "Conformité RGPD", en: "GDPR compliance" },
-        desc: {
-          fr: "Vous avez le droit d'accéder, modifier ou supprimer vos données à tout moment. Contactez rgpd@aupair-aeu.com.",
-          en: "You can access, modify or delete your data at any time. Contact rgpd@aupair-aeu.com.",
-        },
-      },
-    ],
-    issueTitle: { fr: "Vous avez constaté un problème de sécurité ?", en: "Have you noticed a security issue?" },
-    issueText: { fr: "Contactez immédiatement notre équipe de sécurité.", en: "Contact our security team right away." },
-  },
-
   // ─── Blog ──────────────────────────────────────────────────────────────────
   blog: {
     title: { fr: "Blog AuPair A.EU", en: "AuPair A.EU blog" },
