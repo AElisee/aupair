@@ -41,7 +41,6 @@ export const site = {
       contact: { fr: "Contact", en: "Contact" },
     },
     legalLinks: {
-      legalNotice: { fr: "Mentions légales", en: "Legal notice" },
       terms: { fr: "CGU", en: "Terms of use" },
       salesTerms: { fr: "CGV", en: "Terms of sale" },
       privacy: { fr: "Confidentialité", en: "Privacy" },
@@ -483,30 +482,6 @@ export const site = {
         },
       },
     ],
-  },
-
-  // ─── Mentions légales ──────────────────────────────────────────────────────
-  legalNotice: {
-    title: { fr: "Mentions légales", en: "Legal notice" },
-    publisher: { fr: "Éditeur du site", en: "Website publisher" },
-    companyName: { fr: "Raison sociale :", en: "Company name:" },
-    siret: { fr: "SIRET :", en: "SIRET:" },
-    director: { fr: "Directeur de publication :", en: "Publication director:" },
-    email: { fr: "Email :", en: "Email:" },
-    hosting: { fr: "Hébergement", en: "Hosting" },
-    host: { fr: "Hébergeur :", en: "Host:" },
-    address: { fr: "Adresse :", en: "Address:" },
-    ipTitle: { fr: "Propriété intellectuelle", en: "Intellectual property" },
-    ipText: {
-      fr: "L'ensemble du contenu de ce site (textes, images, logo) est protégé par les droits de propriété intellectuelle. Toute reproduction est interdite sans autorisation préalable écrite.",
-      en: "All content on this website (text, images, logo) is protected by intellectual property rights. Any reproduction is prohibited without prior written permission.",
-    },
-    dataTitle: { fr: "Données personnelles", en: "Personal data" },
-    dataText: {
-      fr: "Conformément au RGPD, vous disposez d'un droit d'accès, de rectification, de suppression et d'opposition à vos données. Contact :",
-      en: "Under the GDPR, you have the right to access, rectify, delete and object to the processing of your data. Contact:",
-    },
-    authority: { fr: "Autorité de contrôle :", en: "Supervisory authority:" },
   },
 
   // ─── Blog ──────────────────────────────────────────────────────────────────

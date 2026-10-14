@@ -49,6 +49,7 @@ export const PAYMENT_METHOD_LABELS: Record<string, string> = {
   MOBILE_MONEY: "Mobile Money",
   CARD: "Carte bancaire",
   FEDAPAY: "FedaPay",
+  GENIUSPAY: "GeniusPay",
 };
 
 export const CONTACT_SUBJECTS: Record<string, string> = {

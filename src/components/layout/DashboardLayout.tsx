@@ -83,7 +83,7 @@ function SidebarContent({
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto sidebar-scroll">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isDashboardRoot = item.href === "/dashboard/au-pair" || item.href === "/dashboard/famille";

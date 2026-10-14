@@ -15,7 +15,7 @@ AuPair A.EU — Première plateforme mondiale dédiée aux au pairs africains. M
 - **Auth**: NextAuth.js v5 (beta) — Google + Facebook OAuth + credentials, JWT strategy
 - **Hosting**: Vercel
 
-Not yet integrated: Supabase Realtime (messaging), Supabase Storage (photo uploads). FedaPay (Mobile Money & cards) is the only payment provider, integrated and admin-configurable, see below.
+Not yet integrated: Supabase Realtime (messaging), Supabase Storage (photo uploads). Two payment aggregators are integrated and admin-configurable — FedaPay and GeniusPay — with one active at a time, see below.
 
 ## Commands
 
@@ -167,12 +167,39 @@ edited at `/admin/parametres/email` via `/api/admin/constants`. `src/lib/mail.ts
 `[mail]` error (never throws) if either is missing or Resend rejects the send.
 See `docs/email-resend.md` for setup, local testing, and production deployment.
 
-### Payments (FedaPay — Mobile Money & cards, the only payment provider)
+### Payments — active provider switch
+
+`AppSettings.paymentProvider` (`"fedapay" | "geniuspay"`, default `fedapay`) picks the
+aggregator used for **new** payments. The client always calls `POST /api/payments/checkout`,
+which delegates to the active provider's checkout route and returns `{ provider,
+transactionId, checkoutUrl }`; the client then polls `/api/payments/{provider}/verify`.
+The inactive provider's keys stay saved and its verify/webhook routes keep working, so
+payments started before a switch still complete. Switching is done from the "Agrégateur
+de paiement" block on `/admin/parametres/paiements` ("Moyens de paiement", one tab per provider; old `/admin/parametres/{fedapay,geniuspay}` URLs redirect there)
+(`PaymentProviderActivation`); `/api/admin/constants` refuses to activate a provider
+whose public + secret keys are missing. Helpers in `src/lib/payments.ts`
+(`resolveActiveProvider`, `isProviderConfigured`, `activateSubscriptionForPayment`).
+
+### Payments (GeniusPay — Wave, Orange/MTN/Moov Money, cards)
+
+`geniuspayPublicKey` / `geniuspaySecretKey` / `geniuspayWebhookSecret` on `AppSettings`,
+edited in the GeniusPay tab of `/admin/parametres/paiements`. Single base URL
+`https://geniuspay.ci/api/v1/merchant` for sandbox and live (environment follows the key
+prefix `pk_sandbox_`/`pk_live_`), auth via `X-API-Key` + `X-API-Secret` headers
+(`src/lib/geniuspay.ts`). Hosted checkout mode (`POST /payments` without
+`payment_method` → `checkout_url`), `metadata.user_id` maps a payment back to the user,
+the payment `reference` (`MTX-…`) is the transaction id and the `Subscription.paymentId`.
+Statuses: `completed` = success; `failed`/`cancelled`/`expired`/`refunded` = failure;
+`pending`/`processing` = pending. Webhook `POST /api/webhooks/geniuspay` checks
+`X-Webhook-Signature` = HMAC-SHA256 of `` `${X-Webhook-Timestamp}.${payload}` `` (5 min
+tolerance), then re-fetches `GET /payments/{reference}` before writing.
+
+### Payments (FedaPay — Mobile Money & cards)
 
 `fedapayPublicKey`, `fedapaySecretKey`, `fedapayWebhookSecret` and
 `fedapayEnvironment` are **not** environment variables — they're
 admin-configurable settings stored on `AppSettings` (`app_settings` table),
-edited at `/admin/parametres/fedapay` via `/api/admin/constants`.
+edited in the FedaPay tab of `/admin/parametres/paiements` via `/api/admin/constants`.
 `fedapayEnvironment` (`"sandbox" | "live"`) is an **explicit** admin choice:
 FedaPay's own SDK requires calling `setEnvironment()` rather than inferring it
 from the key prefix, so the app can't auto-detect it either. API base URL is

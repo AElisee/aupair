@@ -99,6 +99,32 @@ a[href] {
   border-radius: 3px;
 }
 
+/* Scrollbar fine des sidebars (fond sombre) */
+.sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(232, 119, 34, 0.6);
+  border-radius: 4px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: #e87722;
+}
+
+/* Firefox (scrollbar-width écraserait les styles ::-webkit dans Chrome) */
+@supports (-moz-appearance: none) {
+  .sidebar-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(232, 119, 34, 0.6) transparent;
+  }
+}
+
 /* Animations */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }

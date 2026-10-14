@@ -70,6 +70,7 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({
+    provider: "fedapay",
     transactionId: transaction.id,
     checkoutUrl: tokenJson.url,
     reference: merchantReference,

@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { RefreshCw } from "lucide-react";
-import { useI18n } from "@/i18n";
+import { useEffect, useRef } from "react";
 
-// Distance (px) à tirer pour déclencher l'actualisation, et déplacement max de l'indicateur.
+// Distance (px) à tirer pour déclencher l'actualisation.
 const THRESHOLD = 80;
 const MAX_PULL = 120;
-// Le doigt bouge plus que l'indicateur, pour un effet de résistance.
+// Le doigt bouge plus que la distance comptée, pour un effet de résistance.
 const RESISTANCE = 0.5;
 
 /** Vrai si la cible du toucher est dans un conteneur déjà défilé vers le bas (liste de messages, modale…). */
@@ -23,12 +21,9 @@ function isInsideScrolledContainer(target: EventTarget | null): boolean {
 /**
  * Pull-to-refresh sur mobile : tirer la page vers le bas depuis le haut recharge la page.
  * Le pull-to-refresh natif est désactivé (`overscroll-behavior-y: none` dans globals.css)
- * pour supprimer le rebond, ce composant le remplace.
+ * pour supprimer le rebond, ce composant le remplace (sans indicateur visuel).
  */
 export default function PullToRefresh() {
-  const { t } = useI18n();
-  const [pull, setPull] = useState(0);
-  const [refreshing, setRefreshing] = useState(false);
   const startY = useRef<number | null>(null);
   const pullRef = useRef(0);
 
@@ -36,7 +31,6 @@ export default function PullToRefresh() {
     const reset = () => {
       startY.current = null;
       pullRef.current = 0;
-      setPull(0);
     };
 
     const onTouchStart = (e: TouchEvent) => {
@@ -55,16 +49,12 @@ export default function PullToRefresh() {
         return;
       }
       if (e.cancelable) e.preventDefault();
-      const next = Math.min(delta * RESISTANCE, MAX_PULL);
-      pullRef.current = next;
-      setPull(next);
+      pullRef.current = Math.min(delta * RESISTANCE, MAX_PULL);
     };
 
     const onTouchEnd = () => {
       if (startY.current === null) return;
       if (pullRef.current >= THRESHOLD) {
-        setRefreshing(true);
-        setPull(THRESHOLD);
         window.location.reload();
         return;
       }
@@ -84,26 +74,5 @@ export default function PullToRefresh() {
     };
   }, []);
 
-  if (pull === 0 && !refreshing) return null;
-
-  const ready = pull >= THRESHOLD;
-  const label = refreshing ? t.common.refreshing : ready ? t.common.releaseToRefresh : t.common.pullToRefresh;
-
-  return (
-    <div
-      className="fixed left-1/2 top-0 z-[200] flex items-center gap-2 rounded-full border border-gray-100 bg-white px-4 py-2 text-sm font-medium text-[#1A1A2E] shadow-lg"
-      style={{
-        transform: `translate(-50%, ${pull - 48}px)`,
-        opacity: Math.min(pull / THRESHOLD, 1),
-      }}
-      role="status"
-      aria-live="polite"
-    >
-      <RefreshCw
-        className={`h-4 w-4 text-[#E87722] ${refreshing ? "animate-spin" : ""}`}
-        style={refreshing ? undefined : { transform: `rotate(${pull * 3}deg)` }}
-      />
-      {label}
-    </div>
-  );
+  return null;
 }

@@ -11,7 +11,7 @@ type Payment = {
   user: string;
   email: string;
   amount: string;
-  method: "MOBILE_MONEY" | "CARD" | "FEDAPAY";
+  method: "MOBILE_MONEY" | "CARD" | "FEDAPAY" | "GENIUSPAY";
   status: "ACTIVE" | "EXPIRED" | "CANCELLED" | "REFUNDED";
   date: string;
   invoiceUrl: string | null;

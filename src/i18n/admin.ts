@@ -83,7 +83,7 @@ export const admin = {
     constants: { fr: "Constantes", en: "Constants" },
     notifications: { fr: "Notifications", en: "Notifications" },
     email: { fr: "Email", en: "Email" },
-    fedapay: { fr: "FedaPay", en: "FedaPay" },
+    paymentMethods: { fr: "Moyens de paiement", en: "Payment methods" },
     documents: { fr: "Documents", en: "Documents" },
     account: { fr: "Mon compte", en: "My account" },
     signOut: { fr: "Déconnexion", en: "Sign out" },
@@ -200,6 +200,7 @@ export const admin = {
       MOBILE_MONEY: { fr: "Mobile Money", en: "Mobile Money" },
       CARD: { fr: "Carte bancaire", en: "Bank card" },
       FEDAPAY: { fr: "FedaPay", en: "FedaPay" },
+      GENIUSPAY: { fr: "GeniusPay", en: "GeniusPay" },
     },
     statuses: {
       ACTIVE: { fr: "Actif", en: "Active" },
@@ -443,7 +444,8 @@ export const admin = {
       en: "This address's domain must be verified in Resend, otherwise sending will fail.",
     },
 
-    fedapayTitle: { fr: "Paramètres — FedaPay (Mobile Money)", en: "Settings — FedaPay (Mobile Money)" },
+    paymentMethodsTitle: { fr: "Moyens de paiement", en: "Payment methods" },
+    fedapayTitle: { fr: "Configuration FedaPay (Mobile Money)", en: "FedaPay configuration (Mobile Money)" },
     environment: { fr: "Environnement", en: "Environment" },
     environmentHint: {
       fr: "FedaPay ne permet pas de déduire l'environnement du préfixe de clé : sélectionnez-le explicitement. Les clés sandbox et live sont totalement séparées (transactions, webhooks).",
@@ -494,6 +496,70 @@ export const admin = {
     webhookUrlHint: {
       fr: "Ajoutez cette URL dans votre tableau de bord FedaPay → Webhooks, puis copiez la clé de signature générée ci-dessus.",
       en: "Add this URL in your FedaPay dashboard → Webhooks, then copy the generated signing key above.",
+    },
+
+    providerTitle: { fr: "Agrégateur de paiement", en: "Payment provider" },
+    providerActiveBadge: { fr: "Actif", en: "Active" },
+    providerInactiveBadge: { fr: "Inactif", en: "Inactive" },
+    providerActive: {
+      fr: (name: string) => `${name} est l'agrégateur actif : tous les nouveaux paiements d'abonnement passent par lui.`,
+      en: (name: string) => `${name} is the active provider: all new subscription payments go through it.`,
+    },
+    providerInactive: {
+      fr: (name: string, other: string) =>
+        `${name} est en veille : les nouveaux paiements passent actuellement par ${other}. Ses clés restent enregistrées et les paiements déjà initiés avec ${name} continuent d'être confirmés.`,
+      en: (name: string, other: string) =>
+        `${name} is on standby: new payments currently go through ${other}. Its keys stay saved and payments already started with ${name} are still confirmed.`,
+    },
+    activateProvider: { fr: (name: string) => `Activer ${name}`, en: (name: string) => `Enable ${name}` },
+    activateProviderConfirm: {
+      fr: (name: string) => `Basculer tous les nouveaux paiements vers ${name} ?`,
+      en: (name: string) => `Switch all new payments to ${name}?`,
+    },
+    activateNeedsKeys: {
+      fr: "Renseignez et enregistrez la clé publique et la clé secrète pour pouvoir l'activer.",
+      en: "Enter and save the public key and secret key to be able to enable it.",
+    },
+
+    geniuspayTitle: { fr: "Configuration GeniusPay (Mobile Money & cartes)", en: "GeniusPay configuration (Mobile Money & cards)" },
+    geniuspayEnvironmentHint: {
+      fr: "GeniusPay déduit l'environnement des clés elles-mêmes : clés pk_sandbox_/sk_sandbox_ pour les tests, pk_live_/sk_live_ pour la production.",
+      en: "GeniusPay infers the environment from the keys themselves: pk_sandbox_/sk_sandbox_ keys for testing, pk_live_/sk_live_ for production.",
+    },
+    geniuspayEnvironmentDetected: {
+      fr: (env: string) => `Environnement détecté : ${env}`,
+      en: (env: string) => `Detected environment: ${env}`,
+    },
+    geniuspayEnvironmentUnknown: {
+      fr: "Environnement non détecté (préfixe de clé inattendu).",
+      en: "Environment not detected (unexpected key prefix).",
+    },
+    geniuspayPublicKeyMissing: {
+      fr: "non configurée — le paiement GeniusPay est désactivé",
+      en: "not configured — GeniusPay payment is disabled",
+    },
+    geniuspayWebhookSecretPlaceholder: { fr: "whsec_...", en: "whsec_..." },
+    removeGeniuspayConfirm: {
+      fr: (label: string) => `${label} ? Le paiement GeniusPay ne fonctionnera plus correctement.`,
+      en: (label: string) => `${label}? GeniusPay payments will no longer work properly.`,
+    },
+    geniuspayKeysHintStart: { fr: "Récupérez vos clés depuis", en: "Get your keys from" },
+    geniuspayKeysHintEnd: {
+      fr: "→ Paramètres → API. Le secret de webhook (whsec_…) n'est affiché qu'une seule fois, à la création du webhook.",
+      en: "→ Settings → API. The webhook secret (whsec_…) is only shown once, when the webhook is created.",
+    },
+    geniuspayOperational: {
+      fr: "GeniusPay est configuré. Les utilisateurs sont redirigés vers la page de paiement hébergée GeniusPay (Wave, Orange Money, MTN, Moov, cartes bancaires).",
+      en: "GeniusPay is configured. Users are redirected to the GeniusPay hosted payment page (Wave, Orange Money, MTN, Moov, bank cards).",
+    },
+    geniuspayDisabled: {
+      fr: "GeniusPay n'est pas configuré. Renseignez la clé publique et la clé secrète.",
+      en: "GeniusPay is not configured. Enter the public key and the secret key.",
+    },
+    geniuspayWebhookUrl: { fr: "URL Webhook à configurer dans GeniusPay :", en: "Webhook URL to configure in GeniusPay:" },
+    geniuspayWebhookUrlHint: {
+      fr: "Créez un webhook avec cette URL dans GeniusPay (événements payment.*), puis collez le secret whsec_… ci-dessus.",
+      en: "Create a webhook with this URL in GeniusPay (payment.* events), then paste the whsec_… secret above.",
     },
 
     constantsTitle: { fr: "Paramètres — Constantes", en: "Settings — Constants" },

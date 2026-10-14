@@ -37,6 +37,7 @@ enum PaymentMethod {
   MOBILE_MONEY
   CARD
   FEDAPAY
+  GENIUSPAY
 }
 
 enum Currency {
@@ -558,6 +559,17 @@ model AppSettings {
   fedapaySecretKey     String?
   fedapayWebhookSecret String?
   fedapayEnvironment   String? @default("sandbox")
+
+  // Configuration des paiements GeniusPay (agrégateur Mobile Money / Wave / cartes, Côte d'Ivoire) —
+  // éditable par l'admin. Une seule URL d'API pour sandbox et live : l'environnement découle des clés
+  // elles-mêmes (pk_sandbox_/pk_live_), d'où l'absence de champ "environment".
+  geniuspayPublicKey     String?
+  geniuspaySecretKey     String?
+  geniuspayWebhookSecret String?
+
+  // Agrégateur utilisé pour les nouveaux paiements : "fedapay" | "geniuspay". L'autre reste configuré
+  // (vérification et webhooks des paiements déjà initiés continuent de fonctionner) et peut être réactivé.
+  paymentProvider String @default("fedapay")
 
   updatedAt            DateTime @updatedAt
 

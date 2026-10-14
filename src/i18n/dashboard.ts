@@ -13,9 +13,6 @@ export const dashboard = {
   // ─── Textes partagés ───────────────────────────────────────────────────────
   common: {
     loading: { fr: "Chargement...", en: "Loading..." },
-    pullToRefresh: { fr: "Tirer pour actualiser", en: "Pull to refresh" },
-    releaseToRefresh: { fr: "Relâcher pour actualiser", en: "Release to refresh" },
-    refreshing: { fr: "Actualisation...", en: "Refreshing..." },
     loadProfileError: { fr: "Impossible de charger ce profil.", en: "Unable to load this profile." },
     genericError: { fr: "Une erreur est survenue.", en: "Something went wrong." },
     networkError: { fr: "Erreur réseau, veuillez réessayer.", en: "Network error, please try again." },

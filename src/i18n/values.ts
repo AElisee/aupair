@@ -186,6 +186,8 @@ const SERVER_ERRORS: Record<string, string> = {
   "reportedId et reason sont requis": "Invalid request.",
   "Le paiement n'est pas configuré.": "Payment is not configured.",
   "Le paiement n'est pas encore configuré.": "Payment is not configured yet.",
+  "Renseignez la clé publique et la clé secrète de cet agrégateur avant de l'activer.":
+    "Enter this provider's public key and secret key before enabling it.",
   "Impossible d'initier le paiement.": "Unable to start the payment.",
   "Impossible de générer le lien de paiement.": "Unable to generate the payment link.",
   "Impossible de vérifier le paiement.": "Unable to verify the payment.",
@@ -249,6 +251,7 @@ const SERVER_ERROR_PATTERNS: [RegExp, (m: RegExpMatchArray) => string][] = [
   [/^Le champ "(.+)" doit être une chaîne\.$/, (m) => `The "${m[1]}" field must be a string.`],
   [/^Le champ "emailFrom" doit être une adresse email/, () => `The "emailFrom" field must be an email address, e.g. "AuPair A.EU <contact@domain.com>".`],
   [/^Le champ "fedapayEnvironment" doit être/, () => `The "fedapayEnvironment" field must be "sandbox" or "live".`],
+  [/^Le champ "paymentProvider" doit être/, () => `The "paymentProvider" field must be "fedapay" or "geniuspay".`],
   [/^Le champ "heroImageUrl" doit être/, () => `The "heroImageUrl" field must be a non-empty URL or path.`],
   [/^Un document avec l'identifiant « (.+) » existe déjà\.$/, (m) => `A document with the identifier "${m[1]}" already exists.`],
 ];

@@ -32,7 +32,8 @@ function AbonnementContent() {
   const [error, setError] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
-  const [pendingTransactionId, setPendingTransactionId] = useState<number | null>(null);
+  // FedaPay identifie une transaction par un id numérique, GeniusPay par une référence "MTX-…"
+  const [pendingTransactionId, setPendingTransactionId] = useState<number | string | null>(null);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const pollAttempts = useRef(0);
 
@@ -51,8 +52,8 @@ function AbonnementContent() {
 
   const paymentStatus = searchParams.get("payment");
 
-  const verify = useCallback((transactionId: number) => {
-    fetch("/api/payments/fedapay/verify", {
+  const verify = useCallback((provider: string, transactionId: number | string) => {
+    fetch(`/api/payments/${provider}/verify`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ transactionId }),
@@ -66,7 +67,7 @@ function AbonnementContent() {
             setError(t.subscription.stillPending);
             return;
           }
-          setTimeout(() => verify(transactionId), POLL_INTERVAL_MS);
+          setTimeout(() => verify(provider, transactionId), POLL_INTERVAL_MS);
           return;
         }
         setPendingTransactionId(null);
@@ -87,7 +88,8 @@ function AbonnementContent() {
     setError("");
     setSubmitting(true);
     try {
-      const res = await fetch("/api/payments/fedapay/checkout", { method: "POST" });
+      // L'API choisit l'agrégateur actif (FedaPay ou GeniusPay) et renvoie `provider` pour le polling.
+      const res = await fetch("/api/payments/checkout", { method: "POST" });
       const json = await res.json();
       if (!res.ok) {
         setError(tError(json.error, t.common.genericError));
@@ -99,7 +101,7 @@ function AbonnementContent() {
 
       pollAttempts.current = 0;
       setPendingTransactionId(json.transactionId);
-      setTimeout(() => verify(json.transactionId), POLL_INTERVAL_MS);
+      setTimeout(() => verify(json.provider ?? "fedapay", json.transactionId), POLL_INTERVAL_MS);
     } catch {
       setError(t.common.genericError);
     } finally {

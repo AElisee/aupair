@@ -1,6 +1,36 @@
 import { NextResponse } from "next/server";
 import { requireAdminSession } from "@/lib/admin";
 import { getAppSettings, updateAppSettings, type AppSettingsInput } from "@/lib/settings";
+import { isPaymentProvider, isProviderConfigured, resolveActiveProvider } from "@/lib/payments";
+import { geniuspayEnvironmentFromKey } from "@/lib/geniuspay";
+
+type Settings = Awaited<ReturnType<typeof getAppSettings>>;
+
+/** Ne renvoie jamais les secrets au client : seulement un booléen "configuré". */
+function toPublicSettings(settings: Settings) {
+  const {
+    resendApiKey,
+    fedapayPublicKey,
+    fedapaySecretKey,
+    fedapayWebhookSecret,
+    geniuspayPublicKey,
+    geniuspaySecretKey,
+    geniuspayWebhookSecret,
+    ...rest
+  } = settings;
+  return {
+    ...rest,
+    paymentProvider: resolveActiveProvider(settings.paymentProvider),
+    resendApiKeyConfigured: !!resendApiKey,
+    fedapayPublicKeyConfigured: !!fedapayPublicKey,
+    fedapaySecretKeyConfigured: !!fedapaySecretKey,
+    fedapayWebhookSecretConfigured: !!fedapayWebhookSecret,
+    geniuspayPublicKeyConfigured: !!geniuspayPublicKey,
+    geniuspaySecretKeyConfigured: !!geniuspaySecretKey,
+    geniuspayWebhookSecretConfigured: !!geniuspayWebhookSecret,
+    geniuspayEnvironment: geniuspayEnvironmentFromKey(geniuspayPublicKey),
+  };
+}
 
 export async function GET() {
   const session = await requireAdminSession();
@@ -9,16 +39,7 @@ export async function GET() {
   }
 
   const settings = await getAppSettings();
-  const { resendApiKey, fedapayPublicKey, fedapaySecretKey, fedapayWebhookSecret, ...rest } = settings;
-  return NextResponse.json({
-    settings: {
-      ...rest,
-      resendApiKeyConfigured: !!resendApiKey,
-      fedapayPublicKeyConfigured: !!fedapayPublicKey,
-      fedapaySecretKeyConfigured: !!fedapaySecretKey,
-      fedapayWebhookSecretConfigured: !!fedapayWebhookSecret,
-    },
-  });
+  return NextResponse.json({ settings: toPublicSettings(settings) });
 }
 
 function isStringArray(value: unknown): value is string[] {
@@ -150,15 +171,35 @@ export async function PUT(req: Request) {
     data.fedapayEnvironment = value;
   }
 
+  for (const key of ["geniuspayPublicKey", "geniuspaySecretKey", "geniuspayWebhookSecret"] as const) {
+    if (key in body) {
+      const value = body[key];
+      if (typeof value !== "string") {
+        return NextResponse.json({ error: `Le champ "${key}" doit être une chaîne.` }, { status: 400 });
+      }
+      data[key] = value.trim() === "" ? null : value.trim();
+    }
+  }
+
+  if ("paymentProvider" in body) {
+    const value = body.paymentProvider;
+    if (!isPaymentProvider(value)) {
+      return NextResponse.json({ error: `Le champ "paymentProvider" doit être "fedapay" ou "geniuspay".` }, { status: 400 });
+    }
+    data.paymentProvider = value;
+  }
+
+  // Refuse d'activer un agrégateur sans clés : les au pairs verraient un bouton "Payer" qui échoue systématiquement.
+  if (isPaymentProvider(data.paymentProvider)) {
+    const current = await getAppSettings();
+    if (!isProviderConfigured(data.paymentProvider, { ...current, ...data })) {
+      return NextResponse.json(
+        { error: "Renseignez la clé publique et la clé secrète de cet agrégateur avant de l'activer." },
+        { status: 400 }
+      );
+    }
+  }
+
   const settings = await updateAppSettings(data);
-  const { resendApiKey, fedapayPublicKey, fedapaySecretKey, fedapayWebhookSecret, ...rest } = settings;
-  return NextResponse.json({
-    settings: {
-      ...rest,
-      resendApiKeyConfigured: !!resendApiKey,
-      fedapayPublicKeyConfigured: !!fedapayPublicKey,
-      fedapaySecretKeyConfigured: !!fedapaySecretKey,
-      fedapayWebhookSecretConfigured: !!fedapayWebhookSecret,
-    },
-  });
+  return NextResponse.json({ settings: toPublicSettings(settings) });
 }

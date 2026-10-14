@@ -15,7 +15,6 @@ const aboutLinks = [
   { href: "/contact", key: "contact" },
 ] as const;
 const legalLinks = [
-  { href: "/mentions-legales", key: "legalNotice" },
   { href: "/cgu", key: "terms" },
   { href: "/cgv", key: "salesTerms" },
   { href: "/confidentialite", key: "privacy" },
