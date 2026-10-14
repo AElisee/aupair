@@ -41,13 +41,13 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 font-bold text-lg sm:text-xl">
+          <Link href="/" className="flex items-center gap-2 font-bold text-sm sm:text-xl">
             <Image
               src="/Logo_au_pair.png"
               alt="AuPair A.EU"
               width={56}
               height={56}
-              className="w-11 h-11 sm:w-14 sm:h-14 object-contain"
+              className="w-11 h-11 sm:w-14 sm:h-14 rounded-full object-cover"
               priority
             />
             <span className="text-[#1A1A2E]">AuPair</span>

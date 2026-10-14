@@ -53,7 +53,7 @@ function SidebarContent({
             alt="AuPair A.EU"
             width={56}
             height={56}
-            className="w-11 h-11 sm:w-14 sm:h-14 object-contain"
+            className="w-11 h-11 sm:w-14 sm:h-14 rounded-full object-cover"
           />
           <span className="text-white font-bold">AuPair<span className="text-[#E87722]">A.EU</span></span>
         </Link>
@@ -297,7 +297,7 @@ export default function DashboardLayout({ children, role, userName }: DashboardL
               alt="AuPair A.EU"
               width={56}
               height={56}
-              className="w-11 h-11 sm:w-14 sm:h-14 object-contain"
+              className="w-11 h-11 sm:w-14 sm:h-14 rounded-full object-cover"
             />
             <span className="text-white font-bold text-sm">AuPair<span className="text-[#E87722]">A.EU</span></span>
           </Link>

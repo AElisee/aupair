@@ -5,7 +5,6 @@ import Image from "next/image";
 import { Instagram, Facebook, Linkedin, Youtube } from "lucide-react";
 import { useI18n } from "@/i18n";
 
-const hostCountries = ["France", "Allemagne", "Belgique", "Luxembourg", "Suisse", "États-Unis"];
 const aboutLinks = [
   { href: "/devenir-au-pair", key: "becomeAuPair" },
   { href: "/accueillir-un-au-pair", key: "hostAuPair" },
@@ -25,11 +24,11 @@ const legalLinks = [
 ] as const;
 
 export default function Footer() {
-  const { t, tValue } = useI18n();
+  const { t } = useI18n();
   return (
     <footer className="bg-[#1A1A2E] text-gray-300 mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
           {/* Marque */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
@@ -38,9 +37,9 @@ export default function Footer() {
                 alt="AuPair A.EU"
                 width={56}
                 height={56}
-                className="w-11 h-11 object-contain"
+                className="w-11 h-11 rounded-full object-cover"
               />
-              <span className="text-white font-bold text-xl">AuPair<span className="text-[#E87722]">A.EU</span></span>
+              <span className="text-white font-bold text-base sm:text-xl">AuPair<span className="text-[#E87722]">A.EU</span></span>
             </div>
             <p className="text-sm text-gray-400 leading-relaxed">
               {t.footer.tagline}
@@ -59,23 +58,6 @@ export default function Footer() {
                 <Youtube className="w-4 h-4" />
               </a>
             </div>
-          </div>
-
-          {/* Pays d'accueil */}
-          <div>
-            <h3 className="text-white font-semibold mb-4">{t.footer.hostCountries}</h3>
-            <ul className="space-y-2">
-              {hostCountries.map((country) => (
-                <li key={country}>
-                  <Link
-                    href={`/trouver-famille/${country.toLowerCase().replace(" ", "-")}`}
-                    className="text-sm hover:text-[#E87722] transition-colors"
-                  >
-                    {tValue(country)}
-                  </Link>
-                </li>
-              ))}
-            </ul>
           </div>
 
           {/* À propos */}

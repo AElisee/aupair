@@ -23,13 +23,13 @@ export default function NotFoundView() {
   return (
     <section className="flex-1 flex items-center justify-center bg-[#F5F5F5] px-4 py-16 min-h-[70dvh]">
       <div className="w-full max-w-lg bg-white rounded-3xl shadow-sm border border-gray-100 p-8 sm:p-10 text-center">
-        <Link href="/" className="inline-flex items-center gap-2 font-bold text-xl mb-8">
+        <Link href="/" className="inline-flex items-center gap-2 font-bold text-base sm:text-xl mb-8">
           <Image
             src="/Logo_au_pair.png"
             alt="AuPair A.EU"
             width={64}
             height={64}
-            className="w-16 h-16 object-contain"
+            className="w-16 h-16 rounded-full object-cover"
             priority
           />
           <span className="text-[#1A1A2E]">AuPair</span>

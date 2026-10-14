@@ -89,7 +89,7 @@ function ConnexionForm() {
               alt="AuPair A.EU"
               width={80}
               height={80}
-              className="w-20 h-20 object-contain"
+              className="w-20 h-20 rounded-full object-cover"
             />
           </div>
           <h2 className="text-3xl font-extrabold mb-4">
@@ -113,7 +113,7 @@ function ConnexionForm() {
         <div className="w-full max-w-md">
           {/* Logo mobile */}
           {/* <div className="lg:hidden flex items-center gap-2 font-bold text-xl mb-8">
-            <Image src="/Logo_au_pair.png" alt="AuPair A.EU" width={32} height={32} className="w-8 h-8 object-contain" />
+            <Image src="/Logo_au_pair.png" alt="AuPair A.EU" width={32} height={32} className="w-8 h-8 rounded-full object-cover" />
             <span className="text-[#1A1A2E]">AuPair</span>
             <span className="text-[#E87722]">A.EU</span>
           </div> */}

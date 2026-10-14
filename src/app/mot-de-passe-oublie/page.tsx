@@ -44,13 +44,13 @@ export default function MotDePasseOubliePage() {
   return (
     <div className="min-h-dvh flex items-center justify-center p-8">
       <div className="w-full max-w-md">
-        <div className="flex items-center gap-2 font-bold text-xl mb-8">
+        <div className="flex items-center gap-2 font-bold text-base sm:text-xl mb-8">
           <Image
             src="/Logo_au_pair.png"
             alt="AuPair A.EU"
             width={32}
             height={32}
-            className="w-8 h-8 object-contain"
+            className="w-8 h-8 rounded-full object-cover"
           />
           <span className="text-[#1A1A2E]">AuPair</span>
           <span className="text-[#E87722]">A.EU</span>

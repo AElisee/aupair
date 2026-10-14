@@ -29,7 +29,6 @@ export const site = {
       fr: "La première plateforme mondiale dédiée aux au pairs africains. Trouvez votre famille d'accueil idéale en Europe.",
       en: "The first global platform dedicated to African au pairs. Find your ideal host family in Europe.",
     },
-    hostCountries: { fr: "Pays d'accueil", en: "Host countries" },
     about: { fr: "À propos d'AuPair A.EU", en: "About AuPair A.EU" },
     usefulLinks: { fr: "Liens utiles", en: "Useful links" },
     aboutLinks: {
@@ -53,7 +52,7 @@ export const site = {
       fr: "© 2026 AuPair A.EU — SIRET : 02025527692 — Éditeur : BODOU SERVICE",
       en: "© 2026 AuPair A.EU — SIRET: 02025527692 — Publisher: BODOU SERVICE",
     },
-    compliance: { fr: "Conforme RGPD · Hébergé sur Vercel", en: "GDPR compliant · Hosted on Vercel" },
+    compliance: { fr: "Conforme RGPD", en: "GDPR compliant" },
   },
 
   // ─── Page d'accueil ────────────────────────────────────────────────────────
@@ -459,7 +458,7 @@ export const site = {
     signUpAuPair: { fr: "S'inscrire comme au pair", en: "Sign up as an au pair" },
     signUpFamily: { fr: "S'inscrire comme famille", en: "Sign up as a family" },
     paymentTitle: { fr: "Moyens de paiement acceptés", en: "Accepted payment methods" },
-    paymentName: { fr: "Mobile Money & carte (FedaPay)", en: "Mobile Money & card (FedaPay)" },
+    paymentName: { fr: "Mobile Money & carte bancaire", en: "Mobile Money & bank card" },
     faqTitle: { fr: "Questions sur les tarifs", en: "Pricing questions" },
     faqs: [
       {
@@ -559,8 +558,8 @@ export const site = {
           {
             q: { fr: "Combien coûte l'abonnement au pair ?", en: "How much does the au pair subscription cost?" },
             a: {
-              fr: "L'abonnement est de 32€ ou 20 800 FCFA pour 30 jours. Vous pouvez payer par Mobile Money ou carte bancaire via FedaPay.",
-              en: "The subscription costs €32 or 20,800 FCFA for 30 days. You can pay by Mobile Money or bank card via FedaPay.",
+              fr: "L'abonnement est de 32€ ou 20 800 FCFA pour 30 jours. Vous pouvez payer par Mobile Money ou carte bancaire.",
+              en: "The subscription costs €32 or 20,800 FCFA for 30 days. You can pay by Mobile Money or bank card.",
             },
           },
           {
@@ -611,8 +610,8 @@ export const site = {
           {
             q: { fr: "Quels moyens de paiement acceptez-vous ?", en: "Which payment methods do you accept?" },
             a: {
-              fr: "Mobile Money et carte bancaire via FedaPay (MTN, Moov, Celtiis, Mixx by Yas, Airtel, Visa/Mastercard, et plus).",
-              en: "Mobile Money and bank card via FedaPay (MTN, Moov, Celtiis, Mixx by Yas, Airtel, Visa/Mastercard and more).",
+              fr: "Mobile Money et carte bancaire (MTN, Moov, Celtiis, Mixx by Yas, Airtel, Visa/Mastercard, et plus).",
+              en: "Mobile Money and bank card (MTN, Moov, Celtiis, Mixx by Yas, Airtel, Visa/Mastercard and more).",
             },
           },
           {
