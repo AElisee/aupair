@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { SessionProvider } from "next-auth/react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import PullToRefresh from "./PullToRefresh";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 
 const PRIVATE_PATHS = ["/dashboard", "/admin"];
@@ -15,6 +16,7 @@ export default function PublicLayoutWrapper({ children }: { children: React.Reac
   return (
     <SessionProvider>
       <LanguageProvider>
+        <PullToRefresh />
         {!isPrivate && <Navbar />}
         <main className={isPrivate ? "min-h-dvh" : "flex-1"}>{children}</main>
         {!isPrivate && <Footer />}
