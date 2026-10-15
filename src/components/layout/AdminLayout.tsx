@@ -7,7 +7,7 @@ import { signOut } from "next-auth/react";
 import { useI18n } from "@/i18n";
 import type { admin } from "@/i18n/admin";
 import { LanguageToggle } from "./LanguageToggle";
-import { Globe, LayoutDashboard, Users, Shield, DollarSign, BarChart2, FileText, HelpCircle, Mail, LogOut, Bell, Settings, ChevronDown, SlidersHorizontal, Menu, X, PanelLeftClose, PanelLeftOpen, Send, Wallet, KeyRound, FileCheck } from "lucide-react";
+import { Globe, LayoutDashboard, Users, Shield, DollarSign, BarChart2, FileText, HelpCircle, Mail, LogOut, Bell, Settings, ChevronDown, SlidersHorizontal, Menu, X, Send, Wallet, KeyRound, FileCheck } from "lucide-react";
 
 // Libellés : section `adminNav` de src/i18n/admin.ts
 type NavKey = keyof typeof admin.adminNav;
@@ -250,7 +250,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               aria-label={sidebarOpen ? t.adminNav.closeMenu : t.adminNav.openMenu}
               title={sidebarOpen ? t.adminNav.closeMenu : t.adminNav.openMenu}
             >
-              {sidebarOpen ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
+              <Menu className="w-5 h-5" />
             </button>
             <h1 className="text-sm font-semibold text-gray-500">
               <span className="hidden sm:inline">{t.adminNav.topTitle}</span>AuPair A.EU

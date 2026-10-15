@@ -51,7 +51,7 @@ export default function ConfirmDialog({
           <button
             onClick={onCancel}
             disabled={loading}
-            className="p-1 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0 disabled:opacity-50"
+            className="p-1 text-gray-400 hover:bg-gray-100 rounded-xl transition-colors flex-shrink-0 disabled:opacity-50"
             aria-label={t.adminCommon.close}
           >
             <X className="w-4 h-4" />

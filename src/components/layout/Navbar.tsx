@@ -60,7 +60,7 @@ export default function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="px-3 py-2 text-sm text-gray-600 hover:text-[#E87722] font-medium transition-colors rounded-lg hover:bg-[#FFF3E0]"
+                className="px-3 py-2 text-sm text-gray-600 hover:text-[#E87722] font-medium transition-colors rounded-xl hover:bg-[#FFF3E0]"
               >
                 {t.navbar[link.key]}
               </Link>
@@ -94,7 +94,7 @@ export default function Navbar() {
           <div className="md:hidden flex items-center gap-1">
           <LanguageToggle />
           <button
-            className="p-2 rounded-lg hover:bg-gray-100"
+            className="p-2 rounded-xl hover:bg-gray-100"
             onClick={() => setIsOpen(!isOpen)}
             aria-label={t.navbar.openMenu}
           >
@@ -111,7 +111,7 @@ export default function Navbar() {
             <Link
               key={link.href}
               href={link.href}
-              className="block px-3 py-2 text-sm text-gray-700 hover:text-[#E87722] hover:bg-[#FFF3E0] rounded-lg transition-colors"
+              className="block px-3 py-2 text-sm text-gray-700 hover:text-[#E87722] hover:bg-[#FFF3E0] rounded-xl transition-colors"
               onClick={() => setIsOpen(false)}
             >
               {t.navbar[link.key]}

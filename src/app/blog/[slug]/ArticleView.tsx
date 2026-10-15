@@ -97,7 +97,7 @@ export default function ArticleView({ slug }: { slug: string }) {
           <h3 className="text-xl font-extrabold text-white mb-2">{t.blog.ctaTitle}</h3>
           <p className="text-white/80 mb-4">{t.blog.ctaText}</p>
           <Link href="/inscription?role=au-pair">
-            <button className="bg-white text-[#E87722] px-6 py-2.5 rounded-full font-bold text-sm hover:bg-gray-100 transition-colors">
+            <button className="bg-white text-[#E87722] px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-100 transition-colors">
               {t.blog.ctaButton}
             </button>
           </Link>

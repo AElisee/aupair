@@ -78,3 +78,20 @@ export function slugify(text: string): string {
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-");
 }
+
+/** "jean-PIERRE" → "Jean-Pierre" (chaque partie d'un prénom composé est capitalisée). */
+function capitalizeName(word: string): string {
+  return word
+    .toLocaleLowerCase("fr")
+    .replace(/(^|[-'])(\p{L})/gu, (_, sep: string, letter: string) => sep + letter.toLocaleUpperCase("fr"));
+}
+
+/**
+ * Nom affiché dans les barres de navigation : premier prénom seulement, capitalisé,
+ * suivi du nom en majuscules — ex. ("marie claire", "dupont") → "Marie DUPONT".
+ */
+export function formatDisplayName(firstName?: string | null, lastName?: string | null): string {
+  const first = (firstName ?? "").trim().split(/\s+/)[0] ?? "";
+  const last = (lastName ?? "").trim().replace(/\s+/g, " ").toLocaleUpperCase("fr");
+  return [first && capitalizeName(first), last].filter(Boolean).join(" ");
+}

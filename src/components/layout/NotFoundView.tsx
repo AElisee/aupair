@@ -43,7 +43,7 @@ export default function NotFoundView() {
         <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             href="/"
-            className="inline-flex items-center justify-center gap-2 h-11 px-6 rounded-full bg-[#E87722] text-white text-sm font-semibold hover:bg-[#d06619] transition-colors"
+            className="inline-flex items-center justify-center gap-2 h-11 px-6 rounded-xl bg-[#E87722] text-white text-sm font-semibold hover:bg-[#d06619] transition-colors"
           >
             <Home className="w-4 h-4" />
             {t.notFound.home}
@@ -51,7 +51,7 @@ export default function NotFoundView() {
           {dashboardUrl && dashboardUrl !== "/" ? (
             <Link
               href={dashboardUrl}
-              className="inline-flex items-center justify-center gap-2 h-11 px-6 rounded-full border-2 border-[#E87722] text-[#E87722] text-sm font-semibold hover:bg-[#FFF3E0] transition-colors"
+              className="inline-flex items-center justify-center gap-2 h-11 px-6 rounded-xl border-2 border-[#E87722] text-[#E87722] text-sm font-semibold hover:bg-[#FFF3E0] transition-colors"
             >
               <LayoutDashboard className="w-4 h-4" />
               {t.notFound.mySpace}
@@ -60,7 +60,7 @@ export default function NotFoundView() {
             <button
               type="button"
               onClick={goBack}
-              className="inline-flex items-center justify-center gap-2 h-11 px-6 rounded-full border-2 border-[#E87722] text-[#E87722] text-sm font-semibold hover:bg-[#FFF3E0] transition-colors cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 h-11 px-6 rounded-xl border-2 border-[#E87722] text-[#E87722] text-sm font-semibold hover:bg-[#FFF3E0] transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
               {t.notFound.back}

@@ -46,7 +46,7 @@ export default function FaqPage() {
             <button
               key={i}
               onClick={() => setActiveIndex(i)}
-              className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${
+              className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all ${
                 activeIndex === i
                   ? "bg-[#E87722] text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-[#FFF3E0] hover:text-[#E87722]"
@@ -70,7 +70,7 @@ export default function FaqPage() {
           <p className="text-gray-500 mb-4">{t.faq.notFoundText}</p>
           <Link
             href="/contact"
-            className="inline-block bg-[#E87722] text-white px-6 py-2.5 rounded-full font-semibold hover:bg-[#d06619] transition-colors"
+            className="inline-block bg-[#E87722] text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-[#d06619] transition-colors"
           >
             {t.faq.contactUs}
           </Link>

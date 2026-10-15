@@ -360,19 +360,19 @@ export default function AdminPaysPage() {
           <div className="flex gap-2">
             <button
               onClick={() => changeFilter("")}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${filterType === "" ? "bg-[#E87722] text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-[#E87722]"}`}
+              className={`px-4 py-1.5 rounded-xl text-sm font-medium transition-colors ${filterType === "" ? "bg-[#E87722] text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-[#E87722]"}`}
             >
               {ac.all}
             </button>
             <button
               onClick={() => changeFilter("ORIGIN")}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${filterType === "ORIGIN" ? "bg-[#E87722] text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-[#E87722]"}`}
+              className={`px-4 py-1.5 rounded-xl text-sm font-medium transition-colors ${filterType === "ORIGIN" ? "bg-[#E87722] text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-[#E87722]"}`}
             >
               {tc.origin}
             </button>
             <button
               onClick={() => changeFilter("HOST")}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${filterType === "HOST" ? "bg-[#E87722] text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-[#E87722]"}`}
+              className={`px-4 py-1.5 rounded-xl text-sm font-medium transition-colors ${filterType === "HOST" ? "bg-[#E87722] text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-[#E87722]"}`}
             >
               {tc.host}
             </button>
@@ -486,7 +486,7 @@ export default function AdminPaysPage() {
                           <button
                             disabled={processingId === c.id}
                             onClick={() => startEdit(c)}
-                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors disabled:opacity-50"
                             title={t.adminCommon.edit}
                           >
                             <Pencil className="w-4 h-4" />
@@ -494,7 +494,7 @@ export default function AdminPaysPage() {
                           <button
                             disabled={processingId === c.id}
                             onClick={() => toggleActive(c)}
-                            className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                            className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-50"
                             title={c.isActive ? tc.deactivate : tc.activate}
                           >
                             {c.isActive ? (
@@ -506,7 +506,7 @@ export default function AdminPaysPage() {
                           <button
                             disabled={processingId === c.id}
                             onClick={() => setDeleteTarget(c)}
-                            className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                            className="p-1.5 text-red-500 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-50"
                             title={t.adminCommon.delete}
                           >
                             <Trash2 className="w-4 h-4" />

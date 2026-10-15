@@ -321,7 +321,7 @@ export default function AdminFaqPage() {
                             <button
                               disabled={processingId === item.id}
                               onClick={() => startEdit(item)}
-                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors disabled:opacity-50"
                               title={c.edit}
                             >
                               <Pencil className="w-4 h-4" />
@@ -329,7 +329,7 @@ export default function AdminFaqPage() {
                             <button
                               disabled={processingId === item.id}
                               onClick={() => togglePublish(item)}
-                              className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                              className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-50"
                               title={item.isPublished ? c.hide : c.publish}
                             >
                               {item.isPublished ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -337,7 +337,7 @@ export default function AdminFaqPage() {
                             <button
                               disabled={processingId === item.id}
                               onClick={() => setDeleteTarget(item)}
-                              className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                              className="p-1.5 text-red-500 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-50"
                               title={c.delete}
                             >
                               <Trash2 className="w-4 h-4" />

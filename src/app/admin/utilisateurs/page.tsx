@@ -322,7 +322,7 @@ export default function UtilisateursPage() {
                             href={`/admin/profil/${u.id}?role=${u.role}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
                             title={c.viewProfile}
                           >
                             <Eye className="w-4 h-4" />
@@ -332,7 +332,7 @@ export default function UtilisateursPage() {
                               <button
                                 disabled={processingId === u.id}
                                 onClick={() => handleAction(u, "restore")}
-                                className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
+                                className="p-1.5 text-green-600 hover:bg-green-50 rounded-xl transition-colors disabled:opacity-50"
                                 title={tu.restore}
                               >
                                 <RotateCcw className="w-4 h-4" />
@@ -340,7 +340,7 @@ export default function UtilisateursPage() {
                               <button
                                 disabled={processingId === u.id}
                                 onClick={() => handleAction(u, "purge")}
-                                className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                                className="p-1.5 text-red-500 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-50"
                                 title={tu.purge}
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -352,7 +352,7 @@ export default function UtilisateursPage() {
                                 <button
                                   disabled={processingId === u.id}
                                   onClick={() => handleAction(u, "validate")}
-                                  className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
+                                  className="p-1.5 text-green-600 hover:bg-green-50 rounded-xl transition-colors disabled:opacity-50"
                                   title={c.validate}
                                 >
                                   <CheckCircle className="w-4 h-4" />
@@ -362,7 +362,7 @@ export default function UtilisateursPage() {
                                 <button
                                   disabled={processingId === u.id}
                                   onClick={() => handleAction(u, "unhide")}
-                                  className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                                  className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-50"
                                   title={c.unhide}
                                 >
                                   <Eye className="w-4 h-4" />
@@ -371,14 +371,14 @@ export default function UtilisateursPage() {
                                 <button
                                   disabled={processingId === u.id}
                                   onClick={() => handleAction(u, "hide")}
-                                  className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                                  className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-50"
                                   title={c.hide}
                                 >
                                   <EyeOff className="w-4 h-4" />
                                 </button>
                               )}
                               <button
-                                className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                                className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-xl transition-colors"
                                 title={tu.sendEmail}
                               >
                                 <Mail className="w-4 h-4" />
@@ -386,7 +386,7 @@ export default function UtilisateursPage() {
                               <button
                                 disabled={processingId === u.id}
                                 onClick={() => handleAction(u, "delete")}
-                                className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                                className="p-1.5 text-red-500 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-50"
                                 title={tu.moveToTrash}
                               >
                                 <Trash2 className="w-4 h-4" />

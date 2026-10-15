@@ -186,7 +186,7 @@ function Toolbar({ editor }: { editor: Editor }) {
           <button
             type="button"
             onClick={() => chain().deleteTable().run()}
-            className="ml-auto inline-flex items-center gap-1 rounded-md px-2 py-1 text-red-500 hover:bg-red-50"
+            className="ml-auto inline-flex items-center gap-1 rounded-xl px-2 py-1 text-red-500 hover:bg-red-50"
           >
             <Trash2 className="w-3.5 h-3.5" /> {te.deleteTable}
           </button>
@@ -208,7 +208,7 @@ function Btn({
       disabled={disabled}
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
-      className={`inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors [&_svg]:h-4 [&_svg]:w-4 disabled:opacity-30 disabled:pointer-events-none ${
+      className={`inline-flex h-8 w-8 items-center justify-center rounded-xl transition-colors [&_svg]:h-4 [&_svg]:w-4 disabled:opacity-30 disabled:pointer-events-none ${
         active ? "bg-[#FFF3E0] text-[#E87722]" : "text-gray-600 hover:bg-gray-200/70 hover:text-[#1A1A2E]"
       }`}
     >
@@ -223,7 +223,7 @@ function TextBtn({ onClick, children }: { onClick: () => void; children: ReactNo
       type="button"
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
-      className="rounded-md border border-gray-200 bg-white px-2 py-1 text-gray-600 hover:border-[#E87722] hover:text-[#E87722]"
+      className="rounded-xl border border-gray-200 bg-white px-2 py-1 text-gray-600 hover:border-[#E87722] hover:text-[#E87722]"
     >
       {children}
     </button>

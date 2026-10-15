@@ -196,7 +196,7 @@ export default function AdminDocumentsPage() {
                 key={s.slug}
                 type="button"
                 onClick={() => openNew(s)}
-                className="px-3 py-1 rounded-full bg-white border border-[#E87722] text-[#E87722] font-semibold hover:bg-[#E87722] hover:text-white transition-colors"
+                className="px-3 py-1 rounded-xl bg-white border border-[#E87722] text-[#E87722] font-semibold hover:bg-[#E87722] hover:text-white transition-colors"
               >
                 + {lang === "en" ? s.titleEn : s.title}
               </button>
@@ -256,7 +256,7 @@ export default function AdminDocumentsPage() {
                             <button
                               disabled={processingId === item.id}
                               onClick={() => startEdit(item)}
-                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors disabled:opacity-50"
                               title={c.edit}
                             >
                               <Pencil className="w-4 h-4" />
@@ -264,7 +264,7 @@ export default function AdminDocumentsPage() {
                             <button
                               disabled={processingId === item.id}
                               onClick={() => togglePublish(item)}
-                              className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                              className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-50"
                               title={item.isPublished ? c.unpublish : c.publish}
                             >
                               {item.isPublished ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -272,7 +272,7 @@ export default function AdminDocumentsPage() {
                             <button
                               disabled={processingId === item.id}
                               onClick={() => setDeleteTarget(item)}
-                              className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                              className="p-1.5 text-red-500 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-50"
                               title={c.delete}
                             >
                               <Trash2 className="w-4 h-4" />
@@ -337,7 +337,7 @@ export default function AdminDocumentsPage() {
                       <button
                         key={l} type="button"
                         onClick={() => setContentLang(l)}
-                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                        className={`px-3 py-1 rounded-xl text-sm font-medium transition-colors ${
                           contentLang === l ? "bg-[#E87722] text-white" : "border border-gray-200 text-gray-600 hover:border-[#E87722]"
                         }`}
                       >

@@ -148,7 +148,7 @@ export default function AdminTicketsPage() {
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${statusFilter === s ? "bg-[#E87722] text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-[#E87722]"}`}
+              className={`px-4 py-1.5 rounded-xl text-sm font-medium transition-colors ${statusFilter === s ? "bg-[#E87722] text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-[#E87722]"}`}
             >
               {s === "" ? c.all : tt.statuses[s]}
             </button>

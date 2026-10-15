@@ -26,7 +26,7 @@ export default function BlogPage() {
         <div className="flex flex-wrap gap-2 justify-center mb-10">
           {(["all", ...CATEGORIES] as const).map((cat) => (
             <button key={cat} onClick={() => setActiveCategory(cat)}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
                 activeCategory === cat ? "bg-[#E87722] text-white" : "bg-gray-100 text-gray-600 hover:bg-[#FFF3E0] hover:text-[#E87722]"
               }`}>
               {cat === "all" ? t.blog.all : t.blog.categories[cat]}

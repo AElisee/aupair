@@ -4,9 +4,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { LogOut, ChevronRight, Menu, X } from "lucide-react";
+import { LogOut, ChevronRight, Menu, X, Bell } from "lucide-react";
 import { PendingValidationGate } from "@/components/dashboard/PendingValidationGate";
 import { useI18n } from "@/i18n";
+import { formatDisplayName } from "@/lib/utils";
 import { LanguageToggle } from "./LanguageToggle";
 import { DASHBOARD_NAV, type DashboardNavItem, type DashboardRole } from "./dashboard-nav";
 
@@ -19,43 +20,50 @@ interface DashboardLayoutProps {
 const UNREAD_POLL_INTERVAL_MS = 5000;
 const UNREAD_NOTIFICATIONS_POLL_INTERVAL_MS = 5000;
 
+function CountBadge({ count }: { count: number }) {
+  return (
+    <span className="ml-auto bg-[#E87722] text-white text-xs font-bold rounded-full px-2 py-0.5 min-w-5 text-center">
+      {count}
+    </span>
+  );
+}
+
 function SidebarContent({
   navItems,
   pathname,
-  photoUrl,
-  userName,
-  role,
   favoritesCount,
   unreadMessages,
   unreadNotifications,
   onNavigate,
   onClose,
+  collapsed = false,
 }: {
   navItems: DashboardNavItem[];
   pathname: string;
-  photoUrl: string;
-  userName?: string;
-  role: DashboardRole;
   favoritesCount: number;
   unreadMessages: number;
   unreadNotifications: number;
   onNavigate?: () => void;
   onClose?: () => void;
+  /** Sidebar desktop réduite : seulement le logo et les icônes */
+  collapsed?: boolean;
 }) {
   const { t } = useI18n();
+  // En mode réduit, les libellés sont masqués et passent en infobulle (title)
+  const itemLayout = collapsed ? "justify-center px-0" : "gap-3 px-3";
   return (
     <>
       {/* Logo */}
-      <div className="p-6 border-b border-white/10 flex items-center justify-between">
+      <div className={`border-b border-white/10 flex items-center justify-between ${collapsed ? "py-4 px-2 justify-center" : "p-6"}`}>
         <Link href="/" className="flex items-center gap-2" onClick={onNavigate}>
           <Image
             src="/Logo_au_pair.png"
             alt="AuPair A.EU"
             width={56}
             height={56}
-            className="w-11 h-11 sm:w-14 sm:h-14 rounded-full object-cover"
+            className={`rounded-full object-cover ${collapsed ? "w-10 h-10" : "w-11 h-11 sm:w-14 sm:h-14"}`}
           />
-          <span className="text-white font-bold">AuPair<span className="text-[#E87722]">A.EU</span></span>
+          {!collapsed && <span className="text-white font-bold">AuPair<span className="text-[#E87722]">A.EU</span></span>}
         </Link>
         {onClose && (
           <button onClick={onClose} className="text-gray-400 hover:text-white p-1" aria-label={t.layout.closeMenu}>
@@ -64,73 +72,55 @@ function SidebarContent({
         )}
       </div>
 
-      {/* User info */}
-      <div className="p-4 border-b border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-[#E87722] rounded-full flex items-center justify-center text-white font-bold overflow-hidden flex-shrink-0">
-            {photoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={photoUrl} alt="" className="w-full h-full object-cover object-top" />
-            ) : (
-              userName?.charAt(0) || "U"
-            )}
-          </div>
-          <div className="min-w-0">
-            <p className="text-white text-sm font-semibold truncate">{userName || t.layout.myAccount}</p>
-            <p className="text-gray-400 text-xs">{role === "au-pair" ? t.layout.roleAuPair : t.layout.roleFamily}</p>
-          </div>
-        </div>
-      </div>
-
       {/* Nav */}
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto sidebar-scroll">
+      <nav className={`flex-1 space-y-1 overflow-y-auto overflow-x-hidden sidebar-scroll ${collapsed ? "p-2" : "p-4"}`}>
         {navItems.map((item) => {
           const Icon = item.icon;
           const isDashboardRoot = item.href === "/dashboard/au-pair" || item.href === "/dashboard/famille";
           const isActive = isDashboardRoot ? pathname === item.href : pathname === item.href || pathname.startsWith(item.href + "/");
+          const count =
+            item.href === "/dashboard/famille/favoris"
+              ? favoritesCount
+              : item.href.endsWith("/messages")
+                ? unreadMessages
+                : item.href.endsWith("/notifications")
+                  ? unreadNotifications
+                  : 0;
           return (
             <Link
               key={item.href}
               href={item.href}
               onClick={onNavigate}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+              title={collapsed ? t.nav[item.labelKey] : undefined}
+              className={`relative flex items-center py-2.5 rounded-xl text-sm font-medium transition-all ${itemLayout} ${
                 isActive
                   ? "bg-[#E87722] text-white"
                   : "text-gray-400 hover:bg-white/10 hover:text-white"
               }`}
             >
-              <Icon className="w-4 h-4" />
-              {t.nav[item.labelKey]}
-              {item.href === "/dashboard/famille/favoris" && favoritesCount > 0 && (
-                <span className="ml-auto bg-[#E87722] text-white text-xs font-bold rounded-full px-2 py-0.5 min-w-5 text-center">
-                  {favoritesCount}
-                </span>
-              )}
-              {item.href.endsWith("/messages") && unreadMessages > 0 && (
-                <span className="ml-auto bg-[#E87722] text-white text-xs font-bold rounded-full px-2 py-0.5 min-w-5 text-center">
-                  {unreadMessages}
-                </span>
-              )}
-              {item.href.endsWith("/notifications") && unreadNotifications > 0 && (
-                <span className="ml-auto bg-[#E87722] text-white text-xs font-bold rounded-full px-2 py-0.5 min-w-5 text-center">
-                  {unreadNotifications}
-                </span>
-              )}
-              {isActive && <ChevronRight className="w-3 h-3 ml-auto" />}
+              <Icon className="w-4 h-4 shrink-0" />
+              {!collapsed && t.nav[item.labelKey]}
+              {count > 0 &&
+                (collapsed ? (
+                  <span className={`absolute top-1.5 right-2 w-2 h-2 rounded-full ${isActive ? "bg-white" : "bg-[#E87722]"}`} />
+                ) : (
+                  <CountBadge count={count} />
+                ))}
+              {isActive && !collapsed && <ChevronRight className="w-3 h-3 ml-auto" />}
             </Link>
           );
         })}
       </nav>
 
-      {/* Langue + déconnexion */}
-      <div className="p-4 border-t border-white/10 space-y-1">
-        <LanguageToggle tone="dark" className="px-2 pb-1" />
+      {/* Déconnexion */}
+      <div className={`border-t border-white/10 ${collapsed ? "p-2" : "p-4"}`}>
         <button
           onClick={() => signOut({ callbackUrl: "/connexion" })}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:bg-white/10 hover:text-white w-full transition-all"
+          title={collapsed ? t.layout.signOut : undefined}
+          className={`flex items-center py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:bg-white/10 hover:text-white w-full transition-all ${itemLayout}`}
         >
-          <LogOut className="w-4 h-4" />
-          {t.layout.signOut}
+          <LogOut className="w-4 h-4 shrink-0" />
+          {!collapsed && t.layout.signOut}
         </button>
       </div>
     </>
@@ -142,11 +132,13 @@ export default function DashboardLayout({ children, role, userName }: DashboardL
   const { t } = useI18n();
   const navItems = DASHBOARD_NAV[role];
   const [photoUrl, setPhotoUrl] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [profileStatus, setProfileStatus] = useState<string | null | undefined>(undefined);
   const [favoritesCount, setFavoritesCount] = useState(0);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [prevPathname, setPrevPathname] = useState(pathname);
 
   // Ferme le menu mobile à chaque changement de page
@@ -162,6 +154,7 @@ export default function DashboardLayout({ children, role, userName }: DashboardL
       .then((json) => {
         if (json) {
           setPhotoUrl(json.profilePhotoUrl || json.familyPhotoUrl || "");
+          setDisplayName(formatDisplayName(json.firstName, json.lastName));
           setProfileStatus(json.status ?? null);
         } else {
           setProfileStatus(null);
@@ -232,20 +225,25 @@ export default function DashboardLayout({ children, role, userName }: DashboardL
     return <PendingValidationGate role={role} />;
   }
 
+  const collapsed = !sidebarOpen;
+  const sidebarProps = {
+    navItems,
+    pathname,
+    favoritesCount,
+    unreadMessages,
+    unreadNotifications,
+  };
+  const topBarName = displayName || userName || t.layout.myAccount;
+
   return (
     <div className="min-h-dvh bg-[#F5F5F5] flex">
       {/* Sidebar desktop */}
-      <aside className="hidden md:flex flex-col w-64 bg-[#1A1A2E] h-dvh fixed left-0 top-0 z-40">
-        <SidebarContent
-          navItems={navItems}
-          pathname={pathname}
-          photoUrl={photoUrl}
-          userName={userName}
-          role={role}
-          favoritesCount={favoritesCount}
-          unreadMessages={unreadMessages}
-          unreadNotifications={unreadNotifications}
-        />
+      <aside
+        className={`hidden md:flex flex-col bg-[#1A1A2E] h-dvh fixed left-0 top-0 z-40 transition-[width] duration-300 ease-in-out ${
+          collapsed ? "w-16" : "w-64"
+        }`}
+      >
+        <SidebarContent {...sidebarProps} collapsed={collapsed} />
       </aside>
 
       {/* Overlay mobile */}
@@ -264,44 +262,66 @@ export default function DashboardLayout({ children, role, userName }: DashboardL
         }`}
       >
         <SidebarContent
-          navItems={navItems}
-          pathname={pathname}
-          photoUrl={photoUrl}
-          userName={userName}
-          role={role}
-          favoritesCount={favoritesCount}
-          unreadMessages={unreadMessages}
-          unreadNotifications={unreadNotifications}
+          {...sidebarProps}
           onNavigate={() => setMobileMenuOpen(false)}
           onClose={() => setMobileMenuOpen(false)}
         />
       </aside>
 
       {/* Contenu principal */}
-      <main className="md:ml-64 flex-1 min-h-dvh">
-        {/* Header mobile */}
-        <div className="md:hidden bg-[#1A1A2E] px-4 py-3 flex items-center justify-between sticky top-0 z-30">
-          <button
-            onClick={() => setMobileMenuOpen(true)}
-            className="relative p-2 -ml-2 text-white"
-            aria-label={t.layout.openMenu}
-          >
-            <Menu className="w-5 h-5" />
-            {unreadMessages > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#E87722] rounded-full" />
-            )}
-          </button>
-          <Link href="/" className="flex items-center gap-2">
-            <Image
-              src="/Logo_au_pair.png"
-              alt="AuPair A.EU"
-              width={56}
-              height={56}
-              className="w-11 h-11 sm:w-14 sm:h-14 rounded-full object-cover"
-            />
-            <span className="text-white font-bold text-sm">AuPair<span className="text-[#E87722]">A.EU</span></span>
-          </Link>
-          <LanguageToggle tone="dark" className="-mr-1" />
+      <main
+        className={`flex-1 min-w-0 min-h-dvh transition-[margin] duration-300 ease-in-out ${collapsed ? "md:ml-16" : "md:ml-64"}`}
+      >
+        {/* Top bar (même structure que celle du back-office) */}
+        <div className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 flex items-center justify-between gap-3 sticky top-0 z-30">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="relative md:hidden -ml-1 p-1 text-gray-500 hover:text-[#E87722]"
+              aria-label={t.layout.openMenu}
+            >
+              <Menu className="w-5 h-5" />
+              {unreadMessages > 0 && (
+                <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-[#E87722] rounded-full" />
+              )}
+            </button>
+            <button
+              onClick={() => setSidebarOpen((open) => !open)}
+              className="hidden md:block -ml-1 p-1 text-gray-500 hover:text-[#E87722]"
+              aria-label={sidebarOpen ? t.layout.closeMenu : t.layout.openMenu}
+              title={sidebarOpen ? t.layout.closeMenu : t.layout.openMenu}
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <h1 className="text-sm font-semibold text-gray-500 truncate">
+              <span className="hidden sm:inline">{role === "au-pair" ? t.layout.topTitleAuPair : t.layout.topTitleFamily}</span>AuPair A.EU
+            </h1>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <LanguageToggle />
+            <Link
+              href={`/dashboard/${role}/notifications`}
+              className="relative p-2 text-gray-500 hover:text-[#E87722]"
+              aria-label={t.layout.notifications}
+              title={t.layout.notifications}
+            >
+              <Bell className="w-5 h-5" />
+              {unreadNotifications > 0 && (
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+              )}
+            </Link>
+            <Link href={`/dashboard/${role}/profil`} className="flex items-center gap-2 min-w-0">
+              <div className="w-8 h-8 bg-[#E87722] rounded-full flex items-center justify-center text-white text-xs font-bold overflow-hidden flex-shrink-0">
+                {photoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={photoUrl} alt="" className="w-full h-full object-cover object-top" />
+                ) : (
+                  topBarName.charAt(0).toUpperCase()
+                )}
+              </div>
+              <span className="hidden sm:block text-sm font-semibold text-[#1A1A2E] truncate max-w-48">{topBarName}</span>
+            </Link>
+          </div>
         </div>
 
         <div className="p-4 sm:p-6">{children}</div>

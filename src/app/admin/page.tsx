@@ -111,7 +111,7 @@ export default function AdminPage() {
               <p className="text-xs text-amber-600">{d.pendingAlertText}</p>
             </div>
             <Link href="/admin/moderation">
-              <button className="bg-amber-600 text-white text-xs px-3 py-1.5 rounded-lg font-semibold hover:bg-amber-700 transition-colors">
+              <button className="bg-amber-600 text-white text-xs px-3 py-1.5 rounded-xl font-semibold hover:bg-amber-700 transition-colors">
                 {d.moderate}
               </button>
             </Link>
@@ -127,7 +127,7 @@ export default function AdminPage() {
               <p className="text-xs text-red-600">{d.reportsAlertText}</p>
             </div>
             <Link href="/admin/moderation">
-              <button className="bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg font-semibold hover:bg-red-700 transition-colors">
+              <button className="bg-red-600 text-white text-xs px-3 py-1.5 rounded-xl font-semibold hover:bg-red-700 transition-colors">
                 {c.see}
               </button>
             </Link>

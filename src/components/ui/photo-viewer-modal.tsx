@@ -19,7 +19,7 @@ export default function PhotoViewerModal({
     >
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
+        className="absolute top-4 right-4 p-2 text-white hover:bg-white/10 rounded-xl transition-colors"
         aria-label={t.common.close}
       >
         <X className="w-6 h-6" />

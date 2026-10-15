@@ -166,7 +166,7 @@ export default function ModerationPage() {
                       href={`/admin/profil/${p.userId}?role=${p.role}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-semibold transition-all duration-200 h-8 px-3 text-xs border-2 border-blue-200 text-blue-600 bg-transparent hover:bg-blue-50"
+                      className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl font-semibold transition-all duration-200 h-8 px-3 text-xs border-2 border-blue-200 text-blue-600 bg-transparent hover:bg-blue-50"
                     >
                       <Eye className="w-3.5 h-3.5 mr-1" /> {c.viewProfile}
                     </Link>

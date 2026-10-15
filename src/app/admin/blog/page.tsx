@@ -381,7 +381,7 @@ export default function AdminBlogPage() {
                             {p.isPublished && (
                               <a
                                 href={`/blog/${p.slug}`} target="_blank" rel="noopener noreferrer"
-                                className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors"
+                                className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-xl transition-colors"
                                 title={tb.viewArticle}
                               >
                                 <ExternalLink className="w-4 h-4" />
@@ -390,7 +390,7 @@ export default function AdminBlogPage() {
                             <button
                               disabled={processingId === p.id}
                               onClick={() => startEdit(p)}
-                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors disabled:opacity-50"
                               title={c.edit}
                             >
                               <Pencil className="w-4 h-4" />
@@ -398,7 +398,7 @@ export default function AdminBlogPage() {
                             <button
                               disabled={processingId === p.id}
                               onClick={() => togglePublish(p)}
-                              className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                              className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-50"
                               title={p.isPublished ? c.unpublish : c.publish}
                             >
                               {p.isPublished ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -406,7 +406,7 @@ export default function AdminBlogPage() {
                             <button
                               disabled={processingId === p.id}
                               onClick={() => setDeleteTarget(p)}
-                              className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                              className="p-1.5 text-red-500 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-50"
                               title={c.delete}
                             >
                               <Trash2 className="w-4 h-4" />

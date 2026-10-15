@@ -89,6 +89,9 @@ export const dashboard = {
     signOut: { fr: "Se déconnecter", en: "Sign out" },
     openMenu: { fr: "Ouvrir le menu", en: "Open menu" },
     closeMenu: { fr: "Fermer le menu", en: "Close menu" },
+    topTitleAuPair: { fr: "Espace au pair — ", en: "Au pair space — " },
+    topTitleFamily: { fr: "Espace famille — ", en: "Family space — " },
+    notifications: { fr: "Notifications", en: "Notifications" },
   },
 
   // ─── Écran "profil en attente de validation" ───────────────────────────────

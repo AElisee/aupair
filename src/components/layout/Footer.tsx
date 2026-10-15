@@ -44,16 +44,16 @@ export default function Footer() {
               {t.footer.tagline}
             </p>
             <div className="flex items-center gap-3 pt-2">
-              <a href="#" className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#E87722] transition-colors">
+              <a href="#" className="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center hover:bg-[#E87722] transition-colors">
                 <Instagram className="w-4 h-4" />
               </a>
-              <a href="#" className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#E87722] transition-colors">
+              <a href="#" className="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center hover:bg-[#E87722] transition-colors">
                 <Facebook className="w-4 h-4" />
               </a>
-              <a href="#" className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#E87722] transition-colors">
+              <a href="#" className="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center hover:bg-[#E87722] transition-colors">
                 <Linkedin className="w-4 h-4" />
               </a>
-              <a href="#" className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#E87722] transition-colors">
+              <a href="#" className="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center hover:bg-[#E87722] transition-colors">
                 <Youtube className="w-4 h-4" />
               </a>
             </div>

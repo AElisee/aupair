@@ -502,7 +502,7 @@ export default function MessagesPanel() {
                                 href={msg.attachmentUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className={`flex items-center gap-2 rounded-lg px-2 py-1.5 mb-1 ${
+                                className={`flex items-center gap-2 rounded-xl px-2 py-1.5 mb-1 ${
                                   msg.senderId === myId ? "bg-white/15" : "bg-white"
                                 }`}
                               >
