@@ -232,6 +232,7 @@ export const dashboard = {
       en: "Complete the payment in the tab that opened (Mobile Money or card).",
     },
     openPaymentPage: { fr: "Ouvrir la page de paiement", en: "Open the payment page" },
+    cancelPayment: { fr: "Annuler le paiement", en: "Cancel the payment" },
     payNow: { fr: "Payer maintenant", en: "Pay now" },
     includedTitle: { fr: "Inclus dans votre abonnement", en: "Included in your subscription" },
   },

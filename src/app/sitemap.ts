@@ -18,6 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/cgu`, priority: 0.3 },
     { url: `${baseUrl}/cgv`, priority: 0.3 },
     { url: `${baseUrl}/confidentialite`, priority: 0.3 },
+    { url: `${baseUrl}/cookies`, priority: 0.3 },
   ];
 
   const blogSlugs = [

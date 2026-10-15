@@ -2,15 +2,18 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
-  Globe,
   CheckCircle,
   ArrowRight,
   ArrowLeft,
   User,
   Home,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SelectField } from "@/components/ui/select-field";
 import { useCountries } from "@/hooks/useCountries";
 import { useConstants } from "@/hooks/useConstants";
 import { calculateAge } from "@/lib/utils";
@@ -19,6 +22,17 @@ import { Suspense } from "react";
 import { useI18n } from "@/i18n";
 
 type Role = "au-pair" | "famille" | null;
+
+const PASSWORD_MIN_LENGTH = 8;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const EXPERIENCE_OPTIONS = [
+  "Moins d'1 an",
+  "1 an",
+  "2 ans",
+  "3 ans",
+  "4 ans",
+  "5 ans et plus",
+];
 
 function InscriptionContent() {
   const searchParams = useSearchParams();
@@ -47,6 +61,8 @@ function InscriptionContent() {
     useConstants();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
+  const [blurred, setBlurred] = useState<Record<string, boolean>>({});
+  const [showPassword, setShowPassword] = useState(false);
   const { t, tValue, tError } = useI18n();
   const s = t.signup;
   const e = s.errors;
@@ -56,10 +72,18 @@ function InscriptionContent() {
   const requiredErrors = (() => {
     const errs: Record<string, string> = {};
     if (step === 1) {
-      if (!form.firstName) errs.firstName = e.firstName;
-      if (!form.lastName) errs.lastName = e.lastName;
-      if (!form.email) errs.email = e.email;
+      const firstName = form.firstName.trim();
+      const lastName = form.lastName.trim();
+      const email = form.email.trim();
+      if (!firstName) errs.firstName = e.firstName;
+      else if (firstName.length < 2) errs.firstName = e.firstNameTooShort;
+      if (!lastName) errs.lastName = e.lastName;
+      else if (lastName.length < 2) errs.lastName = e.lastNameTooShort;
+      if (!email) errs.email = e.email;
+      else if (!EMAIL_REGEX.test(email)) errs.email = e.emailInvalid;
       if (!form.password) errs.password = e.password;
+      else if (form.password.length < PASSWORD_MIN_LENGTH)
+        errs.password = e.passwordTooShort;
     } else if (step === 2 && role === "au-pair") {
       if (!form.country) errs.country = e.country;
       if (!form.gender) errs.gender = e.gender;
@@ -83,8 +107,18 @@ function InscriptionContent() {
     const err = requiredErrors[field];
     if (!err) return null;
     if (field === "dateOfBirth" && form.dateOfBirth) return err;
-    return touched ? err : null;
+    return touched || blurred[field] ? err : null;
   };
+
+  const markBlurred = (field: string) =>
+    setBlurred((b) => (b[field] ? b : { ...b, [field]: true }));
+
+  const inputClass = (field: string) =>
+    `w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 ${
+      fieldError(field)
+        ? "border-red-300 focus:ring-red-400"
+        : "border-gray-200 focus:ring-[#E87722]"
+    }`;
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -96,16 +130,16 @@ function InscriptionContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           role,
-          firstName: form.firstName,
-          lastName: form.lastName,
-          email: form.email,
+          firstName: form.firstName.trim(),
+          lastName: form.lastName.trim(),
+          email: form.email.trim(),
           password: form.password,
           country: form.country,
           gender: form.gender,
           dateOfBirth: form.dateOfBirth,
           languages: form.languages,
-          educationLevel: form.educationLevel,
-          experience: form.experience,
+          educationLevel: form.educationLevel.trim(),
+          experience: form.experience.trim(),
           city: form.city,
           numberOfKids: form.numberOfKids,
           hostCountry: form.hostCountry,
@@ -121,7 +155,7 @@ function InscriptionContent() {
 
       const { signIn } = await import("next-auth/react");
       const signInResult = await signIn("credentials", {
-        email: form.email,
+        email: form.email.trim(),
         password: form.password,
         redirect: false,
       });
@@ -167,14 +201,19 @@ function InscriptionContent() {
     <div className="min-h-dvh bg-[#F5F5F5] py-12 px-4">
       <div className="max-w-xl mx-auto">
         {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-8 h-8 bg-[#E87722] rounded-full flex items-center justify-center">
-            <Globe className="w-5 h-5 text-white" />
-          </div>
+        <Link href="/" className="flex items-center justify-center gap-2 mb-8">
+          <Image
+            src="/Logo_au_pair.png"
+            alt="AuPair A.EU"
+            width={56}
+            height={56}
+            className="w-12 h-12 rounded-full object-cover"
+            priority
+          />
           <span className="font-bold text-xl text-[#1A1A2E]">
             AuPair<span className="text-[#E87722]">A.EU</span>
           </span>
-        </div>
+        </Link>
 
         {/* Stepper */}
         {step > 0 && (
@@ -259,57 +298,67 @@ function InscriptionContent() {
                 {s.basicInfo}
               </h2>
               <div className="space-y-4">
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">
-                      {s.firstName}
-                    </label>
-                    <input
-                      type="text"
-                      value={form.firstName}
-                      onChange={(e) =>
-                        setForm({ ...form, firstName: e.target.value })
-                      }
-                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
-                      placeholder="Marie"
-                    />
-                    {fieldError("firstName") && (
-                      <p className="text-xs text-red-500 mt-1">
-                        {fieldError("firstName")}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">
-                      {s.lastName}
-                    </label>
-                    <input
-                      type="text"
-                      value={form.lastName}
-                      onChange={(e) =>
-                        setForm({ ...form, lastName: e.target.value })
-                      }
-                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
-                      placeholder="Dupont"
-                    />
-                    {fieldError("lastName") && (
-                      <p className="text-xs text-red-500 mt-1">
-                        {fieldError("lastName")}
-                      </p>
-                    )}
-                  </div>
+                <div>
+                  <label htmlFor="firstName" className="block text-sm font-semibold text-gray-700 mb-1">
+                    {s.firstName}
+                  </label>
+                  <input
+                    id="firstName"
+                    type="text"
+                    autoComplete="given-name"
+                    value={form.firstName}
+                    onChange={(e) =>
+                      setForm({ ...form, firstName: e.target.value })
+                    }
+                    onBlur={() => markBlurred("firstName")}
+                    aria-invalid={!!fieldError("firstName")}
+                    className={inputClass("firstName")}
+                    placeholder="Marie"
+                  />
+                  {fieldError("firstName") && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {fieldError("firstName")}
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  <label htmlFor="lastName" className="block text-sm font-semibold text-gray-700 mb-1">
+                    {s.lastName}
+                  </label>
+                  <input
+                    id="lastName"
+                    type="text"
+                    autoComplete="family-name"
+                    value={form.lastName}
+                    onChange={(e) =>
+                      setForm({ ...form, lastName: e.target.value })
+                    }
+                    onBlur={() => markBlurred("lastName")}
+                    aria-invalid={!!fieldError("lastName")}
+                    className={inputClass("lastName")}
+                    placeholder="Dupont"
+                  />
+                  {fieldError("lastName") && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {fieldError("lastName")}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-1">
                     {s.email}
                   </label>
                   <input
+                    id="email"
                     type="email"
+                    autoComplete="email"
                     value={form.email}
                     onChange={(e) =>
                       setForm({ ...form, email: e.target.value })
                     }
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
+                    onBlur={() => markBlurred("email")}
+                    aria-invalid={!!fieldError("email")}
+                    className={inputClass("email")}
                     placeholder={s.emailPlaceholder}
                   />
                   {fieldError("email") && (
@@ -319,21 +368,56 @@ function InscriptionContent() {
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-1">
                     {s.password}
                   </label>
-                  <input
-                    type="password"
-                    value={form.password}
-                    onChange={(e) =>
-                      setForm({ ...form, password: e.target.value })
-                    }
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
-                    placeholder={s.passwordPlaceholder}
-                  />
-                  {fieldError("password") && (
+                  <div className="relative">
+                    <input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="new-password"
+                      value={form.password}
+                      onChange={(e) =>
+                        setForm({ ...form, password: e.target.value })
+                      }
+                      onBlur={() => markBlurred("password")}
+                      aria-invalid={!!fieldError("password")}
+                      aria-describedby="password-hint"
+                      className={`${inputClass("password")} pr-11`}
+                      placeholder={s.passwordPlaceholder}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      aria-label={showPassword ? t.login.hidePassword : t.login.showPassword}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                  {fieldError("password") ? (
                     <p className="text-xs text-red-500 mt-1">
                       {fieldError("password")}
+                    </p>
+                  ) : (
+                    <p
+                      id="password-hint"
+                      className={`flex items-center gap-1 text-xs mt-1 ${
+                        form.password.length >= PASSWORD_MIN_LENGTH
+                          ? "text-green-600"
+                          : "text-gray-400"
+                      }`}
+                    >
+                      {form.password.length >= PASSWORD_MIN_LENGTH && (
+                        <CheckCircle className="w-3 h-3" />
+                      )}
+                      {s.passwordHint(
+                        Math.min(form.password.length, PASSWORD_MIN_LENGTH)
+                      )}
                     </p>
                   )}
                 </div>
@@ -352,20 +436,18 @@ function InscriptionContent() {
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
                     {s.countryOfOrigin}
                   </label>
-                  <select
+                  <SelectField
                     value={form.country}
-                    onChange={(e) =>
-                      setForm({ ...form, country: e.target.value })
-                    }
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
-                  >
-                    <option value="">{s.selectYourCountry}</option>
-                    {originCountries.map((c) => (
-                      <option key={c.name} value={c.name}>
-                        {tValue(c.name)}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(v) => setForm({ ...form, country: v })}
+                    onBlur={() => markBlurred("country")}
+                    invalid={!!fieldError("country")}
+                    aria-label={s.countryOfOrigin}
+                    placeholder={s.selectYourCountry}
+                    options={originCountries.map((c) => ({
+                      value: c.name,
+                      label: tValue(c.name),
+                    }))}
+                  />
                   {fieldError("country") && (
                     <p className="text-xs text-red-500 mt-1">
                       {fieldError("country")}
@@ -376,17 +458,18 @@ function InscriptionContent() {
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
                     {s.gender}
                   </label>
-                  <select
+                  <SelectField
                     value={form.gender}
-                    onChange={(e) =>
-                      setForm({ ...form, gender: e.target.value })
-                    }
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
-                  >
-                    <option value="">{s.select}</option>
-                    <option value="Femme">{tValue("Femme")}</option>
-                    <option value="Homme">{tValue("Homme")}</option>
-                  </select>
+                    onChange={(v) => setForm({ ...form, gender: v })}
+                    onBlur={() => markBlurred("gender")}
+                    invalid={!!fieldError("gender")}
+                    aria-label={s.gender}
+                    placeholder={s.select}
+                    options={["Femme", "Homme"].map((v) => ({
+                      value: v,
+                      label: tValue(v),
+                    }))}
+                  />
                   {fieldError("gender") && (
                     <p className="text-xs text-red-500 mt-1">
                       {fieldError("gender")}
@@ -403,7 +486,8 @@ function InscriptionContent() {
                     onChange={(e) =>
                       setForm({ ...form, dateOfBirth: e.target.value })
                     }
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
+                    onBlur={() => markBlurred("dateOfBirth")}
+                    className={inputClass("dateOfBirth")}
                   />
                   {fieldError("dateOfBirth") && (
                     <p className="text-xs text-red-500 mt-1">
@@ -452,46 +536,37 @@ function InscriptionContent() {
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
                     {s.educationLevel}
                   </label>
-                  <select
+                  <SelectField
                     value={form.educationLevel}
-                    onChange={(e) =>
-                      setForm({ ...form, educationLevel: e.target.value })
-                    }
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
-                  >
-                    <option value="">{s.select}</option>
-                    {EDUCATION_LEVELS.map((level) => (
-                      <option key={level} value={level}>
-                        {tValue(level)}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(v) => setForm({ ...form, educationLevel: v })}
+                    aria-label={s.educationLevel}
+                    placeholder={s.select}
+                    options={EDUCATION_LEVELS.filter((level) => level !== "Autre").map((level) => ({
+                      value: level,
+                      label: tValue(level),
+                    }))}
+                    allowCustom
+                    otherLabel={s.otherOption}
+                    customPlaceholder={s.educationCustomPlaceholder}
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
                     {s.experience}
                   </label>
-                  <select
+                  <SelectField
                     value={form.experience}
-                    onChange={(e) =>
-                      setForm({ ...form, experience: e.target.value })
-                    }
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
-                  >
-                    <option value="">{s.select}</option>
-                    {[
-                      "Moins d'1 an",
-                      "1 an",
-                      "2 ans",
-                      "3 ans",
-                      "4 ans",
-                      "5 ans et plus",
-                    ].map((v) => (
-                      <option key={v} value={v}>
-                        {tValue(v)}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(v) => setForm({ ...form, experience: v })}
+                    aria-label={s.experience}
+                    placeholder={s.select}
+                    options={EXPERIENCE_OPTIONS.map((v) => ({
+                      value: v,
+                      label: tValue(v),
+                    }))}
+                    allowCustom
+                    otherLabel={s.otherOption}
+                    customPlaceholder={s.experienceCustomPlaceholder}
+                  />
                 </div>
               </div>
             </div>
@@ -507,20 +582,18 @@ function InscriptionContent() {
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
                     {s.hostCountry}
                   </label>
-                  <select
+                  <SelectField
                     value={form.hostCountry}
-                    onChange={(e) =>
-                      setForm({ ...form, hostCountry: e.target.value })
-                    }
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
-                  >
-                    <option value="">{s.selectCountry}</option>
-                    {hostCountries.map((c) => (
-                      <option key={c.name} value={c.name}>
-                        {tValue(c.name)}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(v) => setForm({ ...form, hostCountry: v })}
+                    onBlur={() => markBlurred("hostCountry")}
+                    invalid={!!fieldError("hostCountry")}
+                    aria-label={s.hostCountry}
+                    placeholder={s.selectCountry}
+                    options={hostCountries.map((c) => ({
+                      value: c.name,
+                      label: tValue(c.name),
+                    }))}
+                  />
                   {fieldError("hostCountry") && (
                     <p className="text-xs text-red-500 mt-1">
                       {fieldError("hostCountry")}
@@ -535,7 +608,8 @@ function InscriptionContent() {
                     type="text"
                     value={form.city}
                     onChange={(e) => setForm({ ...form, city: e.target.value })}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
+                    onBlur={() => markBlurred("city")}
+                    className={inputClass("city")}
                     placeholder="Paris, Lyon, Berlin..."
                   />
                   {fieldError("city") && (
@@ -548,20 +622,18 @@ function InscriptionContent() {
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
                     {s.numberOfKids}
                   </label>
-                  <select
+                  <SelectField
                     value={form.numberOfKids}
-                    onChange={(e) =>
-                      setForm({ ...form, numberOfKids: e.target.value })
-                    }
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
-                  >
-                    <option value="">{s.select}</option>
-                    {["1", "2", "3", "4", "5+"].map((n) => (
-                      <option key={n} value={n}>
-                        {n}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(v) => setForm({ ...form, numberOfKids: v })}
+                    onBlur={() => markBlurred("numberOfKids")}
+                    invalid={!!fieldError("numberOfKids")}
+                    aria-label={s.numberOfKids}
+                    placeholder={s.select}
+                    options={["1", "2", "3", "4", "5+"].map((n) => ({
+                      value: n,
+                      label: n,
+                    }))}
+                  />
                   {fieldError("numberOfKids") && (
                     <p className="text-xs text-red-500 mt-1">
                       {fieldError("numberOfKids")}
