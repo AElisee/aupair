@@ -411,8 +411,8 @@ export const site = {
       fr: "Un seul abonnement pour les au pairs. Inscription gratuite pour les familles.",
       en: "A single subscription for au pairs. Free sign-up for families.",
     },
-    forAuPairs: { fr: "POUR LES AU PAIRS", en: "FOR AU PAIRS" },
-    forFamilies: { fr: "POUR LES FAMILLES", en: "FOR FAMILIES" },
+    forAuPairs: { fr: "Pour les au pairs", en: "For au pairs" },
+    forFamilies: { fr: "Pour les familles", en: "For families" },
     forDays: { fr: (days: number) => `pour ${days} jours`, en: (days: number) => `for ${days} days` },
     freeSignup: { fr: "Inscription gratuite", en: "Free sign-up" },
     unlimitedAccess: { fr: "accès illimité", en: "unlimited access" },
@@ -458,6 +458,7 @@ export const site = {
     signUpFamily: { fr: "S'inscrire comme famille", en: "Sign up as a family" },
     paymentTitle: { fr: "Moyens de paiement acceptés", en: "Accepted payment methods" },
     paymentName: { fr: "Mobile Money & carte bancaire", en: "Mobile Money & bank card" },
+    paymentSecure: { fr: "Paiement sécurisé, activation immédiate", en: "Secure payment, instant activation" },
     faqTitle: { fr: "Questions sur les tarifs", en: "Pricing questions" },
     faqs: [
       {
