@@ -105,13 +105,13 @@ export default function FamilyProfilePage() {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={data.familyPhotoUrl} alt="" className="absolute inset-0 w-full h-full object-cover object-top" />
                   ) : (
-                    <div className="w-24 h-24 bg-[#E87722] rounded-full flex items-center justify-center text-white text-4xl font-bold">
+                    <div className="w-24 h-24 bg-[#E87722] rounded-full flex items-center justify-center text-white text-4xl font-medium">
                       {data.name.charAt(0)}
                     </div>
                   )}
                 </div>
                 <div className="p-5">
-                  <h1 className="font-bold text-[#1A1A2E] text-xl">{data.name}</h1>
+                  <h1 className="font-medium text-[#1A1A2E] text-xl">{data.name}</h1>
                   <p className="text-gray-500 text-sm mb-4">{data.city}, {tValue(data.country)}</p>
 
                   <div className="space-y-2 text-sm text-gray-600">
@@ -149,7 +149,7 @@ export default function FamilyProfilePage() {
               ) : (
                 <>
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                    <h2 className="font-bold text-[#1A1A2E] mb-3">{td.general}</h2>
+                    <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-3">{td.general}</h2>
                     <div className="grid grid-cols-2 gap-4">
                       <Field label={td.country} value={tValue(data.country)} />
                       <Field label={td.city} value={data.city} />
@@ -160,7 +160,7 @@ export default function FamilyProfilePage() {
                   </div>
 
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                    <h2 className="font-bold text-[#1A1A2E] mb-3">{td.kidsDaily}</h2>
+                    <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-3">{td.kidsDaily}</h2>
                     <div className="grid grid-cols-2 gap-4">
                       <Field label={td.numberOfKids} value={data.numberOfKids} />
                       <Field label={td.kidsAges} value={data.kidsAges.length > 0 ? t.common.ages(data.kidsAges.join(", ")) : null} />
@@ -177,7 +177,7 @@ export default function FamilyProfilePage() {
                   </div>
 
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                    <h2 className="font-bold text-[#1A1A2E] mb-3">{td.preferences}</h2>
+                    <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-3">{td.preferences}</h2>
                     <div className="grid grid-cols-2 gap-4">
                       <Field label={td.preferredGender} value={data.preferredGender ? tValue(data.preferredGender) : null} />
                       <Field
@@ -194,14 +194,14 @@ export default function FamilyProfilePage() {
 
                   {data.description && (
                     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                      <h2 className="font-bold text-[#1A1A2E] mb-3">{td.presentation}</h2>
+                      <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-3">{td.presentation}</h2>
                       <Field label={td.description} value={<span className="whitespace-pre-wrap">{data.description}</span>} />
                     </div>
                   )}
 
                   {data.phoneWhatsapp && (
                     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                      <h2 className="font-bold text-[#1A1A2E] mb-3">{td.contact}</h2>
+                      <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-3">{td.contact}</h2>
                       <Field label="WhatsApp" value={<span className="inline-flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-[#E87722]" /> {data.phoneWhatsapp}</span>} />
                     </div>
                   )}

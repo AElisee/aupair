@@ -8,6 +8,7 @@ import { Search, Filter, MapPin, Users, Clock, Loader2 } from "lucide-react";
 import { useCountries } from "@/hooks/useCountries";
 import { useConstants } from "@/hooks/useConstants";
 import { useI18n } from "@/i18n";
+import { PageHeader } from "@/components/dashboard/PageHeader";
 
 type Family = {
   id: string;
@@ -37,13 +38,13 @@ function FamilyCard({ fam }: { fam: Family }) {
           ) : (
             <div className="text-center">
               <div className="text-4xl mb-1">{fam.flag}</div>
-              <p className="text-white font-bold">{fam.city}</p>
+              <p className="text-white font-medium">{fam.city}</p>
             </div>
           )}
         </div>
 
         <div className="p-5">
-          <h3 className="font-bold text-[#1A1A2E] text-lg mb-1">{fam.name}</h3>
+          <h3 className="text-base font-medium text-[#1A1A2E] mb-1">{fam.name}</h3>
           <div className="flex items-center gap-1 text-gray-500 text-sm mb-3">
             <MapPin className="w-3.5 h-3.5" />
             <span>{fam.city}, {tValue(fam.country)}</span>
@@ -117,10 +118,7 @@ export default function RechercheFamillePage() {
   return (
     <DashboardLayout role="au-pair" userName={session?.user?.name ?? ""}>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{t.searchFamilies.title}</h1>
-          <p className="text-gray-500">{t.searchFamilies.availableCount(families.length)}</p>
-        </div>
+        <PageHeader title={t.searchFamilies.title} subtitle={t.searchFamilies.availableCount(families.length)} />
 
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">

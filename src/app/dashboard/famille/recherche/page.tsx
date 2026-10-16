@@ -9,6 +9,7 @@ import { Search, Heart, Filter, Languages, Star, MapPin, Loader2 } from "lucide-
 import { useCountries } from "@/hooks/useCountries";
 import { useConstants } from "@/hooks/useConstants";
 import { useI18n } from "@/i18n";
+import { PageHeader } from "@/components/dashboard/PageHeader";
 
 type AuPair = {
   id: string;
@@ -37,7 +38,7 @@ function AuPairCard({ ap, onToggleFavorite }: { ap: AuPair; onToggleFavorite: (i
             // eslint-disable-next-line @next/next/no-img-element
             <img src={ap.profilePhotoUrl} alt={ap.firstName} className="absolute inset-0 w-full h-full object-cover object-top" />
           ) : (
-            <div className="w-20 h-20 bg-[#E87722] rounded-full flex items-center justify-center text-white text-3xl font-bold">
+            <div className="w-20 h-20 bg-[#E87722] rounded-full flex items-center justify-center text-white text-3xl font-semibold">
               {ap.firstName.charAt(0)}
             </div>
           )}
@@ -47,7 +48,7 @@ function AuPairCard({ ap, onToggleFavorite }: { ap: AuPair; onToggleFavorite: (i
         </div>
 
         <div className="p-5 pb-3">
-          <h3 className="font-bold text-[#1A1A2E] text-lg">{ap.firstName}, {t.common.age(ap.age)}</h3>
+          <h3 className="text-base font-medium text-[#1A1A2E]">{ap.firstName}, {t.common.age(ap.age)}</h3>
           <div className="flex items-center gap-1 text-gray-500 text-sm mb-2">
             <span>{ap.flag}</span>
             <span>{tValue(ap.country)}</span>
@@ -156,10 +157,7 @@ export default function RechercheAuPairPage() {
   return (
     <DashboardLayout role="famille" userName={session?.user?.name ?? ""}>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{t.searchAuPairs.title}</h1>
-          <p className="text-gray-500">{t.searchAuPairs.availableCount(auPairs.length)}</p>
-        </div>
+        <PageHeader title={t.searchAuPairs.title} subtitle={t.searchAuPairs.availableCount(auPairs.length)} />
 
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">

@@ -8,6 +8,7 @@ import { useCountries } from "@/hooks/useCountries";
 import { useConstants } from "@/hooks/useConstants";
 import PhotoViewerModal from "@/components/ui/photo-viewer-modal";
 import { useI18n } from "@/i18n";
+import { PageHeader } from "@/components/dashboard/PageHeader";
 
 type ProfileStatus = "PENDING" | "ACTIVE" | "HIDDEN" | "SUSPENDED" | "DELETED";
 
@@ -234,22 +235,18 @@ export default function AuPairProfilPage() {
   return (
     <DashboardLayout role="au-pair" userName={userName}>
       <div className="max-w-3xl space-y-6 pb-24">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-extrabold text-[#1A1A2E]">
-              {t.profileForm.title}
-            </h1>
-            <p className="text-gray-500">{t.profileForm.visibleAfterValidation}</p>
-          </div>
-          <Badge variant={STATUS_VARIANTS[status]}>{t.profileStatus[status]}</Badge>
-        </div>
+        <PageHeader
+          title={t.profileForm.title}
+          subtitle={t.profileForm.visibleAfterValidation}
+          action={<Badge variant={STATUS_VARIANTS[status]}>{t.profileStatus[status]}</Badge>}
+        />
 
         {/* Photo de profil */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-4">{tp.photoTitle}</h2>
+          <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-4">{tp.photoTitle}</h2>
           <div className="flex items-center gap-5">
             <div className="relative">
-              <div className="w-20 h-20 bg-[#E87722] rounded-full flex items-center justify-center text-white text-2xl font-bold overflow-hidden">
+              <div className="w-20 h-20 bg-[#E87722] rounded-full flex items-center justify-center text-white text-2xl font-semibold overflow-hidden">
                 {profile.profilePhotoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -316,7 +313,7 @@ export default function AuPairProfilPage() {
 
         {/* Pièce d'identité */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-4">{tp.idTitle}</h2>
+          <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-4">{tp.idTitle}</h2>
           <div className="flex items-start gap-5">
             <div className="w-20 h-20 rounded-2xl bg-[#FFF3E0] flex items-center justify-center flex-shrink-0">
               <FileText className="w-8 h-8 text-[#E87722]" />
@@ -389,7 +386,7 @@ export default function AuPairProfilPage() {
 
         {/* Infos personnelles */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-5">
+          <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-5">
             {tp.personalInfo}
           </h2>
           <div className="grid sm:grid-cols-2 gap-4">
@@ -511,7 +508,7 @@ export default function AuPairProfilPage() {
 
         {/* Langues parlées */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-5">{tp.spokenLanguages}</h2>
+          <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-5">{tp.spokenLanguages}</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {LANGUAGES.map((lang) => (
               <label
@@ -543,7 +540,7 @@ export default function AuPairProfilPage() {
 
         {/* Expérience & qualifications */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-5">
+          <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-5">
             {tp.experienceQualifications}
           </h2>
           <div className="space-y-4">
@@ -613,7 +610,7 @@ export default function AuPairProfilPage() {
 
         {/* Disponibilité & destination */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-5">
+          <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-5">
             {tp.availability}
           </h2>
           <div className="space-y-4">
@@ -704,7 +701,7 @@ export default function AuPairProfilPage() {
 
         {/* Description & Motivation */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-5">
+          <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-5">
             {tp.descriptionMotivation}
           </h2>
           <div className="space-y-4">
@@ -739,7 +736,7 @@ export default function AuPairProfilPage() {
 
         {/* Santé & déclarations */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-5">
+          <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-5">
             {tp.healthDeclarations}
           </h2>
           <div className="space-y-4">
@@ -788,7 +785,7 @@ export default function AuPairProfilPage() {
 
         {/* Contact */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-5">{t.profileForm.whatsappTitle}</h2>
+          <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-5">{t.profileForm.whatsappTitle}</h2>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">

@@ -104,7 +104,7 @@ The whole UI (public site, auth pages, au pair/family dashboards, admin back-off
 - Server pages that need `metadata` or DB data stay server components and render a client `*Content.tsx` / `*View.tsx` for the text. Page `metadata` (SEO title/description) stays French since the server doesn't know the visitor's language.
 - APIs return raw values (ISO dates, enum keys, numbers) and the client formats them per language (e.g. `/api/admin/dashboard`, `/api/admin/analytics` months as `YYYY-MM`).
 - `LanguageToggle` (`src/components/layout/`) shows FR/GB flag buttons (images via `CountryFlag`, emoji flags don't render on Windows); used in the Navbar, dashboard sidebar + mobile header, admin top bar and pending-validation screen.
-- Sidebar nav for both dashboard roles is defined once in `src/components/layout/dashboard-nav.ts`; `DashboardLayout` takes only `role`. Admin table pagination is the shared `src/components/admin/Pagination.tsx`.
+- Sidebar nav for both dashboard roles is defined once in `src/components/layout/dashboard-nav.ts`; `DashboardLayout` takes only `role`. It mirrors the admin charte: breadcrumb in the top bar (hidden below `sm`), avatar dropdown (Mon profil / Se déconnecter), a sidebar "Au pair premium" link (instead of sign-out) when the au pair's subscription is active, and a warm soft background (`SPACE_BACKGROUND`, distinct from the admin's blue one). Pages open with `PageHeader` (`src/components/dashboard/`, admin `PAGE_TITLE` + `Separator`); same weights as admin (nothing heavier than `font-medium` except values). Dashboard greeting is Bonjour/Bonsoir from the device hour (`useIsEvening`). Admin table pagination is the shared `src/components/admin/Pagination.tsx`.
 - Notifications are stored in French; `NotificationsPanel` regenerates known types (`PROFILE_VIEW`, `WEEKLY_VIEWS_DIGEST`) in the current language from the stored text. Emails and the CSV payment export are still French-only.
 
 ## User roles and business rules
@@ -166,6 +166,10 @@ edited at `/admin/parametres/email` via `/api/admin/constants`. `src/lib/mail.ts
 `sendMail()` loads them from `getAppSettings()` on every call and logs a clear
 `[mail]` error (never throws) if either is missing or Resend rejects the send.
 See `docs/email-resend.md` for setup, local testing, and production deployment.
+
+### Au pair subscription page
+
+`/dashboard/au-pair/abonnement` has three tabs (current subscription, plan & payment, payment history), fed by `GET /api/subscription` (latest subscription + `history[]`; an `ACTIVE` row past `expiresAt` is returned as `EXPIRED`). The pay button is disabled while a subscription is active, and `POST /api/payments/checkout` also refuses with `409` in that case (no early renewal).
 
 ### Payments — active provider switch
 

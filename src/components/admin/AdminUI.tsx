@@ -63,7 +63,7 @@ export function KpiCard({ icon: Icon, value, label, caption, ratio, color }: {
   icon: LucideIcon;
   value: number | string;
   label: string;
-  caption: string;
+  caption?: string;
   ratio: number;
   color: string;
 }) {
@@ -95,7 +95,7 @@ export function KpiCard({ icon: Icon, value, label, caption, ratio, color }: {
       <div className="relative min-w-0">
         <p className="text-2xl font-semibold text-[#1A1A2E] leading-tight tabular-nums truncate">{value}</p>
         <p className="text-sm text-gray-700 leading-snug">{label}</p>
-        <p className="text-xs text-gray-500 leading-snug">{caption}</p>
+        {caption && <p className="text-xs text-gray-500 leading-snug">{caption}</p>}
       </div>
     </section>
   );
@@ -111,6 +111,31 @@ export function KpiGrid({ items }: { items: KpiItem[] }) {
       {items.map((kpi) => (
         <KpiCard key={kpi.label} {...kpi} />
       ))}
+    </div>
+  );
+}
+
+/** Anneau de progression (0–100) avec contenu centré */
+export function Ring({ ratio, color, size = 112, children }: {
+  ratio: number;
+  color: string;
+  size?: number;
+  children: React.ReactNode;
+}) {
+  const r = 46;
+  const circumference = 2 * Math.PI * r;
+  const filled = (Math.max(0, Math.min(100, ratio)) / 100) * circumference;
+  return (
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      <svg viewBox="0 0 104 104" className="w-full h-full -rotate-90">
+        <circle cx="52" cy="52" r={r} fill="none" stroke={`${color}1F`} strokeWidth={7} />
+        <circle
+          cx="52" cy="52" r={r} fill="none" stroke={color} strokeWidth={7} strokeLinecap="round"
+          strokeDasharray={`${filled} ${circumference}`}
+          className="transition-[stroke-dasharray] duration-700"
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">{children}</div>
     </div>
   );
 }

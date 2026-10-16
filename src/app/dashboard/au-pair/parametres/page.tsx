@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import ChangePasswordForm from "@/components/settings/ChangePasswordForm";
 import { useI18n } from "@/i18n";
+import { PageHeader } from "@/components/dashboard/PageHeader";
 
 export default function AuPairParametresPage() {
   const { data: session } = useSession();
@@ -12,7 +13,7 @@ export default function AuPairParametresPage() {
   return (
     <DashboardLayout role="au-pair" userName={session?.user?.name ?? ""}>
       <div className="space-y-5">
-        <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{t.settings.title}</h1>
+        <PageHeader title={t.settings.title} />
         <ChangePasswordForm />
       </div>
     </DashboardLayout>

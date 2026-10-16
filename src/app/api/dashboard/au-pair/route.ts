@@ -49,15 +49,12 @@ export async function GET() {
       }),
     ]);
 
-  let filledCount = 0;
-  for (const field of COMPLETION_FIELDS) {
+  const missingFields = COMPLETION_FIELDS.filter((field) => {
     const value = profile[field as keyof typeof profile];
-    if (Array.isArray(value) ? value.length > 0 : value !== null && value !== undefined && value !== "") {
-      filledCount++;
-    }
-  }
+    return Array.isArray(value) ? value.length === 0 : value === null || value === undefined || value === "";
+  });
   const profileCompletion = Math.round(
-    (filledCount / COMPLETION_FIELDS.length) * 100
+    ((COMPLETION_FIELDS.length - missingFields.length) / COMPLETION_FIELDS.length) * 100
   );
 
   let daysLeft = 0;
@@ -115,6 +112,7 @@ export async function GET() {
     kids: s.profile.numberOfKids,
     hoursPerWeek: s.profile.hoursPerWeek ?? 0,
     pocketMoney: s.profile.pocketMoney ?? 0,
+    photoUrl: s.profile.familyPhotoUrl ?? "",
   }));
 
   return NextResponse.json({
@@ -123,6 +121,7 @@ export async function GET() {
     status: profile.status,
     isAvailable: profile.isAvailable,
     profileCompletion,
+    missingFields,
     profileViews: profile.profileViews,
     favoritesCount,
     totalMessages,

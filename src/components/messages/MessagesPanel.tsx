@@ -41,7 +41,7 @@ interface OtherUser {
 
 function Avatar({ name, avatar }: { name: string; avatar: string | null }) {
   return (
-    <div className="w-10 h-10 rounded-full bg-[#1A1A2E] flex items-center justify-center text-white font-bold overflow-hidden flex-shrink-0">
+    <div className="w-10 h-10 rounded-full bg-[#1A1A2E] flex items-center justify-center text-white font-medium overflow-hidden flex-shrink-0">
       {avatar ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={avatar} alt="" className="w-full h-full object-cover object-top" />
@@ -434,7 +434,7 @@ export default function MessagesPanel() {
                 </button>
                 <Avatar name={otherUser.name} avatar={otherUser.avatar} />
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-[#1A1A2E] truncate">{otherUser.name}</p>
+                  <p className="font-medium text-[#1A1A2E] truncate">{otherUser.name}</p>
                   <p className="text-xs text-gray-400">{roleLabels[otherUser.role] ?? otherUser.role}</p>
                 </div>
                 <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
@@ -583,7 +583,7 @@ export default function MessagesPanel() {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-[#1A1A2E] text-lg">{t.messages.reportTitle(otherUser.name)}</h3>
+              <h3 className="text-base font-medium text-[#1A1A2E]">{t.messages.reportTitle(otherUser.name)}</h3>
               <button onClick={closeReportModal} className="text-gray-400 hover:text-gray-600" aria-label={t.common.close}>
                 <X className="w-5 h-5" />
               </button>

@@ -7,6 +7,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Heart, Languages, Star, MapPin, Loader2 } from "lucide-react";
 import { useI18n } from "@/i18n";
+import { PageHeader } from "@/components/dashboard/PageHeader";
 
 type AuPair = {
   id: string;
@@ -46,10 +47,7 @@ export default function FavorisPage() {
   return (
     <DashboardLayout role="famille" userName={session?.user?.name ?? ""}>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{t.favorites.title}</h1>
-          <p className="text-gray-500">{t.favorites.subtitle}</p>
-        </div>
+        <PageHeader title={t.favorites.title} subtitle={t.favorites.subtitle} />
 
         {loading ? (
           <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
@@ -74,7 +72,7 @@ export default function FavorisPage() {
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={ap.profilePhotoUrl} alt={ap.firstName} className="absolute inset-0 w-full h-full object-cover object-top" />
                     ) : (
-                      <div className="w-20 h-20 bg-[#E87722] rounded-full flex items-center justify-center text-white text-3xl font-bold">
+                      <div className="w-20 h-20 bg-[#E87722] rounded-full flex items-center justify-center text-white text-3xl font-semibold">
                         {ap.firstName.charAt(0)}
                       </div>
                     )}
@@ -84,7 +82,7 @@ export default function FavorisPage() {
                   </div>
 
                   <div className="p-5">
-                    <h3 className="font-bold text-[#1A1A2E] text-lg">{ap.firstName}, {t.common.age(ap.age)}</h3>
+                    <h3 className="text-base font-medium text-[#1A1A2E]">{ap.firstName}, {t.common.age(ap.age)}</h3>
                     <div className="flex items-center gap-1 text-gray-500 text-sm mb-2">
                       <span>{ap.flag}</span>
                       <span>{tValue(ap.country)}</span>

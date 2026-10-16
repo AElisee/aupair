@@ -32,7 +32,7 @@ export function SubscriptionLockCard({
       <div className="w-12 h-12 bg-[#FFF3E0] rounded-full flex items-center justify-center mx-auto mb-3">
         <Lock className="w-6 h-6 text-[#E87722]" />
       </div>
-      <h3 className="font-bold text-[#1A1A2E] mb-1">{title ?? t.subscriptionLock.defaultTitle}</h3>
+      <h3 className="text-[15px] font-medium text-[#1A1A2E] mb-1">{title ?? t.subscriptionLock.defaultTitle}</h3>
       <p className="text-sm text-gray-500 mb-4">{message ?? t.subscriptionLock.defaultMessage}</p>
       <Link href="/dashboard/au-pair/abonnement">
         <Button size="sm">{t.subscriptionLock.subscribeNow}</Button>

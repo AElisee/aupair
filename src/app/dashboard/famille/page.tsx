@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { User, MessageCircle, Eye, Heart } from "lucide-react";
 import Link from "next/link";
 import { useI18n } from "@/i18n";
+import { PageHeader } from "@/components/dashboard/PageHeader";
+import { useIsEvening } from "@/hooks/useIsEvening";
 
 const VIEWS_POLL_INTERVAL_MS = 5000;
 
@@ -35,6 +37,7 @@ interface DashboardData {
 export default function FamilleDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const { t, tValue, tList } = useI18n();
+  const isEvening = useIsEvening();
 
   useEffect(() => {
     let cancelled = false;
@@ -89,12 +92,7 @@ export default function FamilleDashboard() {
       userName={data?.name ?? ""}
     >
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">
-            {t.common.greeting(data?.name ?? "")}
-          </h1>
-          <p className="text-gray-500">{t.common.activitySummary}</p>
-        </div>
+        <PageHeader title={t.common.greeting(data?.name ?? "", isEvening)} subtitle={t.common.activitySummary} />
 
         {/* Alerte profil incomplet */}
         {profileCompletion < 100 && (
@@ -103,7 +101,7 @@ export default function FamilleDashboard() {
               <User className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1">
-              <p className="font-bold text-[#1A1A2E] mb-1">
+              <p className="font-medium text-[#1A1A2E] mb-1">
                 {t.familyHome.completeTitle(profileCompletion)}
               </p>
               <p className="text-sm text-gray-500 mb-3">
@@ -128,7 +126,7 @@ export default function FamilleDashboard() {
                 <div className="w-10 h-10 bg-[#FFF3E0] rounded-full flex items-center justify-center mx-auto mb-3">
                   <Icon className="w-5 h-5 text-[#E87722]" />
                 </div>
-                <div className="text-2xl font-extrabold text-[#1A1A2E]">
+                <div className="text-2xl font-semibold text-[#1A1A2E]">
                   {s.value}
                 </div>
                 <div className="text-xs text-gray-500 mt-0.5">{s.label}</div>
@@ -145,7 +143,7 @@ export default function FamilleDashboard() {
         {/* Au pairs suggérés */}
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between gap-2 flex-wrap mb-4">
-            <h3 className="font-bold text-[#1A1A2E]">
+            <h3 className="text-[15px] font-medium text-[#1A1A2E]">
               {t.familyHome.suggestedTitle}
             </h3>
             <Link
@@ -168,7 +166,7 @@ export default function FamilleDashboard() {
                   className="flex items-center justify-between gap-2 p-3 bg-[#F5F5F5] rounded-xl hover:bg-[#FFF3E0] transition-colors"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 bg-[#E87722] rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden shrink-0">
+                    <div className="w-10 h-10 bg-[#E87722] rounded-full flex items-center justify-center text-white font-medium text-sm overflow-hidden shrink-0">
                       {ap.profilePhotoUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img

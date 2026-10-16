@@ -194,6 +194,7 @@ const SERVER_ERRORS: Record<string, string> = {
   "Le paiement a échoué ou a été annulé.": "The payment failed or was cancelled.",
   "Identifiant de transaction manquant.": "Missing transaction ID.",
   "Référence invalide.": "Invalid reference.",
+  "Votre abonnement est déjà actif.": "Your subscription is already active.",
   // Inscription, mot de passe oublié, contact
   "Adresse email invalide.": "Invalid email address.",
   "Champs obligatoires manquants.": "Required fields are missing.",

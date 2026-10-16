@@ -6,20 +6,77 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as Toast from "@radix-ui/react-toast";
-import { CheckCircle, Clock, Wallet, Loader2, AlertCircle, ExternalLink, X } from "lucide-react";
+import {
+  CheckCircle, Wallet, Loader2, AlertCircle, ExternalLink, X, CalendarClock, Receipt, Sparkles,
+  ShieldCheck, Lock, FileText, CreditCard, Smartphone, Globe,
+} from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import { useI18n } from "@/i18n";
+import { PageHeader } from "@/components/dashboard/PageHeader";
+import { ICON, ORANGE, TEAL, Panel, PanelHeader, Ring, pct } from "@/components/admin/AdminUI";
+
+type SubscriptionStatus = "ACTIVE" | "EXPIRED" | "CANCELLED" | "REFUNDED";
+type PaymentMethod = "MOBILE_MONEY" | "CARD" | "FEDAPAY" | "GENIUSPAY";
+type Currency = "EUR" | "XOF" | "USD";
+
+type PaymentRow = {
+  id: string;
+  date: string;
+  startsAt: string;
+  expiresAt: string;
+  amount: number;
+  currency: Currency;
+  method: PaymentMethod;
+  status: SubscriptionStatus;
+  reference: string | null;
+  invoiceUrl: string | null;
+};
 
 type SubscriptionData = {
   active: boolean;
-  status: "ACTIVE" | "EXPIRED" | "CANCELLED" | "REFUNDED" | null;
+  status: SubscriptionStatus | null;
+  startsAt: string | null;
   expiresAt: string | null;
   daysLeft: number;
   amount: number | null;
-  currency: "EUR" | "XOF" | "USD" | null;
+  currency: Currency | null;
+  paymentMethod: PaymentMethod | null;
   countryOfOrigin: string | null;
+  history: PaymentRow[];
   constants: { priceEur: number; priceXof: number; days: number; features: string[] };
 };
+
+type Tab = "current" | "plan" | "history";
+const TABS: Tab[] = ["current", "plan", "history"];
+
+const STATUS_VARIANTS: Record<SubscriptionStatus, "success" | "secondary" | "warning" | "destructive"> = {
+  ACTIVE: "success",
+  EXPIRED: "secondary",
+  CANCELLED: "warning",
+  REFUNDED: "destructive",
+};
+
+const TH = "px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-left";
+const PRIMARY_BUTTON =
+  "w-full inline-flex items-center justify-center gap-2 h-11 rounded-xl text-sm text-white bg-gradient-to-r from-[#F08A3C] to-[#E87722] shadow-[0_6px_16px_-6px_rgba(232,119,34,0.7)] hover:brightness-105 transition disabled:opacity-60";
+const DISABLED_BUTTON =
+  "w-full inline-flex items-center justify-center gap-2 h-11 rounded-xl text-sm border border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed";
+
+const methodIcon = (method: PaymentMethod) => {
+  const props = { ...ICON, size: 15 };
+  if (method === "MOBILE_MONEY") return <Smartphone {...props} />;
+  if (method === "CARD") return <CreditCard {...props} />;
+  return <Globe {...props} />;
+};
+
+function Detail({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl bg-white/70 border border-gray-100 px-4 py-3">
+      <p className="text-xs text-gray-500">{label}</p>
+      <div className="text-sm text-[#1A1A2E] mt-0.5 tabular-nums">{children}</div>
+    </div>
+  );
+}
 
 const POLL_INTERVAL_MS = 4000;
 const MAX_POLL_ATTEMPTS = 30;
@@ -75,6 +132,7 @@ function AbonnementContent() {
   const [pendingTransactionId, setPendingTransactionId] = useState<number | string | null>(null);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [tab, setTab] = useState<Tab>("current");
   const pollAttempts = useRef(0);
   const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Incrémenté à chaque arrêt du polling : les réponses d'une vérification devenue obsolète sont ignorées
@@ -231,133 +289,262 @@ function AbonnementContent() {
   const priceEur = constants?.priceEur ?? 32;
   const priceXof = constants?.priceXof ?? 20800;
   const features = constants?.features ?? [];
+  const ts = t.subscription;
+  const fmtDate = (date: string | null) => (date ? formatDate(date, locale) : "—");
+
+  const active = data?.active ?? false;
+  const daysLeft = data?.daysLeft ?? 0;
+  const expiringSoon = active && daysLeft <= 7;
+  const statusColor = !active ? "#D64545" : expiringSoon ? ORANGE : TEAL;
+  const history = data?.history ?? [];
+
+  const statusBadge = data ? (
+    active ? (
+      <Badge variant={expiringSoon ? "warning" : "success"}>{ts.active}</Badge>
+    ) : data.status === "EXPIRED" ? (
+      <Badge variant="secondary">{ts.expired}</Badge>
+    ) : (
+      <Badge variant="destructive">{ts.inactive}</Badge>
+    )
+  ) : null;
+
+  // Bouton de paiement : non cliquable tant que l'abonnement en cours n'a pas expiré
+  const payButton = active ? (
+    <div className="space-y-2">
+      <button type="button" disabled className={DISABLED_BUTTON}>
+        <Lock {...ICON} size={16} />
+        {ts.alreadyActive}
+      </button>
+      <p className="text-xs text-gray-500 text-center">{ts.renewFrom(fmtDate(data?.expiresAt ?? null))}</p>
+    </div>
+  ) : pendingTransactionId ? (
+    // Dialogue fermé mais paiement toujours en cours de vérification : permet de le rouvrir ou d'abandonner
+    <div className="space-y-2">
+      <button
+        type="button"
+        onClick={() => setDialogOpen(true)}
+        className="w-full inline-flex items-center justify-center gap-2 h-11 rounded-xl text-sm border border-[#E87722]/30 bg-[#FFF3E0] text-[#E87722] hover:bg-[#FFE7C7] transition"
+      >
+        <Loader2 {...ICON} size={16} className="animate-spin" />
+        {ts.waitingConfirmation}
+      </button>
+      <button
+        type="button"
+        onClick={handleCancelPayment}
+        className="w-full text-center text-sm text-gray-500 hover:text-[#1A1A2E] underline underline-offset-2"
+      >
+        {ts.cancelPayment}
+      </button>
+    </div>
+  ) : (
+    <button type="button" onClick={handlePay} disabled={submitting} className={PRIMARY_BUTTON}>
+      {submitting ? <Loader2 {...ICON} size={16} className="animate-spin" /> : <Wallet {...ICON} size={16} />}
+      {ts.payNow}
+    </button>
+  );
 
   return (
     <DashboardLayout role="au-pair" userName={session?.user?.name ?? ""}>
-      <h1 className="text-2xl font-extrabold text-[#1A1A2E] mb-6">{t.subscription.title}</h1>
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="space-y-6">
+        <PageHeader title={ts.title} subtitle={ts.subtitle} action={statusBadge} />
 
         {paymentStatus === "success" && (
           <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-3 text-green-700 text-sm">
-            <CheckCircle className="w-5 h-5 flex-shrink-0" />
-            {t.subscription.paymentSuccess}
+            <CheckCircle {...ICON} className="flex-shrink-0" />
+            {ts.paymentSuccess}
           </div>
         )}
         {paymentStatus === "cancelled" && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 flex items-center gap-3 text-yellow-700 text-sm">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            {t.subscription.paymentCancelled}
+            <AlertCircle {...ICON} className="flex-shrink-0" />
+            {ts.paymentCancelled}
           </div>
         )}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center gap-3 text-red-600 text-sm">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <AlertCircle {...ICON} className="flex-shrink-0" />
             {error}
           </div>
         )}
 
+        <div role="tablist" className="flex gap-1 border-b border-gray-200 overflow-x-auto">
+          {TABS.map((key) => (
+            <button
+              key={key}
+              type="button"
+              role="tab"
+              aria-selected={tab === key}
+              onClick={() => setTab(key)}
+              className={`px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 -mb-px transition-colors ${
+                tab === key ? "border-[#E87722] text-[#E87722]" : "border-transparent text-gray-500 hover:text-[#1A1A2E]"
+              }`}
+            >
+              {ts.tabs[key]}
+              {key === "history" && history.length > 0 && (
+                <span className="ml-1.5 text-xs text-gray-400 tabular-nums">{history.length}</span>
+              )}
+            </button>
+          ))}
+        </div>
+
         {loading || !data ? (
-          <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
+          <Panel className="p-12 text-center">
             <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
             <p className="text-gray-500">{t.common.loading}</p>
-          </div>
-        ) : (
-          <>
-            {/* Statut actuel */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-bold text-[#1A1A2E]">{t.subscription.currentTitle}</h2>
-                {data.active ? (
-                  <Badge variant="success">{t.subscription.active}</Badge>
-                ) : data.status === "EXPIRED" ? (
-                  <Badge variant="secondary">{t.subscription.expired}</Badge>
-                ) : (
-                  <Badge variant="destructive">{t.subscription.inactive}</Badge>
-                )}
-              </div>
-
-              {data.active ? (
-                <>
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-14 h-14 bg-[#FFF3E0] rounded-full flex items-center justify-center">
-                      <Clock className="w-7 h-7 text-[#E87722]" />
+          </Panel>
+        ) : tab === "current" ? (
+          <div className="grid lg:grid-cols-3 gap-4">
+            <Panel className="p-5 lg:col-span-2" tint={statusColor}>
+              <PanelHeader title={ts.currentTitle} icon={CalendarClock} color={statusColor} />
+              <div className="flex flex-col sm:flex-row items-center gap-6">
+                <Ring ratio={pct(daysLeft, daysTotal)} color={statusColor} size={136}>
+                  <span className="text-3xl font-semibold text-[#1A1A2E] tabular-nums leading-none">{daysLeft}</span>
+                  <span className="text-[11px] text-gray-500 mt-1 px-4 leading-tight">{ts.daysLeftLabel}</span>
+                </Ring>
+                <div className="flex-1 w-full space-y-4">
+                  {!active && (
+                    <p className="text-sm text-gray-500">
+                      {data.status ? ts.expiredOn(fmtDate(data.expiresAt)) : ts.noSubscription}{" "}
+                      {ts.subscribeToBeVisible}
+                    </p>
+                  )}
+                  {data.status && (
+                    <div className="grid grid-cols-1 min-[480px]:grid-cols-2 gap-3">
+                      <Detail label={ts.startedOn}>{fmtDate(data.startsAt)}</Detail>
+                      <Detail label={ts.expiresOn}>{fmtDate(data.expiresAt)}</Detail>
+                      <Detail label={ts.lastPayment}>
+                        {data.amount != null ? formatCurrency(data.amount, data.currency ?? "EUR", locale) : "—"}
+                      </Detail>
+                      <Detail label={ts.paymentMethod}>
+                        {data.paymentMethod ? (
+                          <span className="inline-flex items-center gap-1.5">
+                            {methodIcon(data.paymentMethod)}
+                            {ts.methods[data.paymentMethod]}
+                          </span>
+                        ) : "—"}
+                      </Detail>
                     </div>
-                    <div>
-                      <p className="text-3xl font-extrabold text-[#1A1A2E]">{t.subscription.daysCount(data.daysLeft)}</p>
-                      <p className="text-sm text-gray-500">
-                        {t.subscription.remaining(data.expiresAt ? formatDate(data.expiresAt, locale) : "—")}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="w-full bg-gray-100 rounded-full h-2">
-                    <div className="bg-[#E87722] h-2 rounded-full" style={{ width: `${Math.min(100, (data.daysLeft / daysTotal) * 100)}%` }} />
-                  </div>
-                </>
-              ) : (
-                <p className="text-sm text-gray-500">
-                  {data.status
-                    ? t.subscription.expiredOn(data.expiresAt ? formatDate(data.expiresAt, locale) : "—")
-                    : t.subscription.noSubscription}
-                  {" "}{t.subscription.subscribeToBeVisible}
-                </p>
-              )}
-            </div>
-
-            {/* Activer / renouveler + contenu inclus */}
-            <div className="bg-gradient-to-br from-[#E87722] to-[#ff9a3c] rounded-2xl p-6 text-white">
-              <h2 className="font-bold text-xl mb-1">{data.active ? t.subscription.renewTitle : t.subscription.activateTitle}</h2>
-              <p className="text-white/80 mb-4 text-sm">{t.subscription.stayVisible}</p>
-              <div className="bg-white/20 rounded-xl p-4 mb-5">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold">{t.subscription.planLabel(daysTotal)}</span>
-                  <span className="font-extrabold text-xl">{formatCurrency(priceEur, "EUR", locale)}</span>
+                  )}
                 </div>
-                <p className="text-white/70 text-xs mt-1">{t.subscription.fullAccess(formatCurrency(priceXof, "XOF", locale))}</p>
               </div>
+            </Panel>
 
-              {features.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="font-semibold mb-3">{t.subscription.includedTitle}</h3>
-                  <div className="space-y-2.5">
-                    {features.map(f => (
-                      <div key={f} className="flex items-center gap-3 text-sm">
-                        <CheckCircle className="w-4 h-4 text-white flex-shrink-0" />
-                        {tValue(f)}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {pendingTransactionId ? (
-                // Dialogue fermé mais paiement toujours en cours de vérification : permet de le rouvrir ou d'abandonner
-                <div className="space-y-2">
-                  <button
-                    onClick={() => setDialogOpen(true)}
-                    className="w-full flex items-center justify-center gap-3 bg-white/20 hover:bg-white/30 rounded-xl p-3 text-sm font-medium transition-colors"
-                  >
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    {t.subscription.waitingConfirmation}
-                  </button>
-                  <button
-                    onClick={handleCancelPayment}
-                    className="w-full text-center text-sm text-white/80 hover:text-white underline underline-offset-2"
-                  >
-                    {t.subscription.cancelPayment}
-                  </button>
-                </div>
+            <Panel className="p-5 flex flex-col" tint={ORANGE}>
+              <PanelHeader title={ts.planLabel(daysTotal)} icon={Sparkles} />
+              <p className="text-2xl font-semibold text-[#1A1A2E] tabular-nums">{formatCurrency(priceEur, "EUR", locale)}</p>
+              <p className="text-xs text-gray-500 mb-5">{ts.priceXof(formatCurrency(priceXof, "XOF", locale))}</p>
+              <div className="flex-1" />
+              {active ? (
+                payButton
               ) : (
-                <button
-                  onClick={handlePay}
-                  disabled={submitting}
-                  className="w-full flex items-center justify-center gap-3 bg-[#1A1A2E] hover:bg-[#1A1A2E]/90 disabled:opacity-60 rounded-xl p-3 text-sm font-medium transition-colors text-white"
-                >
-                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wallet className="w-4 h-4" />}
-                  {t.subscription.payNow}
+                <button type="button" onClick={() => setTab("plan")} className={PRIMARY_BUTTON}>
+                  {ts.seePlan}
                 </button>
               )}
+            </Panel>
+          </div>
+        ) : tab === "plan" ? (
+          <div className="grid lg:grid-cols-3 gap-4">
+            <Panel className="p-5 lg:col-span-2" tint={ORANGE}>
+              <PanelHeader
+                title={active ? ts.includedTitle : ts.activateTitle}
+                subtitle={ts.stayVisible}
+                icon={Sparkles}
+              />
+              {features.length > 0 && (
+                <>
+                  {!active && <h3 className="text-sm text-gray-700 mb-3">{ts.includedTitle}</h3>}
+                  <ul className="grid sm:grid-cols-2 gap-2.5">
+                    {features.map((f) => (
+                      <li key={f} className="flex items-start gap-2.5 text-sm text-[#1A1A2E]">
+                        <CheckCircle {...ICON} size={16} className="text-[#3FA45B] mt-0.5 flex-shrink-0" />
+                        {tValue(f)}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </Panel>
+
+            <Panel className="p-5 flex flex-col">
+              <PanelHeader title={ts.planLabel(daysTotal)} icon={Wallet} />
+              <div className="mb-5">
+                <p className="text-3xl font-semibold text-[#1A1A2E] tabular-nums">
+                  {formatCurrency(priceEur, "EUR", locale)}
+                  <span className="ml-1.5 text-sm font-normal text-gray-500">{ts.priceLabel(daysTotal)}</span>
+                </p>
+                <p className="text-xs text-gray-500 mt-1">{ts.priceXof(formatCurrency(priceXof, "XOF", locale))}</p>
+              </div>
+              <div className="flex-1" />
+              {payButton}
+              <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-gray-400">
+                <ShieldCheck {...ICON} size={14} />
+                {ts.securePayment}
+              </p>
+            </Panel>
+          </div>
+        ) : (
+          <Panel className="py-5">
+            <div className="px-5">
+              <PanelHeader title={ts.tabs.history} subtitle={ts.historySubtitle(history.length)} icon={Receipt} />
             </div>
-          </>
+            {history.length === 0 ? (
+              <p className="px-5 py-8 text-center text-sm text-gray-500">{ts.noPayments}</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="border-y border-gray-200/60 bg-white/60">
+                    <tr>
+                      <th className={TH}>{ts.colDate}</th>
+                      <th className={TH}>{ts.colPeriod}</th>
+                      <th className={TH}>{ts.colAmount}</th>
+                      <th className={TH}>{ts.colMethod}</th>
+                      <th className={TH}>{ts.status}</th>
+                      <th className={TH}>{ts.colReference}</th>
+                      <th className={`${TH} !text-right`}>{ts.colInvoice}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200/50">
+                    {history.map((p) => (
+                      <tr key={p.id} className="hover:bg-white/70 transition-colors">
+                        <td className="px-5 py-3 text-gray-700 tabular-nums whitespace-nowrap">{fmtDate(p.date)}</td>
+                        <td className="px-5 py-3 text-gray-500 tabular-nums whitespace-nowrap">
+                          {fmtDate(p.startsAt)} → {fmtDate(p.expiresAt)}
+                        </td>
+                        <td className="px-5 py-3 font-medium text-[#1A1A2E] tabular-nums whitespace-nowrap">
+                          {formatCurrency(p.amount, p.currency, locale)}
+                        </td>
+                        <td className="px-5 py-3 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1.5 text-gray-600">
+                            {methodIcon(p.method)}
+                            {ts.methods[p.method] ?? p.method}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3">
+                          <Badge variant={STATUS_VARIANTS[p.status]}>{ts.statuses[p.status]}</Badge>
+                        </td>
+                        <td className="px-5 py-3 text-xs text-gray-400 font-mono whitespace-nowrap">{p.reference ?? "—"}</td>
+                        <td className="px-5 py-3 text-right">
+                          {p.invoiceUrl ? (
+                            <a
+                              href={p.invoiceUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-[#E87722] text-xs hover:underline"
+                            >
+                              <FileText {...ICON} size={14} />PDF
+                            </a>
+                          ) : (
+                            <span className="text-gray-300 text-xs">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Panel>
         )}
       </div>
 
@@ -375,7 +562,7 @@ function AbonnementContent() {
               <div className="w-14 h-14 bg-[#FFF3E0] rounded-full flex items-center justify-center mb-4">
                 <Loader2 className="w-7 h-7 text-[#E87722] animate-spin" />
               </div>
-              <Dialog.Title className="text-lg font-bold text-[#1A1A2E]">
+              <Dialog.Title className="text-lg font-medium text-[#1A1A2E]">
                 {t.subscription.waitingConfirmation}
               </Dialog.Title>
               <Dialog.Description className="mt-2 text-sm text-gray-500">
@@ -384,7 +571,7 @@ function AbonnementContent() {
               {checkoutUrl && (
                 <button
                   onClick={() => window.open(checkoutUrl, "_blank", "noopener,noreferrer")}
-                  className="mt-6 w-full flex items-center justify-center gap-2 bg-[#E87722] hover:bg-[#d96a1a] text-white rounded-xl px-6 py-4 text-base font-bold shadow-md transition-colors"
+                  className="mt-6 w-full flex items-center justify-center gap-2 bg-[#E87722] hover:bg-[#d96a1a] text-white rounded-xl px-6 py-4 text-base font-medium shadow-md transition-colors"
                 >
                   {t.subscription.openPaymentPage}
                   <ExternalLink className="w-5 h-5" />

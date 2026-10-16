@@ -8,6 +8,7 @@ import { useCountries } from "@/hooks/useCountries";
 import { useConstants } from "@/hooks/useConstants";
 import PhotoViewerModal from "@/components/ui/photo-viewer-modal";
 import { useI18n } from "@/i18n";
+import { PageHeader } from "@/components/dashboard/PageHeader";
 
 type ProfileStatus = "PENDING" | "ACTIVE" | "HIDDEN" | "SUSPENDED" | "DELETED";
 
@@ -138,20 +139,18 @@ export default function FamilleProfilPage() {
   return (
     <DashboardLayout role="famille" userName={userName}>
       <div className="max-w-3xl space-y-6 pb-24">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{t.profileForm.title}</h1>
-            <p className="text-gray-500">{t.profileForm.visibleAfterValidation}</p>
-          </div>
-          <Badge variant={STATUS_VARIANTS[status]}>{t.profileStatus[status]}</Badge>
-        </div>
+        <PageHeader
+          title={t.profileForm.title}
+          subtitle={t.profileForm.visibleAfterValidation}
+          action={<Badge variant={STATUS_VARIANTS[status]}>{t.profileStatus[status]}</Badge>}
+        />
 
         {/* Photo de famille */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-4">{tf.photoTitle}</h2>
+          <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-4">{tf.photoTitle}</h2>
           <div className="flex items-center gap-5">
             <div className="relative">
-              <div className="w-20 h-20 bg-[#E87722] rounded-full flex items-center justify-center text-white text-2xl font-bold overflow-hidden">
+              <div className="w-20 h-20 bg-[#E87722] rounded-full flex items-center justify-center text-white text-2xl font-semibold overflow-hidden">
                 {profile.familyPhotoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={profile.familyPhotoUrl} alt={tf.photoTitle} className="w-full h-full object-cover object-top" />
@@ -199,7 +198,7 @@ export default function FamilleProfilPage() {
 
         {/* Infos générales */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-5">{tf.general}</h2>
+          <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-5">{tf.general}</h2>
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">{t.profileForm.firstName}</label>
@@ -247,7 +246,7 @@ export default function FamilleProfilPage() {
 
         {/* Enfants & accueil */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-5">{tf.kidsHosting}</h2>
+          <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-5">{tf.kidsHosting}</h2>
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">{tf.numberOfKids}</label>
@@ -293,14 +292,14 @@ export default function FamilleProfilPage() {
 
         {/* Description */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-5">{tf.familyDescription}</h2>
+          <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-5">{tf.familyDescription}</h2>
           <textarea value={profile.description} onChange={e => setProfile({ ...profile, description: e.target.value })}
             rows={3} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] resize-none" />
         </div>
 
         {/* Préférences au pair */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-5">{tf.preferences}</h2>
+          <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-5">{tf.preferences}</h2>
           <div className="grid sm:grid-cols-3 gap-4 mb-5">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">{tf.preferredGender}</label>
@@ -351,7 +350,7 @@ export default function FamilleProfilPage() {
 
         {/* Contact */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-5">{t.profileForm.whatsappTitle}</h2>
+          <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-5">{t.profileForm.whatsappTitle}</h2>
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">{tf.whatsappNumber}</label>
             <div className="flex flex-col sm:flex-row gap-2">

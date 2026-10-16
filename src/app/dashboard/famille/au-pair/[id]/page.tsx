@@ -129,7 +129,7 @@ export default function AuPairProfilePage() {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={data.profilePhotoUrl} alt="" className="absolute inset-0 w-full h-full object-cover object-top" />
                   ) : (
-                    <div className="w-24 h-24 bg-[#E87722] rounded-full flex items-center justify-center text-white text-4xl font-bold">
+                    <div className="w-24 h-24 bg-[#E87722] rounded-full flex items-center justify-center text-white text-4xl font-medium">
                       {data.firstName.charAt(0)}
                     </div>
                   )}
@@ -138,7 +138,7 @@ export default function AuPairProfilePage() {
                   </div>
                 </div>
                 <div className="p-5">
-                  <h1 className="font-bold text-[#1A1A2E] text-xl">{data.firstName} {data.lastName}</h1>
+                  <h1 className="font-medium text-[#1A1A2E] text-xl">{data.firstName} {data.lastName}</h1>
                   <p className="text-gray-500 text-sm mb-4">{t.common.age(data.age)} · {data.cityOfOrigin ? `${data.cityOfOrigin}, ` : ""}{tValue(data.countryOfOrigin)}</p>
 
                   <div className="space-y-2 text-sm text-gray-600">
@@ -166,7 +166,7 @@ export default function AuPairProfilePage() {
             {/* Colonne droite : détails */}
             <div className="lg:col-span-2 space-y-6">
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <h2 className="font-bold text-[#1A1A2E] mb-3">{td.general}</h2>
+                <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-3">{td.general}</h2>
                 <div className="grid grid-cols-2 gap-4">
                   <Field label={td.gender} value={tValue(data.gender)} />
                   <Field label={td.nationality} value={data.nationality} />
@@ -176,7 +176,7 @@ export default function AuPairProfilePage() {
               </div>
 
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <h2 className="font-bold text-[#1A1A2E] mb-3">{td.experienceQualifications}</h2>
+                <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-3">{td.experienceQualifications}</h2>
                 <div className="grid grid-cols-2 gap-4">
                   <Field label={td.yearsOfExperience} value={data.childcareYears != null ? td.experienceYears(data.childcareYears) : null} />
                   <Field label={td.firstAid} value={<YesNo value={data.firstAidCertified} />} />
@@ -191,7 +191,7 @@ export default function AuPairProfilePage() {
               </div>
 
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <h2 className="font-bold text-[#1A1A2E] mb-3">{td.availability}</h2>
+                <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-3">{td.availability}</h2>
                 <div className="grid grid-cols-2 gap-4">
                   <Field label={td.targetCountries} value={tList(data.targetCountries)} />
                   <Field label={td.preferredDuration} value={tValue(data.preferredDuration)} />
@@ -202,7 +202,7 @@ export default function AuPairProfilePage() {
 
               {(data.description || data.motivation) && (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                  <h2 className="font-bold text-[#1A1A2E] mb-3">{td.presentation}</h2>
+                  <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-3">{td.presentation}</h2>
                   {data.description && <Field label={td.description} value={<span className="whitespace-pre-wrap">{data.description}</span>} />}
                   {data.motivation && <div className="mt-3"><Field label={td.motivation} value={<span className="whitespace-pre-wrap">{data.motivation}</span>} /></div>}
                 </div>
@@ -210,7 +210,7 @@ export default function AuPairProfilePage() {
 
               {(data.phoneWhatsapp1 || data.phoneWhatsapp2) && (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                  <h2 className="font-bold text-[#1A1A2E] mb-3">{td.contact}</h2>
+                  <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-3">{td.contact}</h2>
                   <div className="grid grid-cols-2 gap-4">
                     {data.phoneWhatsapp1 && <Field label="WhatsApp" value={<span className="inline-flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-[#E87722]" /> {data.phoneWhatsapp1}</span>} />}
                     {data.phoneWhatsapp2 && <Field label="WhatsApp (2)" value={<span className="inline-flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-[#E87722]" /> {data.phoneWhatsapp2}</span>} />}

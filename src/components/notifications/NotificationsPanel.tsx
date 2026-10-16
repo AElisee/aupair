@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Bell, Eye, BarChart2, Loader2, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n";
+import { PageHeader } from "@/components/dashboard/PageHeader";
 
 interface NotificationItem {
   id: string;
@@ -99,22 +100,24 @@ export default function NotificationsPanel() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{t.notifications.title}</h1>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={markAllRead}
-          disabled={markingAll || unreadCount === 0}
-        >
-          {markingAll ? (
-            <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
-          ) : (
-            <CheckCheck className="w-4 h-4 mr-1.5" />
-          )}
-          {t.notifications.markAllRead}
-        </Button>
-      </div>
+      <PageHeader
+        title={t.notifications.title}
+        action={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={markAllRead}
+            disabled={markingAll || unreadCount === 0}
+          >
+            {markingAll ? (
+              <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+            ) : (
+              <CheckCheck className="w-4 h-4 mr-1.5" />
+            )}
+            {t.notifications.markAllRead}
+          </Button>
+        }
+      />
 
       {notifications === null ? (
         <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">

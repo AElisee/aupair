@@ -9,11 +9,12 @@ export async function GET() {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   }
 
-  const [settings, subscription, profile] = await Promise.all([
+  const [settings, subscriptions, profile] = await Promise.all([
     getAppSettings(),
-    prisma.subscription.findFirst({
+    prisma.subscription.findMany({
       where: { userId: session.user.id },
       orderBy: { createdAt: "desc" },
+      take: 100,
     }),
     prisma.auPairProfile.findUnique({
       where: { userId: session.user.id },
@@ -21,6 +22,7 @@ export async function GET() {
     }),
   ]);
 
+  const subscription = subscriptions[0] ?? null;
   const now = new Date();
   const active = !!subscription && subscription.status === "ACTIVE" && subscription.expiresAt > now;
   const daysLeft = active && subscription
@@ -30,11 +32,26 @@ export async function GET() {
   return NextResponse.json({
     active,
     status: subscription?.status ?? null,
+    startsAt: subscription?.startsAt ?? null,
     expiresAt: subscription?.expiresAt ?? null,
     daysLeft,
     amount: subscription?.amount ?? null,
     currency: subscription?.currency ?? null,
+    paymentMethod: subscription?.paymentMethod ?? null,
     countryOfOrigin: profile?.countryOfOrigin ?? null,
+    // Historique des paiements : un abonnement "ACTIVE" dont la date est passée est renvoyé "EXPIRED"
+    history: subscriptions.map((s) => ({
+      id: s.id,
+      date: s.createdAt,
+      startsAt: s.startsAt,
+      expiresAt: s.expiresAt,
+      amount: s.amount,
+      currency: s.currency,
+      method: s.paymentMethod,
+      status: s.status === "ACTIVE" && s.expiresAt <= now ? "EXPIRED" : s.status,
+      reference: s.paymentId,
+      invoiceUrl: s.invoiceUrl,
+    })),
     constants: {
       priceEur: settings.subscriptionPriceEur,
       priceXof: settings.subscriptionPriceXof,
