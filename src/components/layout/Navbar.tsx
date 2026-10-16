@@ -21,7 +21,9 @@ const navLinks = [
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useI18n();
-  const { data: session } = useSession();
+  const { data } = useSession();
+  // Une session sans id est invalidée côté serveur : on l'affiche comme déconnectée.
+  const session = data?.user?.id ? data : null;
   const accountLabel = session
     ? session.user.role === "ADMIN"
       ? t.navbar.admin

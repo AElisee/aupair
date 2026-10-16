@@ -9,6 +9,7 @@ import { useConstants } from "@/hooks/useConstants";
 import PhotoViewerModal from "@/components/ui/photo-viewer-modal";
 import { useI18n } from "@/i18n";
 import { PageHeader } from "@/components/dashboard/PageHeader";
+import { formatPhoneDigits } from "@/lib/phone";
 
 type ProfileStatus = "PENDING" | "ACTIVE" | "HIDDEN" | "SUSPENDED" | "DELETED";
 
@@ -360,9 +361,9 @@ export default function FamilleProfilPage() {
                   <option key={c.name} value={c.dialCode}>{tValue(c.name)} ({c.dialCode})</option>
                 ))}
               </select>
-              <input type="tel" value={profile.phoneNumber} onChange={e => setProfile({ ...profile, phoneNumber: e.target.value })}
+              <input type="tel" inputMode="tel" value={formatPhoneDigits(profile.phoneNumber)} onChange={e => setProfile({ ...profile, phoneNumber: formatPhoneDigits(e.target.value) })}
                 className="w-full sm:flex-1 min-w-0 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
-                placeholder="6XX XXX XXX" />
+                placeholder="01 02 03 04 05" />
             </div>
           </div>
         </div>

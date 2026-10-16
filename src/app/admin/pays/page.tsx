@@ -389,7 +389,7 @@ export default function AdminPaysPage() {
                 setPage(1);
               }}
               placeholder={tc.searchPlaceholder}
-              className="w-full pl-9 pr-3 py-1.5 rounded-full border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
+              className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
             />
           </div>
         </div>

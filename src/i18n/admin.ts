@@ -502,121 +502,114 @@ export const admin = {
     },
 
     paymentMethodsTitle: { fr: "Moyens de paiement", en: "Payment methods" },
-    fedapayTitle: { fr: "Configuration FedaPay (Mobile Money)", en: "FedaPay configuration (Mobile Money)" },
+    paymentMethodsSubtitle: {
+      fr: "Choisissez l'agrégateur qui encaisse les abonnements au pair et gérez ses clés API.",
+      en: "Choose the provider that collects au pair subscriptions and manage its API keys.",
+    },
+    providerSectionTitle: { fr: "Agrégateur de paiement", en: "Payment provider" },
+    providerSectionHint: {
+      fr: "Un seul agrégateur sert les nouveaux paiements ; l'autre garde ses clés et confirme les paiements déjà initiés.",
+      en: "Only one provider serves new payments; the other keeps its keys and still confirms payments already started.",
+    },
+    providerDescriptions: {
+      fedapay: { fr: "Mobile Money & cartes bancaires", en: "Mobile Money & bank cards" },
+      geniuspay: { fr: "Wave, Orange, MTN, Moov & cartes", en: "Wave, Orange, MTN, Moov & cards" },
+    },
+    providerActiveBadge: { fr: "Actif", en: "Active" },
+    providerStandbyBadge: { fr: "En veille", en: "Standby" },
+    providerReady: { fr: "Configuré", en: "Configured" },
+    providerIncomplete: { fr: "Incomplet", en: "Incomplete" },
+    activateProvider: { fr: (name: string) => `Activer ${name}`, en: (name: string) => `Enable ${name}` },
+    activateProviderConfirm: {
+      fr: (name: string, other: string) =>
+        `Tous les nouveaux paiements d'abonnement passeront par ${name}. Les paiements déjà initiés avec ${other} continueront d'être confirmés.`,
+      en: (name: string, other: string) =>
+        `All new subscription payments will go through ${name}. Payments already started with ${other} will still be confirmed.`,
+    },
+    activateNeedsKeys: {
+      fr: "Enregistrez la clé publique et la clé secrète pour pouvoir l'activer.",
+      en: "Save the public key and secret key to be able to enable it.",
+    },
+
+    keysTitle: { fr: "Clés API", en: "API keys" },
+    keysSubtitle: {
+      fr: (name: string) => `Identifiants de votre compte ${name}. Les clés enregistrées ne sont jamais réaffichées.`,
+      en: (name: string) => `Credentials of your ${name} account. Saved keys are never displayed again.`,
+    },
+    keyConfigured: { fr: "Configurée", en: "Configured" },
+    keyMissing: { fr: "Manquante", en: "Missing" },
     environment: { fr: "Environnement", en: "Environment" },
     environmentHint: {
-      fr: "FedaPay ne permet pas de déduire l'environnement du préfixe de clé : sélectionnez-le explicitement. Les clés sandbox et live sont totalement séparées (transactions, webhooks).",
-      en: "FedaPay does not let you infer the environment from the key prefix: select it explicitly. Sandbox and live keys are completely separate (transactions, webhooks).",
+      fr: "FedaPay ne permet pas de déduire l'environnement du préfixe de clé : sélectionnez-le explicitement. Les clés sandbox et live sont totalement séparées.",
+      en: "FedaPay does not let you infer the environment from the key prefix: select it explicitly. Sandbox and live keys are completely separate.",
     },
     sandbox: { fr: "Sandbox (test)", en: "Sandbox (test)" },
     live: { fr: "Live (production)", en: "Live (production)" },
     publicKey: { fr: "Clé publique", en: "Public key" },
-    publicKeyMissing: {
-      fr: "non configurée — le paiement FedaPay est désactivé",
-      en: "not configured — FedaPay payment is disabled",
-    },
     publicKeyPlaceholder: { fr: "pk_sandbox_... ou pk_live_...", en: "pk_sandbox_... or pk_live_..." },
     secretKey: { fr: "Clé secrète", en: "Secret key" },
-    secretKeyMissing: {
-      fr: "non configurée — la création de paiement est désactivée",
-      en: "not configured — payment creation is disabled",
-    },
     secretKeyPlaceholder: { fr: "sk_sandbox_... ou sk_live_...", en: "sk_sandbox_... or sk_live_..." },
     webhookSecret: { fr: "Clé secrète de webhook", en: "Webhook secret key" },
     webhookSecretHint: { fr: "Distincte de la clé secrète API.", en: "Separate from the API secret key." },
-    webhookSecretMissing: {
-      fr: "non configurée — les webhooks seront rejetés",
-      en: "not configured — webhooks will be rejected",
-    },
     webhookSecretPlaceholder: { fr: "wh_sandbox_... ou wh_live_...", en: "wh_sandbox_... or wh_live_..." },
-    removePublicKey: { fr: "Supprimer la clé publique", en: "Remove the public key" },
-    removeSecretKey: { fr: "Supprimer la clé secrète", en: "Remove the secret key" },
-    removeWebhookKey: { fr: "Supprimer la clé de webhook", en: "Remove the webhook key" },
-    removeFedapayConfirm: {
-      fr: (label: string) => `${label} ? Le paiement FedaPay ne fonctionnera plus correctement.`,
-      en: (label: string) => `${label}? FedaPay payments will no longer work properly.`,
-    },
-    fedapayKeysHintStart: { fr: "Récupérez vos clés depuis", en: "Get your keys from" },
-    fedapayKeysHintEnd: {
-      fr: "→ Développeurs / API → clés publique et secrète, puis Webhooks → clé de signature. Les clés sandbox et live sont séparées : basculez l'environnement ci-dessus en conséquence.",
-      en: "→ Developers / API → public and secret keys, then Webhooks → signing key. Sandbox and live keys are separate: switch the environment above accordingly.",
-    },
-    fedapayOperational: {
-      fr: (env: string) => `FedaPay est opérationnel en mode ${env}. Les utilisateurs sont redirigés vers la page de paiement hébergée FedaPay (Mobile Money, cartes).`,
-      en: (env: string) => `FedaPay is operational in ${env} mode. Users are redirected to the FedaPay hosted payment page (Mobile Money, cards).`,
-    },
-    fedapayDisabled: {
-      fr: "FedaPay est désactivé. Renseignez la clé publique et la clé secrète pour activer le paiement.",
-      en: "FedaPay is disabled. Enter the public key and the secret key to enable payment.",
-    },
-    webhookUrl: { fr: "URL Webhook à configurer dans FedaPay :", en: "Webhook URL to configure in FedaPay:" },
-    webhookUrlHint: {
-      fr: "Ajoutez cette URL dans votre tableau de bord FedaPay → Webhooks, puis copiez la clé de signature générée ci-dessus.",
-      en: "Add this URL in your FedaPay dashboard → Webhooks, then copy the generated signing key above.",
-    },
-
-    providerTitle: { fr: "Agrégateur de paiement", en: "Payment provider" },
-    providerActiveBadge: { fr: "Actif", en: "Active" },
-    providerInactiveBadge: { fr: "Inactif", en: "Inactive" },
-    providerActive: {
-      fr: (name: string) => `${name} est l'agrégateur actif : tous les nouveaux paiements d'abonnement passent par lui.`,
-      en: (name: string) => `${name} is the active provider: all new subscription payments go through it.`,
-    },
-    providerInactive: {
-      fr: (name: string, other: string) =>
-        `${name} est en veille : les nouveaux paiements passent actuellement par ${other}. Ses clés restent enregistrées et les paiements déjà initiés avec ${name} continuent d'être confirmés.`,
-      en: (name: string, other: string) =>
-        `${name} is on standby: new payments currently go through ${other}. Its keys stay saved and payments already started with ${name} are still confirmed.`,
-    },
-    activateProvider: { fr: (name: string) => `Activer ${name}`, en: (name: string) => `Enable ${name}` },
-    activateProviderConfirm: {
-      fr: (name: string) => `Basculer tous les nouveaux paiements vers ${name} ?`,
-      en: (name: string) => `Switch all new payments to ${name}?`,
-    },
-    activateNeedsKeys: {
-      fr: "Renseignez et enregistrez la clé publique et la clé secrète pour pouvoir l'activer.",
-      en: "Enter and save the public key and secret key to be able to enable it.",
-    },
-
-    geniuspayTitle: { fr: "Configuration GeniusPay (Mobile Money & cartes)", en: "GeniusPay configuration (Mobile Money & cards)" },
-    geniuspayEnvironmentHint: {
-      fr: "GeniusPay déduit l'environnement des clés elles-mêmes : clés pk_sandbox_/sk_sandbox_ pour les tests, pk_live_/sk_live_ pour la production.",
-      en: "GeniusPay infers the environment from the keys themselves: pk_sandbox_/sk_sandbox_ keys for testing, pk_live_/sk_live_ for production.",
-    },
-    geniuspayEnvironmentDetected: {
-      fr: (env: string) => `Environnement détecté : ${env}`,
-      en: (env: string) => `Detected environment: ${env}`,
-    },
-    geniuspayEnvironmentUnknown: {
-      fr: "Environnement non détecté (préfixe de clé inattendu).",
-      en: "Environment not detected (unexpected key prefix).",
-    },
-    geniuspayPublicKeyMissing: {
-      fr: "non configurée — le paiement GeniusPay est désactivé",
-      en: "not configured — GeniusPay payment is disabled",
-    },
     geniuspayWebhookSecretPlaceholder: { fr: "whsec_...", en: "whsec_..." },
-    removeGeniuspayConfirm: {
-      fr: (label: string) => `${label} ? Le paiement GeniusPay ne fonctionnera plus correctement.`,
-      en: (label: string) => `${label}? GeniusPay payments will no longer work properly.`,
+    removeKeyTitle: { fr: (label: string) => `Supprimer : ${label}`, en: (label: string) => `Remove: ${label}` },
+    removeKeyWarning: {
+      fr: (name: string) => `Le paiement ${name} ne fonctionnera plus correctement tant qu'une nouvelle clé n'aura pas été enregistrée.`,
+      en: (name: string) => `${name} payments will no longer work properly until a new key is saved.`,
     },
-    geniuspayKeysHintStart: { fr: "Récupérez vos clés depuis", en: "Get your keys from" },
+    keysHintStart: { fr: "Récupérez vos clés depuis", en: "Get your keys from" },
+    fedapayKeysHintEnd: {
+      fr: "→ Développeurs / API → clés publique et secrète, puis Webhooks → clé de signature.",
+      en: "→ Developers / API → public and secret keys, then Webhooks → signing key.",
+    },
+    geniuspayEnvironmentHint: {
+      fr: "GeniusPay déduit l'environnement des clés elles-mêmes : pk_sandbox_/sk_sandbox_ pour les tests, pk_live_/sk_live_ pour la production.",
+      en: "GeniusPay infers the environment from the keys themselves: pk_sandbox_/sk_sandbox_ for testing, pk_live_/sk_live_ for production.",
+    },
+    geniuspayEnvironmentUnknown: { fr: "non détecté", en: "not detected" },
     geniuspayKeysHintEnd: {
       fr: "→ Paramètres → API. Le secret de webhook (whsec_…) n'est affiché qu'une seule fois, à la création du webhook.",
       en: "→ Settings → API. The webhook secret (whsec_…) is only shown once, when the webhook is created.",
     },
+
+    checklistTitle: { fr: "État de la configuration", en: "Configuration status" },
+    checklistSubtitle: {
+      fr: (done: number, total: number) => `${done}/${total} éléments prêts`,
+      en: (done: number, total: number) => `${done}/${total} items ready`,
+    },
+    checkPublicKey: { fr: "Clé publique", en: "Public key" },
+    checkSecretKey: { fr: "Clé secrète — création des paiements", en: "Secret key — payment creation" },
+    checkWebhook: { fr: "Secret de webhook — confirmations serveur", en: "Webhook secret — server confirmations" },
+    checkEnvironment: { fr: (env: string) => `Environnement : ${env}`, en: (env: string) => `Environment: ${env}` },
+    fedapayOperational: {
+      fr: "Les utilisateurs sont redirigés vers la page de paiement hébergée FedaPay (Mobile Money, cartes).",
+      en: "Users are redirected to the FedaPay hosted payment page (Mobile Money, cards).",
+    },
     geniuspayOperational: {
-      fr: "GeniusPay est configuré. Les utilisateurs sont redirigés vers la page de paiement hébergée GeniusPay (Wave, Orange Money, MTN, Moov, cartes bancaires).",
-      en: "GeniusPay is configured. Users are redirected to the GeniusPay hosted payment page (Wave, Orange Money, MTN, Moov, bank cards).",
+      fr: "Les utilisateurs sont redirigés vers la page de paiement hébergée GeniusPay (Wave, Orange Money, MTN, Moov, cartes).",
+      en: "Users are redirected to the GeniusPay hosted payment page (Wave, Orange Money, MTN, Moov, cards).",
     },
-    geniuspayDisabled: {
-      fr: "GeniusPay n'est pas configuré. Renseignez la clé publique et la clé secrète.",
-      en: "GeniusPay is not configured. Enter the public key and the secret key.",
+    providerDisabled: {
+      fr: (name: string) => `${name} ne peut pas encaisser tant que la clé publique et la clé secrète ne sont pas enregistrées.`,
+      en: (name: string) => `${name} cannot collect payments until the public key and secret key are saved.`,
     },
-    geniuspayWebhookUrl: { fr: "URL Webhook à configurer dans GeniusPay :", en: "Webhook URL to configure in GeniusPay:" },
+    sandboxWarning: {
+      fr: "Mode sandbox : aucun paiement réel n'est encaissé.",
+      en: "Sandbox mode: no real payment is collected.",
+    },
+
+    webhookTitle: { fr: "Webhook", en: "Webhook" },
+    webhookSubtitle: { fr: (name: string) => `URL à déclarer dans ${name}`, en: (name: string) => `URL to declare in ${name}` },
+    copy: { fr: "Copier", en: "Copy" },
+    copied: { fr: "Copié", en: "Copied" },
+    fedapayWebhookUrlHint: {
+      fr: "Ajoutez cette URL dans votre tableau de bord FedaPay → Webhooks, puis collez la clé de signature générée dans « Clé secrète de webhook ».",
+      en: "Add this URL in your FedaPay dashboard → Webhooks, then paste the generated signing key into “Webhook secret key”.",
+    },
     geniuspayWebhookUrlHint: {
-      fr: "Créez un webhook avec cette URL dans GeniusPay (événements payment.*), puis collez le secret whsec_… ci-dessus.",
-      en: "Create a webhook with this URL in GeniusPay (payment.* events), then paste the whsec_… secret above.",
+      fr: "Créez un webhook avec cette URL dans GeniusPay (événements payment.*), puis collez le secret whsec_… dans « Clé secrète de webhook ».",
+      en: "Create a webhook with this URL in GeniusPay (payment.* events), then paste the whsec_… secret into “Webhook secret key”.",
     },
 
     constantsTitle: { fr: "Constantes", en: "Constants" },
@@ -644,6 +637,50 @@ export const admin = {
     heroImageAlt: { fr: "Aperçu image de fond", en: "Background image preview" },
     heroUploadError: { fr: "Échec de l'envoi de l'image.", en: "Failed to upload the image." },
     subscriptionFeatures: { fr: "Avantages de l'abonnement", en: "Subscription benefits" },
+    constantsSubtitle: {
+      fr: "Listes de référence, tarif de l'abonnement et visuel de la page d'accueil.",
+      en: "Reference lists, subscription pricing and home page visual.",
+    },
+    unsavedChanges: { fr: "Modifications non enregistrées", en: "Unsaved changes" },
+    discardChanges: { fr: "Annuler les modifications", en: "Discard changes" },
+    itemCount: {
+      fr: (n: number) => `${n} élément${n > 1 ? "s" : ""}`,
+      en: (n: number) => `${n} item${n > 1 ? "s" : ""}`,
+    },
+    itemExists: { fr: "Cet élément existe déjà.", en: "This item already exists." },
+    referenceListsTitle: { fr: "Listes de référence", en: "Reference lists" },
+    referenceListsHint: {
+      fr: "Choix proposés dans les formulaires d'inscription, de profil et de signalement.",
+      en: "Options offered in the sign-up, profile and report forms.",
+    },
+    languagesHint: { fr: "Profils au pair et famille", en: "Au pair and family profiles" },
+    educationLevelsHint: { fr: "Profil au pair", en: "Au pair profile" },
+    durationsHint: { fr: "Séjour souhaité ou proposé", en: "Desired or offered stay" },
+    reportReasonsHint: { fr: "Signalement d'un profil", en: "Profile reports" },
+    subscriptionSubtitle: {
+      fr: "Tarif et durée de l'accès messagerie des au pairs",
+      en: "Price and length of the au pairs' messaging access",
+    },
+    priceEurHint: { fr: "Prix affiché aux au pairs.", en: "Price shown to au pairs." },
+    priceXofHint: {
+      fr: "Montant réellement facturé par l'agrégateur de paiement.",
+      en: "Amount actually charged by the payment aggregator.",
+    },
+    durationDaysHint: { fr: "Validité après paiement.", en: "Validity after payment." },
+    daysUnit: { fr: "jours", en: "days" },
+    subscriptionPreview: { fr: "Aperçu côté au pair", en: "Au pair preview" },
+    previewPerDays: { fr: (d: number) => `pour ${d} jours`, en: (d: number) => `for ${d} days` },
+    subscriptionFeaturesHint: {
+      fr: "Listés sur la page d'abonnement de l'au pair.",
+      en: "Listed on the au pair's subscription page.",
+    },
+    addFeature: { fr: "Ajouter un avantage...", en: "Add a benefit..." },
+    heroImageSubtitle: {
+      fr: "Visuel affiché en fond de la section principale.",
+      en: "Visual shown behind the main section.",
+    },
+    heroChange: { fr: "Changer l'image", en: "Change image" },
+    heroEmpty: { fr: "Aucune image", en: "No image" },
 
     documentsTitle: { fr: "Documents", en: "Documents" },
     newDocument: { fr: "Nouveau document", en: "New document" },

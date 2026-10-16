@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getCountriesByType, splitPhoneNumber } from "@/lib/countries";
+import { formatPhoneDigits } from "@/lib/phone";
 
 function formatChildcareYears(years: number | null): string {
   if (years === null) return "";
@@ -87,11 +88,11 @@ export async function PUT(request: Request) {
   }
 
   const phoneCountryCode = body.phoneCountryCode ? String(body.phoneCountryCode) : "";
-  const phoneNumber = body.phoneNumber ? String(body.phoneNumber).trim() : "";
+  const phoneNumber = body.phoneNumber ? formatPhoneDigits(String(body.phoneNumber)) : "";
   const phoneWhatsapp1 = phoneNumber ? `${phoneCountryCode} ${phoneNumber}`.trim() : null;
 
   const phoneCountryCode2 = body.phoneCountryCode2 ? String(body.phoneCountryCode2) : "";
-  const phoneNumber2 = body.phoneNumber2 ? String(body.phoneNumber2).trim() : "";
+  const phoneNumber2 = body.phoneNumber2 ? formatPhoneDigits(String(body.phoneNumber2)) : "";
   const phoneWhatsapp2 = phoneNumber2 ? `${phoneCountryCode2} ${phoneNumber2}`.trim() : null;
 
   const toDateOrNull = (value: unknown): Date | null => {

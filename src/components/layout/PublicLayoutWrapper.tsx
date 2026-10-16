@@ -5,6 +5,7 @@ import { SessionProvider } from "next-auth/react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import PullToRefresh from "./PullToRefresh";
+import SessionGuard from "./SessionGuard";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 
 const PRIVATE_PATHS = ["/dashboard", "/admin"];
@@ -15,6 +16,7 @@ export default function PublicLayoutWrapper({ children }: { children: React.Reac
 
   return (
     <SessionProvider>
+      <SessionGuard />
       <LanguageProvider>
         <PullToRefresh />
         {!isPrivate && <Navbar />}

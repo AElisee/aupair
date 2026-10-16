@@ -392,15 +392,31 @@ export const dashboard = {
 
   // ─── Fiche famille vue par un au pair (/dashboard/au-pair/famille/[id]) ────
   familyDetail: {
-    back: { fr: "Retour au tableau de bord", en: "Back to dashboard" },
+    back: { fr: "Retour", en: "Back" },
     lockedTitle: { fr: "Profil complet réservé aux abonnés", en: "Full profile for subscribers only" },
     lockedMessage: {
       fr: "Abonnez-vous pour consulter le profil complet de cette famille et accéder à ses coordonnées.",
       en: "Subscribe to see this family's full profile and contact details.",
     },
-    general: { fr: "Informations générales", en: "General information" },
-    country: { fr: "Pays", en: "Country" },
-    city: { fr: "Ville", en: "City" },
+    lockedPerks: {
+      fr: [
+        "Présentation complète de la famille",
+        "Tâches confiées, logement et repas",
+        "Préférences pour l'au pair",
+        "Coordonnées WhatsApp",
+      ],
+      en: [
+        "The family's full introduction",
+        "Tasks, accommodation and meals",
+        "Au pair preferences",
+        "WhatsApp contact details",
+      ],
+    },
+    enlargePhoto: { fr: "Agrandir la photo", en: "Enlarge photo" },
+    family: { fr: "La famille", en: "The family" },
+    conditions: { fr: "Logement & conditions", en: "Accommodation & terms" },
+    noPreference: { fr: "Pas de préférence", en: "No preference" },
+    writeOnWhatsapp: { fr: "Écrire sur WhatsApp", en: "Message on WhatsApp" },
     address: { fr: "Adresse", en: "Address" },
     maritalStatus: { fr: "Situation familiale", en: "Marital status" },
     parentsAges: { fr: "Âge des parents", en: "Parents' ages" },
@@ -421,7 +437,6 @@ export const dashboard = {
     },
     preferredLanguages: { fr: "Langues souhaitées", en: "Preferred languages" },
     presentation: { fr: "Présentation", en: "About" },
-    description: { fr: "Description", en: "Description" },
     contact: { fr: "Contact", en: "Contact" },
   },
 
@@ -501,6 +516,51 @@ export const dashboard = {
   },
 
   auPairProfile: {
+    subtitle: {
+      fr: "Un profil complet et soigné attire davantage de familles.",
+      en: "A complete, polished profile attracts more families.",
+    },
+    completionLabel: { fr: "Profil complété", en: "Profile completed" },
+    completionMissing: {
+      fr: (n: number) => `Il manque ${n} information${n > 1 ? "s" : ""} :`,
+      en: (n: number) => `${n} item${n === 1 ? "" : "s"} missing:`,
+    },
+    completionDone: { fr: "Votre profil est complet, bravo !", en: "Your profile is complete, well done!" },
+    changePhoto: { fr: "Changer la photo", en: "Change photo" },
+    sectionsNav: { fr: "Sections du profil", en: "Profile sections" },
+    nav: {
+      personal: { fr: "Identité", en: "Identity" },
+      languages: { fr: "Langues", en: "Languages" },
+      experience: { fr: "Expérience", en: "Experience" },
+      availability: { fr: "Disponibilité", en: "Availability" },
+      about: { fr: "Présentation", en: "About me" },
+      health: { fr: "Santé", en: "Health" },
+      contact: { fr: "Contact", en: "Contact" },
+      documents: { fr: "Documents", en: "Documents" },
+    },
+    languagesHint: { fr: "Touchez une langue pour la sélectionner.", en: "Tap a language to select it." },
+    selectedCount: {
+      fr: (n: number) => `${n} sélectionné${n > 1 ? "s" : ""}`,
+      en: (n: number) => `${n} selected`,
+    },
+    aboutHint: {
+      fr: "C'est la première chose que lisent les familles.",
+      en: "This is the first thing families read.",
+    },
+    healthHint: {
+      fr: "Visible uniquement par les familles avec qui vous échangez.",
+      en: "Only visible to families you talk with.",
+    },
+    contactHint: {
+      fr: "Les familles vous contacteront sur ce numéro.",
+      en: "Families will contact you on this number.",
+    },
+    privateBadge: { fr: "Privé", en: "Private" },
+    docsCount: { fr: (n: number, max: number) => `${n}/${max}`, en: (n: number, max: number) => `${n}/${max}` },
+    openDocument: { fr: "Ouvrir", en: "Open" },
+    unsavedChanges: { fr: "Modifications non enregistrées", en: "Unsaved changes" },
+    upToDate: { fr: "Tout est enregistré", en: "All changes saved" },
+    save: { fr: "Enregistrer", en: "Save" },
     photoTitle: { fr: "Photo de profil", en: "Profile photo" },
     addPhoto: { fr: "Ajouter une photo professionnelle", en: "Add a professional photo" },
     idTitle: { fr: "Pièce d'identité", en: "Identity document" },
@@ -669,5 +729,49 @@ export const dashboard = {
     },
     reportError: { fr: "Erreur lors de l'envoi du signalement.", en: "Error while sending the report." },
     send: { fr: "Envoyer", en: "Send" },
+    subtitleAuPair: {
+      fr: "Échangez avec les familles d'accueil qui vous intéressent.",
+      en: "Chat with the host families you are interested in.",
+    },
+    subtitleFamily: {
+      fr: "Échangez avec les au pairs qui vous intéressent.",
+      en: "Chat with the au pairs you are interested in.",
+    },
+    conversations: { fr: "Conversations", en: "Conversations" },
+    filterAll: { fr: "Toutes", en: "All" },
+    filterUnread: { fr: "Non lues", en: "Unread" },
+    noUnread: { fr: "Aucune conversation non lue.", en: "No unread conversations." },
+    noSearchResults: {
+      fr: (q: string) => `Aucune conversation pour « ${q} ».`,
+      en: (q: string) => `No conversations matching "${q}".`,
+    },
+    noConversationsHintAuPair: {
+      fr: "Trouvez une famille qui vous plaît et envoyez-lui un premier message.",
+      en: "Find a family you like and send them a first message.",
+    },
+    noConversationsHintFamily: {
+      fr: "Trouvez un au pair qui vous plaît et envoyez-lui un premier message.",
+      en: "Find an au pair you like and send them a first message.",
+    },
+    findFamily: { fr: "Trouver une famille", en: "Find a family" },
+    findAuPair: { fr: "Trouver un au pair", en: "Find an au pair" },
+    selectConversationHint: {
+      fr: "Choisissez une conversation dans la liste pour afficher vos échanges.",
+      en: "Pick a conversation from the list to see your messages.",
+    },
+    emptyThreadTitle: { fr: "Démarrez la conversation", en: "Start the conversation" },
+    emptyThreadHint: {
+      fr: (name: string) => `Présentez-vous en quelques mots à ${name}.`,
+      en: (name: string) => `Introduce yourself to ${name} in a few words.`,
+    },
+    viewProfile: { fr: "Voir le profil", en: "View profile" },
+    moreActions: { fr: "Plus d'actions", en: "More actions" },
+    statusSent: { fr: "Envoyé", en: "Sent" },
+    statusRead: { fr: "Lu", en: "Read" },
+    blockedByMeNotice: { fr: "Vous avez bloqué cet utilisateur.", en: "You have blocked this user." },
+    unreadCount: {
+      fr: (n: number) => `${n} message${n > 1 ? "s" : ""} non lu${n > 1 ? "s" : ""}`,
+      en: (n: number) => `${n} unread message${n === 1 ? "" : "s"}`,
+    },
   },
 } satisfies Dictionary;

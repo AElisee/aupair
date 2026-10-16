@@ -81,7 +81,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return token;
       }
 
-      if (!token.id) return token;
+      // Retourner null invalide la session : Auth.js supprime alors le cookie, au lieu
+      // de laisser traîner un token sans id/rôle que le client prendrait pour une
+      // session encore valide (bouton « Profil » qui ne mène nulle part).
+      if (!token.id) return null;
 
       // Après un changement de mot de passe, le client appelle update() pour
       // resynchroniser pwdAt et garder sa propre session active.
@@ -101,9 +104,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.role === "ADMIN" &&
         Date.now() - (token.loginAt ?? 0) > ADMIN_SESSION_MAX_AGE_MS
       ) {
-        delete token.id;
-        delete token.role;
-        return token;
+        return null;
       }
 
       // Invalide les tokens émis avant le dernier changement de mot de passe
@@ -113,17 +114,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         select: { passwordChangedAt: true, isActive: true },
       });
 
-      if (!dbUser || !dbUser.isActive) {
-        delete token.id;
-        delete token.role;
-        return token;
-      }
+      if (!dbUser || !dbUser.isActive) return null;
 
       const dbPwdAt = dbUser.passwordChangedAt?.getTime() ?? 0;
-      if (dbPwdAt > (token.pwdAt ?? 0)) {
-        delete token.id;
-        delete token.role;
-      }
+      if (dbPwdAt > (token.pwdAt ?? 0)) return null;
 
       return token;
     },

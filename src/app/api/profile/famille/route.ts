@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getCountriesByType, splitPhoneNumber } from "@/lib/countries";
+import { formatPhoneDigits } from "@/lib/phone";
 
 export async function GET() {
   const session = await auth();
@@ -63,7 +64,7 @@ export async function PUT(request: Request) {
   }
 
   const phoneCountryCode = body.phoneCountryCode ? String(body.phoneCountryCode) : "";
-  const phoneNumber = body.phoneNumber ? String(body.phoneNumber).trim() : "";
+  const phoneNumber = body.phoneNumber ? formatPhoneDigits(String(body.phoneNumber)) : "";
   const phoneWhatsapp = phoneNumber ? `${phoneCountryCode} ${phoneNumber}`.trim() : null;
 
   const kidsAges = String(body.kidsAges ?? "")

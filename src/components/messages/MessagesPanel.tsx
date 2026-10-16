@@ -1,95 +1,46 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
-import { Search, Send, Loader2, MessageCircle, Ban, Paperclip, FileText, Download, Flag, X, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useConstants } from "@/hooks/useConstants";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { ArrowLeft, Ban, Flag, Loader2, MessagesSquare, MoreVertical, UserRound } from "lucide-react";
+import { ICON, Panel } from "@/components/admin/AdminUI";
+import { PageHeader } from "@/components/dashboard/PageHeader";
 import { SubscriptionBanner } from "@/components/dashboard/SubscriptionLock";
-import { useI18n, getDictionary, intlLocale, type Lang } from "@/i18n";
+import type { DashboardRole } from "@/components/layout/dashboard-nav";
+import { useI18n } from "@/i18n";
+import { cn } from "@/lib/utils";
+import { ChatAvatar } from "./ChatAvatar";
+import { ConversationList } from "./ConversationList";
+import { MessageComposer } from "./MessageComposer";
+import { MessageThread } from "./MessageThread";
+import { ReportDialog } from "./ReportDialog";
+import type { ConversationSummary, MessageItem, OtherUser } from "./types";
 
-interface ConversationSummary {
-  userId: string;
-  name: string;
-  avatar: string | null;
-  role: string;
-  lastMessage: string;
-  lastMessageAt: string;
-  lastMessageFromMe: boolean;
-  unreadCount: number;
+/** Actualisation de la conversation ouverte et de la liste (onglet visible uniquement) */
+const THREAD_POLL_MS = 5000;
+const CONVERSATIONS_POLL_MS = 10000;
+
+/** Lien vers la fiche de l'interlocuteur, quand l'espace courant en propose une */
+function profileHref(role: DashboardRole, other: OtherUser): string | null {
+  if (role === "au-pair" && other.role === "FAMILLE") return `/dashboard/au-pair/famille/${other.id}`;
+  if (role === "famille" && other.role === "AU_PAIR") return `/dashboard/famille/au-pair/${other.id}`;
+  return null;
 }
 
-interface MessageItem {
-  id: string;
-  senderId: string;
-  receiverId: string;
-  content: string;
-  attachmentUrl?: string | null;
-  attachmentType?: string | null;
-  attachmentName?: string | null;
-  status: string;
-  createdAt: string;
-}
-
-interface OtherUser {
-  id: string;
-  name: string;
-  avatar: string | null;
-  role: string;
-}
-
-function Avatar({ name, avatar }: { name: string; avatar: string | null }) {
-  return (
-    <div className="w-10 h-10 rounded-full bg-[#1A1A2E] flex items-center justify-center text-white font-medium overflow-hidden flex-shrink-0">
-      {avatar ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={avatar} alt="" className="w-full h-full object-cover object-top" />
-      ) : (
-        <span>{name.charAt(0).toUpperCase()}</span>
-      )}
-    </div>
-  );
-}
-
-function formatTime(iso: string, lang: Lang) {
-  return new Date(iso).toLocaleTimeString(intlLocale(lang), { hour: "2-digit", minute: "2-digit" });
-}
-
-// Étiquette du séparateur de jour affiché entre les messages (Aujourd'hui, Hier, jour de la semaine, Semaine dernière, ou date)
-function getDayLabel(iso: string, lang: Lang): string {
-  const t = getDictionary(lang);
-  const locale = intlLocale(lang);
-  const date = new Date(iso);
-  const now = new Date();
-  const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-  const diffDays = Math.round((startOfDay(now) - startOfDay(date)) / 86400000);
-
-  if (diffDays === 0) return t.time.today;
-  if (diffDays === 1) return t.time.yesterday;
-  if (diffDays < 7) {
-    const weekday = new Intl.DateTimeFormat(locale, { weekday: "long" }).format(date);
-    return weekday.charAt(0).toUpperCase() + weekday.slice(1);
-  }
-  if (diffDays < 14) return t.time.lastWeek;
-  return new Intl.DateTimeFormat(locale, {
-    day: "numeric",
-    month: "long",
-    year: now.getFullYear() === date.getFullYear() ? undefined : "numeric",
-  }).format(date);
-}
-
-export default function MessagesPanel() {
+export default function MessagesPanel({ role }: { role: DashboardRole }) {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
   const myId = session?.user?.id;
-  const { reportReasons: REPORT_REASONS } = useConstants();
-  const { t, lang, tValue, tError, relativeDate } = useI18n();
+  const { t, tError } = useI18n();
+  const m = t.messages;
   const roleLabels: Record<string, string> = {
-    AU_PAIR: t.messages.roleAuPair,
-    FAMILLE: t.messages.roleFamily,
-    AGENCE: t.messages.roleAgency,
-    ADMIN: t.messages.roleAdmin,
+    AU_PAIR: m.roleAuPair,
+    FAMILLE: m.roleFamily,
+    AGENCE: m.roleAgency,
+    ADMIN: m.roleAdmin,
   };
 
   const [conversations, setConversations] = useState<ConversationSummary[] | null>(null);
@@ -99,23 +50,16 @@ export default function MessagesPanel() {
   const [isBlocked, setIsBlocked] = useState(false);
   const [blockedByMe, setBlockedByMe] = useState(false);
   const [blockProcessing, setBlockProcessing] = useState(false);
-  const [showReportModal, setShowReportModal] = useState(false);
-  const [reportReason, setReportReason] = useState("");
-  const [reportDescription, setReportDescription] = useState("");
-  const [reportSubmitting, setReportSubmitting] = useState(false);
-  const [reportError, setReportError] = useState("");
-  const [reportSent, setReportSent] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const [loadingThread, setLoadingThread] = useState(false);
-  const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
-  const [sendError, setSendError] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [search, setSearch] = useState("");
+  const [sendError, setSendError] = useState("");
   const [mobileShowChat, setMobileShowChat] = useState(false);
   const [subscriptionActive, setSubscriptionActive] = useState(true);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const initialSelectionDone = useRef(false);
+  // Conversation réellement affichée : ignore les réponses arrivées après un changement de conversation
+  const activeUserIdRef = useRef<string | null>(null);
 
   const loadConversations = useCallback(async () => {
     try {
@@ -131,24 +75,23 @@ export default function MessagesPanel() {
   const loadThread = useCallback(async (userId: string) => {
     try {
       const res = await fetch(`/api/messages/${userId}`);
-      if (!res.ok) return;
+      if (!res.ok || activeUserIdRef.current !== userId) return;
       const data = await res.json();
-      setMessages(data.messages as MessageItem[]);
+      if (activeUserIdRef.current !== userId) return;
+      const thread = data.messages as MessageItem[];
+      setMessages(thread);
       setOtherUser(data.otherUser as OtherUser);
       setIsBlocked(Boolean(data.isBlocked));
       setBlockedByMe(Boolean(data.blockedByMe));
 
-      const hasUnread = (data.messages as MessageItem[]).some(
-        (m) => m.receiverId === myId && m.status === "SENT"
-      );
-      if (hasUnread) {
+      if (thread.some((msg) => msg.receiverId === myId && msg.status === "SENT")) {
         await fetch(`/api/messages/${userId}/read`, { method: "POST" });
         setConversations((prev) =>
           prev ? prev.map((c) => (c.userId === userId ? { ...c, unreadCount: 0 } : c)) : prev
         );
       }
     } catch {
-      // erreur silencieuse, l'utilisateur peut recharger la page
+      // erreur silencieuse : la prochaine actualisation réessaiera
     }
   }, [myId]);
 
@@ -165,7 +108,7 @@ export default function MessagesPanel() {
       });
   }, [session?.user?.role]);
 
-  // Sélection initiale : conversation passée en query (?userId=) ou première de la liste
+  // Sélection initiale : conversation passée en query (?userId=), sinon la première de la liste (sur mobile, la liste reste affichée)
   useEffect(() => {
     if (initialSelectionDone.current) return;
     const userIdParam = searchParams.get("userId");
@@ -180,17 +123,31 @@ export default function MessagesPanel() {
   }, [searchParams, conversations]);
 
   useEffect(() => {
+    activeUserIdRef.current = activeUserId;
     if (!activeUserId) return;
+    setMessages([]);
+    setOtherUser(null);
+    setSendError("");
     setLoadingThread(true);
     loadThread(activeUserId).finally(() => setLoadingThread(false));
   }, [activeUserId, loadThread]);
 
+  // Actualisation périodique (en attendant une messagerie temps réel)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    const visible = () => document.visibilityState === "visible";
+    const threadTimer = setInterval(() => {
+      if (visible() && activeUserIdRef.current) loadThread(activeUserIdRef.current);
+    }, THREAD_POLL_MS);
+    const listTimer = setInterval(() => {
+      if (visible()) loadConversations();
+    }, CONVERSATIONS_POLL_MS);
+    return () => {
+      clearInterval(threadTimer);
+      clearInterval(listTimer);
+    };
+  }, [loadThread, loadConversations]);
 
-  // Met à jour la liste des conversations localement après l'envoi d'un message,
-  // sans recharger /api/messages.
+  // Met à jour la liste localement après un envoi, sans recharger /api/messages
   const bumpConversation = useCallback((userId: string, lastMessage: string) => {
     setConversations((prev) => {
       const now = new Date().toISOString();
@@ -207,15 +164,12 @@ export default function MessagesPanel() {
             lastMessageFromMe: true,
             unreadCount: 0,
           };
-      const rest = (prev ?? []).filter((c) => c.userId !== userId);
-      return [updated, ...rest];
+      return [updated, ...(prev ?? []).filter((c) => c.userId !== userId)];
     });
   }, [otherUser]);
 
-  const handleSend = async () => {
-    const content = newMessage.trim();
-    if (!content || !activeUserId || sending) return;
-
+  const handleSend = async (content: string) => {
+    if (!activeUserId || sending) return false;
     setSending(true);
     setSendError("");
     try {
@@ -226,24 +180,22 @@ export default function MessagesPanel() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setSendError(tError(data.error, t.messages.sendError));
-        return;
+        setSendError(tError(data.error, m.sendError));
+        return false;
       }
       setMessages((prev) => [...prev, data.message as MessageItem]);
-      setNewMessage("");
       bumpConversation(activeUserId, content);
+      return true;
     } catch {
       setSendError(t.common.networkError);
+      return false;
     } finally {
       setSending(false);
     }
   };
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file || !activeUserId || uploading) return;
-
+  const handleFile = async (file: File) => {
+    if (!activeUserId || uploading) return;
     setUploading(true);
     setSendError("");
     try {
@@ -253,15 +205,12 @@ export default function MessagesPanel() {
       const res = await fetch("/api/messages/upload", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) {
-        setSendError(tError(data.error, t.messages.fileSendError));
+        setSendError(tError(data.error, m.fileSendError));
         return;
       }
-      const sentMessage = data.message as MessageItem;
-      setMessages((prev) => [...prev, sentMessage]);
-      const lastMessage =
-        sentMessage.content ||
-        (sentMessage.attachmentType?.startsWith("image/") ? "📷 Photo" : "📄 Document");
-      bumpConversation(activeUserId, lastMessage);
+      const sent = data.message as MessageItem;
+      setMessages((prev) => [...prev, sent]);
+      bumpConversation(activeUserId, sent.content || (sent.attachmentType?.startsWith("image/") ? "📷 Photo" : "📄 Document"));
     } catch {
       setSendError(t.common.networkError);
     } finally {
@@ -273,368 +222,201 @@ export default function MessagesPanel() {
     if (!activeUserId || blockProcessing) return;
     setBlockProcessing(true);
     try {
-      if (blockedByMe) {
-        const res = await fetch(`/api/blocks?blockedId=${activeUserId}`, { method: "DELETE" });
-        if (res.ok) setBlockedByMe(false);
-      } else {
-        const res = await fetch("/api/blocks", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ blockedId: activeUserId }),
-        });
-        if (res.ok) setBlockedByMe(true);
-      }
-      loadThread(activeUserId);
+      const res = blockedByMe
+        ? await fetch(`/api/blocks?blockedId=${activeUserId}`, { method: "DELETE" })
+        : await fetch("/api/blocks", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ blockedId: activeUserId }),
+          });
+      if (res.ok) setBlockedByMe(!blockedByMe);
+      await loadThread(activeUserId);
     } finally {
       setBlockProcessing(false);
     }
   };
 
-  const handleSubmitReport = async () => {
-    if (!activeUserId || !reportReason || reportSubmitting) return;
-    setReportSubmitting(true);
-    setReportError("");
-    try {
-      const res = await fetch("/api/reports", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          reportedId: activeUserId,
-          reason: reportReason,
-          description: reportDescription.trim() || undefined,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setReportError(tError(data.error, t.messages.reportError));
-        return;
-      }
-      setReportSent(true);
-    } catch {
-      setReportError(t.common.networkError);
-    } finally {
-      setReportSubmitting(false);
-    }
+  const selectConversation = (userId: string) => {
+    setActiveUserId(userId);
+    setMobileShowChat(true);
   };
 
-  const closeReportModal = () => {
-    setShowReportModal(false);
-    setReportReason("");
-    setReportDescription("");
-    setReportError("");
-    setReportSent(false);
-  };
-
+  // La conversation ouverte via ?userId= sans message échangé apparaît quand même dans la liste
   const baseList = conversations ?? [];
-  // Si la conversation active (ouverte via ?userId=) n'a pas encore de message, on l'affiche quand même
   const displayList =
-    activeUserId && otherUser && !baseList.some((c) => c.userId === activeUserId)
+    conversations && activeUserId && otherUser?.id === activeUserId && !baseList.some((c) => c.userId === activeUserId)
       ? [
           {
             userId: otherUser.id,
             name: otherUser.name,
             avatar: otherUser.avatar,
             role: otherUser.role,
-            lastMessage: t.messages.newConversation,
+            lastMessage: m.newConversation,
             lastMessageAt: new Date().toISOString(),
             lastMessageFromMe: false,
             unreadCount: 0,
           },
           ...baseList,
         ]
-      : baseList;
+      : conversations;
 
-  const filteredList = search.trim()
-    ? displayList.filter((c) => c.name.toLowerCase().includes(search.trim().toLowerCase()))
-    : displayList;
-
-  if (conversations === null) {
-    return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex items-center justify-center h-[calc(100vh-180px)] min-h-[420px] md:h-[calc(100vh-200px)] md:min-h-[500px]">
-        <Loader2 className="w-6 h-6 animate-spin text-[#E87722]" />
-      </div>
-    );
-  }
+  const menuItem =
+    "flex items-center gap-2.5 px-3 h-11 sm:h-10 rounded-lg text-sm text-[#1A1A2E] outline-none cursor-pointer data-[highlighted]:bg-[#FFF3E0] data-[highlighted]:text-[#E87722]";
+  const otherProfileHref = otherUser ? profileHref(role, otherUser) : null;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden h-[calc(100vh-180px)] min-h-[420px] md:h-[calc(100vh-200px)] md:min-h-[500px]">
-      <div className="flex h-full">
-        {/* Liste conversations */}
-        <div className={`w-full md:w-80 border-r border-gray-100 flex-col ${mobileShowChat ? "hidden md:flex" : "flex"}`}>
-          <div className="p-4 border-b border-gray-100">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder={t.messages.searchPlaceholder}
-                className="w-full pl-9 pr-4 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
-              />
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            {filteredList.length === 0 ? (
-              <div className="p-6 text-center text-sm text-gray-400">
-                <MessageCircle className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                {t.messages.noConversations}
-              </div>
-            ) : (
-              filteredList.map((conv) => (
-                <button
-                  key={conv.userId}
-                  onClick={() => {
-                    setActiveUserId(conv.userId);
-                    setMobileShowChat(true);
-                  }}
-                  className={`w-full p-4 text-left hover:bg-gray-50 transition-colors border-b border-gray-50 ${activeUserId === conv.userId ? "bg-[#FFF3E0]" : ""}`}
-                >
-                  <div className="flex items-start gap-3">
-                    <Avatar name={conv.name} avatar={conv.avatar} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-0.5">
-                        <p className="font-semibold text-[#1A1A2E] text-sm truncate">{conv.name}</p>
-                        <span className="text-xs text-gray-400 flex-shrink-0 ml-2">{relativeDate(conv.lastMessageAt)}</span>
-                      </div>
-                      <p className="text-xs text-gray-500 truncate">
-                        {conv.lastMessageFromMe && t.messages.youPrefix}{tValue(conv.lastMessage)}
-                      </p>
-                    </div>
-                    {conv.unreadCount > 0 && (
-                      <span className="w-5 h-5 bg-[#E87722] text-white text-xs rounded-full flex items-center justify-center flex-shrink-0">{conv.unreadCount}</span>
-                    )}
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
-        </div>
+    // Hauteur = écran − top bar (57px) − marges du contenu (2 × 16px, 2 × 24px dès sm)
+    <div className="flex flex-col gap-4 sm:gap-6 h-[calc(100dvh-89px)] sm:h-[calc(100dvh-105px)] min-h-[460px]">
+      <div className={mobileShowChat ? "hidden md:block" : undefined}>
+        <PageHeader title={m.title} subtitle={role === "au-pair" ? m.subtitleAuPair : m.subtitleFamily} />
+      </div>
 
-        {/* Conversation active */}
-        <div className={`flex-1 flex-col min-w-0 ${mobileShowChat ? "flex" : "hidden md:flex"}`}>
+      <Panel className="flex-1 min-h-0 overflow-hidden flex">
+        {/* Liste des conversations */}
+        <aside
+          className={cn(
+            "w-full md:w-80 lg:w-96 md:border-r border-gray-100 min-h-0",
+            mobileShowChat ? "hidden md:block" : "block"
+          )}
+        >
+          <ConversationList
+            role={role}
+            conversations={displayList}
+            activeUserId={activeUserId}
+            onSelect={selectConversation}
+          />
+        </aside>
+
+        {/* Conversation ouverte */}
+        <section className={cn("flex-1 min-w-0 min-h-0 flex-col bg-white", mobileShowChat ? "flex" : "hidden md:flex")}>
           {!activeUserId ? (
-            <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">
-              {t.messages.selectConversation}
+            <div className="flex-1 flex flex-col items-center justify-center text-center px-6 bg-[#FAF8F5]">
+              <div className="w-16 h-16 mb-4 rounded-2xl bg-white shadow-sm text-[#E87722] flex items-center justify-center">
+                <MessagesSquare {...ICON} size={30} />
+              </div>
+              <p className="text-[15px] font-medium text-[#1A1A2E]">{m.selectConversation}</p>
+              <p className="text-sm text-gray-500 mt-1 max-w-xs">{m.selectConversationHint}</p>
             </div>
           ) : !otherUser ? (
-            <div className="flex-1 flex items-center justify-center">
+            <div className="flex-1 flex items-center justify-center bg-[#FAF8F5]">
               <Loader2 className="w-6 h-6 animate-spin text-[#E87722]" />
             </div>
           ) : (
             <>
-              {/* En-tête */}
-              <div className="p-3 sm:p-4 border-b border-gray-100 flex items-center gap-2 sm:gap-3">
+              {/* En-tête de la conversation */}
+              <header className="flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2.5 border-b border-gray-100">
                 <button
                   type="button"
                   onClick={() => setMobileShowChat(false)}
-                  className="md:hidden -ml-1 p-1.5 text-gray-500 hover:text-[#1A1A2E] flex-shrink-0"
-                  title={t.messages.backToConversations}
-                  aria-label={t.messages.backToConversations}
+                  className="md:hidden w-11 h-11 shrink-0 rounded-full flex items-center justify-center text-gray-500 hover:text-[#1A1A2E] hover:bg-gray-50"
+                  aria-label={m.backToConversations}
                 >
-                  <ArrowLeft className="w-5 h-5" />
+                  <ArrowLeft {...ICON} />
                 </button>
-                <Avatar name={otherUser.name} avatar={otherUser.avatar} />
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-[#1A1A2E] truncate">{otherUser.name}</p>
-                  <p className="text-xs text-gray-400">{roleLabels[otherUser.role] ?? otherUser.role}</p>
-                </div>
-                <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    type="button"
-                    onClick={() => setShowReportModal(true)}
-                    title={t.messages.reportUser}
-                    className="h-7 px-2 text-xs gap-1"
+                {otherProfileHref ? (
+                  <Link href={otherProfileHref} className="flex items-center gap-3 min-w-0 flex-1 rounded-xl -my-1 py-1 hover:opacity-80" title={m.viewProfile}>
+                    <ChatAvatar name={otherUser.name} avatar={otherUser.avatar} />
+                    <div className="min-w-0">
+                      <p className="font-medium text-[#1A1A2E] truncate">{otherUser.name}</p>
+                      <p className="text-xs text-gray-500 truncate">{roleLabels[otherUser.role] ?? otherUser.role}</p>
+                    </div>
+                  </Link>
+                ) : (
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <ChatAvatar name={otherUser.name} avatar={otherUser.avatar} />
+                    <div className="min-w-0">
+                      <p className="font-medium text-[#1A1A2E] truncate">{otherUser.name}</p>
+                      <p className="text-xs text-gray-500 truncate">{roleLabels[otherUser.role] ?? otherUser.role}</p>
+                    </div>
+                  </div>
+                )}
+
+                <DropdownMenu.Root modal={false}>
+                  <DropdownMenu.Trigger
+                    className="w-11 h-11 shrink-0 rounded-full flex items-center justify-center text-gray-500 hover:text-[#1A1A2E] hover:bg-gray-50 outline-none focus-visible:ring-2 focus-visible:ring-[#E87722]/40"
+                    aria-label={m.moreActions}
+                    title={m.moreActions}
                   >
-                    <Flag className="w-3.5 h-3.5" /> <span className="hidden sm:inline">{t.messages.report}</span>
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={blockedByMe ? "default" : "outline"}
+                    {blockProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <MoreVertical {...ICON} />}
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Portal>
+                    <DropdownMenu.Content
+                      align="end"
+                      sideOffset={6}
+                      className="z-50 min-w-56 p-1.5 rounded-xl bg-white border border-gray-100 shadow-[0_10px_30px_-12px_rgba(26,26,46,0.3)]"
+                    >
+                      {otherProfileHref && (
+                        <>
+                          <DropdownMenu.Item asChild className={menuItem}>
+                            <Link href={otherProfileHref}>
+                              <UserRound {...ICON} size={16} />
+                              {m.viewProfile}
+                            </Link>
+                          </DropdownMenu.Item>
+                          <DropdownMenu.Separator className="my-1 h-px bg-gray-100" />
+                        </>
+                      )}
+                      <DropdownMenu.Item className={menuItem} onSelect={() => setReportOpen(true)}>
+                        <Flag {...ICON} size={16} />
+                        {m.reportUser}
+                      </DropdownMenu.Item>
+                      <DropdownMenu.Item
+                        className={cn(menuItem, !blockedByMe && "text-red-600 data-[highlighted]:bg-red-50 data-[highlighted]:text-red-600")}
+                        onSelect={handleToggleBlock}
+                        disabled={blockProcessing}
+                      >
+                        <Ban {...ICON} size={16} />
+                        {blockedByMe ? m.unblockUser : m.blockUser}
+                      </DropdownMenu.Item>
+                    </DropdownMenu.Content>
+                  </DropdownMenu.Portal>
+                </DropdownMenu.Root>
+              </header>
+
+              <MessageThread myId={myId} otherUser={otherUser} messages={messages} loading={loadingThread} />
+
+              {/* Saisie, ou raison pour laquelle elle est indisponible */}
+              {blockedByMe ? (
+                <div className="border-t border-gray-100 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-sm text-gray-500">
+                  <span className="flex items-center gap-2">
+                    <Ban {...ICON} size={16} />
+                    {m.blockedByMeNotice}
+                  </span>
+                  <button
                     type="button"
                     onClick={handleToggleBlock}
                     disabled={blockProcessing}
-                    title={blockedByMe ? t.messages.unblockUser : t.messages.blockUser}
-                    className={`h-7 px-2 text-xs gap-1 ${blockedByMe ? "bg-[#1A1A2E] text-white hover:bg-[#1A1A2E]/90" : "text-red-600 border-red-200 hover:bg-red-50"}`}
+                    className="h-11 px-3 font-medium text-[#E87722] hover:underline disabled:opacity-50"
                   >
-                    {blockProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Ban className="w-3.5 h-3.5" />}
-                    <span className="hidden sm:inline">{blockedByMe ? t.messages.unblock : t.messages.block}</span>
-                  </Button>
+                    {m.unblock}
+                  </button>
                 </div>
-              </div>
-
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-1">
-                {loadingThread && messages.length === 0 ? (
-                  <div className="flex justify-center pt-8">
-                    <Loader2 className="w-5 h-5 animate-spin text-[#E87722]" />
-                  </div>
-                ) : messages.length === 0 ? (
-                  <div className="text-center text-sm text-gray-400 pt-8">
-                    {t.messages.noMessages}
-                  </div>
-                ) : (
-                  messages.map((msg, index) => {
-                    const dayLabel = getDayLabel(msg.createdAt, lang);
-                    const showSeparator = index === 0 || getDayLabel(messages[index - 1].createdAt, lang) !== dayLabel;
-                    return (
-                      <div key={msg.id}>
-                        {showSeparator && (
-                          <div className="flex items-center gap-3 my-4 first:mt-0">
-                            <div className="flex-1 h-px bg-gray-200" />
-                            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{dayLabel}</span>
-                            <div className="flex-1 h-px bg-gray-200" />
-                          </div>
-                        )}
-                        <div className={`flex flex-col mb-3 ${msg.senderId === myId ? "items-end" : "items-start"}`}>
-                          <div className={`max-w-[85%] sm:max-w-xs md:max-w-sm rounded-2xl px-4 py-2.5 text-sm ${
-                            msg.senderId === myId
-                              ? "bg-[#E87722] text-white rounded-br-sm"
-                              : "bg-gray-100 text-gray-800 rounded-bl-sm"
-                          }`}>
-                            {msg.attachmentUrl && msg.attachmentType?.startsWith("image/") ? (
-                              <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={msg.attachmentUrl} alt={msg.attachmentName ?? t.messages.image} className="rounded-lg max-w-full max-h-48 object-cover mb-1" />
-                              </a>
-                            ) : msg.attachmentUrl ? (
-                              <a
-                                href={msg.attachmentUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={`flex items-center gap-2 rounded-xl px-2 py-1.5 mb-1 ${
-                                  msg.senderId === myId ? "bg-white/15" : "bg-white"
-                                }`}
-                              >
-                                <FileText className="w-4 h-4 flex-shrink-0" />
-                                <span className="truncate text-sm underline">{msg.attachmentName ?? t.messages.document}</span>
-                                <Download className="w-3.5 h-3.5 flex-shrink-0 ml-auto" />
-                              </a>
-                            ) : null}
-                            {msg.content && <p className="whitespace-pre-wrap break-words">{msg.content}</p>}
-                          </div>
-                          <span className="text-[13px] text-gray-400 mt-1 px-1">{formatTime(msg.createdAt, lang)}</span>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-
-              {/* Saisie */}
-              <div className="p-4 border-t border-gray-100">
-                {isBlocked ? (
-                  <div className="flex items-center justify-center gap-2 text-sm text-gray-400 py-2">
-                    <Ban className="w-4 h-4" />
-                    {t.messages.cannotMessage}
-                  </div>
-                ) : session?.user?.role === "AU_PAIR" && !subscriptionActive ? (
-                  <SubscriptionBanner message={t.messages.subscribeToMessage} />
-                ) : (
-                  <>
-                    {sendError && <p className="text-xs text-red-500 mb-2">{sendError}</p>}
-                    <div className="flex gap-2">
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                        className="hidden"
-                        onChange={handleFileSelect}
-                      />
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={uploading || sending}
-                        title={t.messages.attach}
-                      >
-                        {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
-                      </Button>
-                      <input
-                        type="text"
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder={t.messages.writeMessage}
-                        className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && !e.shiftKey) {
-                            e.preventDefault();
-                            handleSend();
-                          }
-                        }}
-                        disabled={sending}
-                      />
-                      <Button size="icon" onClick={handleSend} disabled={!newMessage.trim() || sending}>
-                        {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                      </Button>
-                    </div>
-                  </>
-                )}
-              </div>
+              ) : isBlocked ? (
+                <div className="border-t border-gray-100 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex items-center justify-center gap-2 text-sm text-gray-500 text-center">
+                  <Ban {...ICON} size={16} className="shrink-0" />
+                  {m.cannotMessage}
+                </div>
+              ) : session?.user?.role === "AU_PAIR" && !subscriptionActive ? (
+                <div className="border-t border-gray-100 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+                  <SubscriptionBanner message={m.subscribeToMessage} />
+                </div>
+              ) : (
+                <MessageComposer
+                  key={otherUser.id}
+                  onSend={handleSend}
+                  onFile={handleFile}
+                  sending={sending}
+                  uploading={uploading}
+                  error={sendError}
+                />
+              )}
             </>
           )}
-        </div>
-      </div>
+        </section>
+      </Panel>
 
-      {/* Modale de signalement */}
-      {showReportModal && otherUser && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-medium text-[#1A1A2E]">{t.messages.reportTitle(otherUser.name)}</h3>
-              <button onClick={closeReportModal} className="text-gray-400 hover:text-gray-600" aria-label={t.common.close}>
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {reportSent ? (
-              <div className="text-center py-4">
-                <Flag className="w-10 h-10 text-green-500 mx-auto mb-2" />
-                <p className="text-sm text-gray-600">{t.messages.reportSent}</p>
-                <Button className="mt-4 w-full" onClick={closeReportModal}>{t.common.close}</Button>
-              </div>
-            ) : (
-              <>
-                <label className="block text-sm font-semibold text-[#1A1A2E] mb-1.5">{t.messages.reason}</label>
-                <select
-                  value={reportReason}
-                  onChange={(e) => setReportReason(e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-[#E87722]"
-                >
-                  <option value="">{t.messages.selectReason}</option>
-                  {REPORT_REASONS.map((reason) => (
-                    <option key={reason} value={reason}>{tValue(reason)}</option>
-                  ))}
-                </select>
-
-                <label className="block text-sm font-semibold text-[#1A1A2E] mb-1.5">{t.messages.descriptionOptional}</label>
-                <textarea
-                  value={reportDescription}
-                  onChange={(e) => setReportDescription(e.target.value)}
-                  rows={3}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-[#E87722] resize-none"
-                  placeholder={t.messages.descriptionPlaceholder}
-                />
-
-                {reportError && <p className="text-xs text-red-500 mb-3">{reportError}</p>}
-
-                <div className="flex gap-2">
-                  <Button variant="outline" className="flex-1" onClick={closeReportModal}>{t.common.cancel}</Button>
-                  <Button
-                    className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-                    onClick={handleSubmitReport}
-                    disabled={!reportReason || reportSubmitting}
-                  >
-                    {reportSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Flag className="w-4 h-4 mr-1" />}
-                    {t.messages.send}
-                  </Button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
+      {otherUser && (
+        <ReportDialog open={reportOpen} onOpenChange={setReportOpen} reportedId={otherUser.id} name={otherUser.name} />
       )}
     </div>
   );

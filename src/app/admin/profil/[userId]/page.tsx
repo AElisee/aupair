@@ -8,6 +8,7 @@ import PhotoViewerModal from "@/components/ui/photo-viewer-modal";
 import { ArrowLeft, CheckCircle, X, Loader2, Maximize2 } from "lucide-react";
 import { useCountries } from "@/hooks/useCountries";
 import { useI18n } from "@/i18n";
+import { formatPhoneNumber } from "@/lib/phone";
 
 type AuPairDetail = {
   role: "AU_PAIR";
@@ -278,8 +279,8 @@ export default function AdminProfilePage() {
                   <h3 className="text-[15px] font-medium text-[#1A1A2E] mb-3">{tp.contact}</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <Field label={tp.email} value={data.email} />
-                    <Field label="WhatsApp" value={data.phoneWhatsapp1} />
-                    {data.phoneWhatsapp2 && <Field label="WhatsApp (2)" value={data.phoneWhatsapp2} />}
+                    <Field label="WhatsApp" value={formatPhoneNumber(data.phoneWhatsapp1)} />
+                    {data.phoneWhatsapp2 && <Field label="WhatsApp (2)" value={formatPhoneNumber(data.phoneWhatsapp2)} />}
                     <Field label={tp.memberSince} value={formatDate(data.memberSince)} />
                   </div>
                 </div>
@@ -367,7 +368,7 @@ export default function AdminProfilePage() {
                   <h3 className="text-[15px] font-medium text-[#1A1A2E] mb-3">{tp.contact}</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <Field label={tp.email} value={data.email} />
-                    <Field label="WhatsApp" value={data.phoneWhatsapp} />
+                    <Field label="WhatsApp" value={formatPhoneNumber(data.phoneWhatsapp)} />
                     <Field label={tp.memberSince} value={formatDate(data.memberSince)} />
                   </div>
                 </div>

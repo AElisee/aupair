@@ -69,10 +69,14 @@ const methodIcon = (method: PaymentMethod) => {
   return <Globe {...props} />;
 };
 
-function Detail({ label, children }: { label: string; children: React.ReactNode }) {
+// `color` : fond teinté (dates de début / d'expiration) ; sinon fond blanc translucide
+function Detail({ label, color, children }: { label: string; color?: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl bg-white/70 border border-gray-100 px-4 py-3">
-      <p className="text-xs text-gray-500">{label}</p>
+    <div
+      className={`rounded-xl border px-4 py-3 ${color ? "" : "bg-white/70 border-gray-100"}`}
+      style={color ? { backgroundColor: `${color}14`, borderColor: `${color}33` } : undefined}
+    >
+      <p className="text-xs" style={{ color: color ?? "#6B7280" }}>{label}</p>
       <div className="text-sm text-[#1A1A2E] mt-0.5 tabular-nums">{children}</div>
     </div>
   );
@@ -367,7 +371,7 @@ function AbonnementContent() {
           </div>
         )}
 
-        <div role="tablist" className="flex gap-1 border-b border-gray-200 overflow-x-auto">
+        <div role="tablist" className="flex gap-1 border-b border-gray-200 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {TABS.map((key) => (
             <button
               key={key}
@@ -410,8 +414,8 @@ function AbonnementContent() {
                   )}
                   {data.status && (
                     <div className="grid grid-cols-1 min-[480px]:grid-cols-2 gap-3">
-                      <Detail label={ts.startedOn}>{fmtDate(data.startsAt)}</Detail>
-                      <Detail label={ts.expiresOn}>{fmtDate(data.expiresAt)}</Detail>
+                      <Detail label={ts.startedOn} color={TEAL}>{fmtDate(data.startsAt)}</Detail>
+                      <Detail label={ts.expiresOn} color={active ? ORANGE : "#D64545"}>{fmtDate(data.expiresAt)}</Detail>
                       <Detail label={ts.lastPayment}>
                         {data.amount != null ? formatCurrency(data.amount, data.currency ?? "EUR", locale) : "—"}
                       </Detail>
@@ -491,7 +495,7 @@ function AbonnementContent() {
             {history.length === 0 ? (
               <p className="px-5 py-8 text-center text-sm text-gray-500">{ts.noPayments}</p>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#E87722]/60">
                 <table className="w-full text-sm">
                   <thead className="border-y border-gray-200/60 bg-white/60">
                     <tr>

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle, X, Loader2, Phone, Languages, Star, CalendarRange, MessageCircle, Heart } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { useI18n } from "@/i18n";
+import { formatPhoneNumber } from "@/lib/phone";
 
 type AuPairProfile = {
   available: boolean;
@@ -212,8 +213,8 @@ export default function AuPairProfilePage() {
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                   <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-3">{td.contact}</h2>
                   <div className="grid grid-cols-2 gap-4">
-                    {data.phoneWhatsapp1 && <Field label="WhatsApp" value={<span className="inline-flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-[#E87722]" /> {data.phoneWhatsapp1}</span>} />}
-                    {data.phoneWhatsapp2 && <Field label="WhatsApp (2)" value={<span className="inline-flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-[#E87722]" /> {data.phoneWhatsapp2}</span>} />}
+                    {data.phoneWhatsapp1 && <Field label="WhatsApp" value={<span className="inline-flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-[#E87722]" /> {formatPhoneNumber(data.phoneWhatsapp1)}</span>} />}
+                    {data.phoneWhatsapp2 && <Field label="WhatsApp (2)" value={<span className="inline-flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-[#E87722]" /> {formatPhoneNumber(data.phoneWhatsapp2)}</span>} />}
                   </div>
                 </div>
               )}

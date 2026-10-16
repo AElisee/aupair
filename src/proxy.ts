@@ -31,11 +31,14 @@ export async function proxy(request: NextRequest) {
   // Décode le JWT NextAuth sans requête DB (compatible Edge runtime)
   // secureCookie doit correspondre au cookie posé par NextAuth : en prod
   // (HTTPS), le cookie est préfixé "__Secure-", sinon getToken ne le trouve pas.
-  const token = await getToken({
+  const rawToken = await getToken({
     req: request,
     secret: process.env.AUTH_SECRET,
     secureCookie: process.env.NODE_ENV === "production",
   });
+  // Un token sans id est une session invalidée (cf. callback jwt) : on la traite
+  // comme une absence de session.
+  const token = rawToken?.id ? rawToken : null;
 
   // ── Déjà authentifié → on bloque l'accès aux pages réservées aux invités ───
   if (isGuestOnly) {
