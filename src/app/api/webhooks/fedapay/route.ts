@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAppSettings } from "@/lib/settings";
+import { revokeSubscriptionForRefund } from "@/lib/payments";
 import {
   fedapayBaseUrl,
   fedapayHeaders,
@@ -67,6 +68,8 @@ export async function POST(req: Request) {
             });
           }
         }
+      } else if (transaction.status === "refunded") {
+        await revokeSubscriptionForRefund(String(transaction.id));
       }
     }
   }

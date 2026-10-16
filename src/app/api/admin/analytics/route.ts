@@ -40,7 +40,7 @@ export async function GET() {
   ] = await Promise.all([
     prisma.user.findMany({ where: { createdAt: { gte: since } }, select: { createdAt: true, role: true } }),
     prisma.subscription.findMany({
-      where: { createdAt: { gte: since }, currency: "EUR", status: { in: ["ACTIVE", "EXPIRED"] } },
+      where: { createdAt: { gte: since }, currency: "XOF", status: { in: ["ACTIVE", "EXPIRED"] } },
       select: { createdAt: true, amount: true },
     }),
     prisma.auPairProfile.groupBy({ by: ["status"], _count: { _all: true } }),

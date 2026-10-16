@@ -218,7 +218,7 @@ export default function AdminAnalyticsPage() {
                           <div className="flex w-full items-center justify-between gap-4">
                             <span className="text-muted-foreground">{ta.revenueTitle}</span>
                             <span className="text-foreground font-mono font-medium tabular-nums">
-                              {formatCurrency(Number(value), "EUR", locale)}
+                              {formatCurrency(Number(value), "XOF", locale)}
                             </span>
                           </div>
                         )}

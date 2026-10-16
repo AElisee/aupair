@@ -192,7 +192,9 @@ the payment `reference` (`MTX-…`) is the transaction id and the `Subscription.
 Statuses: `completed` = success; `failed`/`cancelled`/`expired`/`refunded` = failure;
 `pending`/`processing` = pending. Webhook `POST /api/webhooks/geniuspay` checks
 `X-Webhook-Signature` = HMAC-SHA256 of `` `${X-Webhook-Timestamp}.${payload}` `` (5 min
-tolerance), then re-fetches `GET /payments/{reference}` before writing.
+tolerance), then re-fetches `GET /payments/{reference}` before writing. A re-fetched
+`refunded` status sets the linked `Subscription` to `REFUNDED` (`revokeSubscriptionForRefund`
+in `src/lib/payments.ts`, also used by the FedaPay webhook), which cuts access since checks require `ACTIVE`.
 
 ### Payments (FedaPay — Mobile Money & cards)
 

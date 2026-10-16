@@ -52,3 +52,14 @@ export async function activateSubscriptionForPayment(params: {
     },
   });
 }
+
+/**
+ * Révoque l'abonnement lié à un paiement remboursé : le statut passe à REFUNDED, ce qui coupe l'accès
+ * (les contrôles exigent ACTIVE). Idempotent — seul un abonnement encore ACTIVE est modifié.
+ */
+export async function revokeSubscriptionForRefund(paymentId: string) {
+  return prisma.subscription.updateMany({
+    where: { paymentId, status: "ACTIVE" },
+    data: { status: "REFUNDED" },
+  });
+}

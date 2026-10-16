@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAppSettings } from "@/lib/settings";
-import { activateSubscriptionForPayment } from "@/lib/payments";
+import { activateSubscriptionForPayment, revokeSubscriptionForRefund } from "@/lib/payments";
 import {
   verifyGeniuspaySignature,
   fetchGeniuspayPayment,
@@ -48,6 +48,8 @@ export async function POST(req: Request) {
           subscriptionDays: settings.subscriptionDays,
         });
       }
+    } else if (payment?.status === "refunded") {
+      await revokeSubscriptionForRefund(payment.reference);
     }
   }
 
