@@ -7,6 +7,7 @@ import { ICON } from "@/components/admin/AdminUI";
 import { Button } from "@/components/ui/button";
 import { useConstants } from "@/hooks/useConstants";
 import { useI18n } from "@/i18n";
+import { SelectField } from "@/components/ui/select-field";
 
 const FIELD =
   "w-full h-11 border border-gray-200 rounded-xl px-3 text-base sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#E87722]/40";
@@ -96,12 +97,14 @@ export function ReportDialog({
             <>
               <Dialog.Description className="sr-only">{m.reportUser}</Dialog.Description>
               <label htmlFor="report-reason" className="block text-sm font-medium text-[#1A1A2E] mb-1.5">{m.reason}</label>
-              <select id="report-reason" value={reason} onChange={(e) => setReason(e.target.value)} className={`${FIELD} mb-4`}>
-                <option value="">{m.selectReason}</option>
-                {reportReasons.map((r) => (
-                  <option key={r} value={r}>{tValue(r)}</option>
-                ))}
-              </select>
+              <SelectField
+                id="report-reason"
+                value={reason}
+                onChange={(v) => setReason(v)}
+                placeholder={m.selectReason}
+                options={reportReasons.map((r) => ({ value: String(r), label: tValue(r) }))}
+                className="mb-4"
+              />
 
               <label htmlFor="report-description" className="block text-sm font-medium text-[#1A1A2E] mb-1.5">{m.descriptionOptional}</label>
               <textarea

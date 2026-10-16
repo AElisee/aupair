@@ -17,6 +17,7 @@ import {
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { useI18n } from "@/i18n";
 import { Separator } from "@/components/ui/separator";
+import { SelectField } from "@/components/ui/select-field";
 
 type Country = {
   id: string;
@@ -318,19 +319,20 @@ export default function AdminPaysPage() {
               <label className="block text-xs font-medium text-gray-500 mb-1">
                 {tc.type}
               </label>
-              <select
+              <SelectField
                 value={form.type}
-                onChange={(e) =>
+                onChange={(v) =>
                   setForm({
                     ...form,
-                    type: e.target.value as "ORIGIN" | "HOST",
-                  })
-                }
-                className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none bg-white"
-              >
-                <option value="ORIGIN">{tc.originCountry}</option>
-                <option value="HOST">{tc.hostCountry}</option>
-              </select>
+                    type: v as "ORIGIN" | "HOST",
+                  })}
+                options={[
+                  { value: "ORIGIN", label: tc.originCountry },
+                  { value: "HOST", label: tc.hostCountry },
+                ]}
+                size="sm"
+                className="w-44"
+              />
             </div>
             <Button type="submit" disabled={submitting}>
               {editingId ? (

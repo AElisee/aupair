@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, Clock, Calendar, Tag } from "lucide-react";
 import { escapeHtml } from "@/lib/utils";
 import { getBlogArticle } from "@/content/blog-articles";
+import { BlogCover } from "@/components/blog/BlogCover";
 import { useI18n } from "@/i18n";
 
 /** Échappe le texte puis ré-autorise seulement le **gras** en <strong> — protège contre
@@ -37,9 +38,7 @@ export default function ArticleView({ slug }: { slug: string }) {
         </Link>
 
         {/* Header article */}
-        <div className="bg-[#FFF3E0] rounded-2xl h-48 flex items-center justify-center text-7xl mb-8">
-          {article.emoji}
-        </div>
+        <BlogCover article={article} size="lg" className="rounded-3xl h-48 sm:h-64 mb-8" />
 
         <div className="flex items-center gap-3 mb-4">
           <span className="text-xs font-semibold text-[#E87722] bg-[#FFF3E0] px-3 py-1 rounded-full flex items-center gap-1">

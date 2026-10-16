@@ -7,6 +7,7 @@ import { Loader2, Mail, Send, Inbox, Clock, CheckCircle, AlertTriangle } from "l
 import { useI18n } from "@/i18n";
 import { Separator } from "@/components/ui/separator";
 import { BLUE, GREEN, INDIGO, ORANGE, PAGE_TITLE, KpiGrid, pct } from "@/components/admin/AdminUI";
+import { SelectField } from "@/components/ui/select-field";
 
 type TicketStatus = "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
 type TicketPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
@@ -228,22 +229,22 @@ export default function AdminTicketsPage() {
                     <p className="text-xs text-gray-400">{new Date(detail.createdAt).toLocaleString(locale)}</p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <select
+                    <SelectField
                       value={detail.status}
                       disabled={updating}
-                      onChange={(e) => handleStatusChange(e.target.value as TicketStatus)}
-                      className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
-                    >
-                      {STATUSES.map((s) => <option key={s} value={s}>{tt.statuses[s]}</option>)}
-                    </select>
-                    <select
+                      onChange={(v) => handleStatusChange(v as TicketStatus)}
+                      options={STATUSES.map((s) => ({ value: String(s), label: tt.statuses[s] }))}
+                      size="xs"
+                      className="w-32"
+                    />
+                    <SelectField
                       value={detail.priority}
                       disabled={updating}
-                      onChange={(e) => handlePriorityChange(e.target.value as TicketPriority)}
-                      className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white"
-                    >
-                      {PRIORITIES.map((p) => <option key={p} value={p}>{tt.priorities[p]}</option>)}
-                    </select>
+                      onChange={(v) => handlePriorityChange(v as TicketPriority)}
+                      options={PRIORITIES.map((p) => ({ value: String(p), label: tt.priorities[p] }))}
+                      size="xs"
+                      className="w-32"
+                    />
                   </div>
                 </div>
 

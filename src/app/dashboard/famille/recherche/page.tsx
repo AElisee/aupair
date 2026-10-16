@@ -10,6 +10,7 @@ import { useCountries } from "@/hooks/useCountries";
 import { useConstants } from "@/hooks/useConstants";
 import { useI18n } from "@/i18n";
 import { PageHeader } from "@/components/dashboard/PageHeader";
+import { SelectField } from "@/components/ui/select-field";
 
 type AuPair = {
   id: string;
@@ -181,63 +182,63 @@ export default function RechercheAuPairPage() {
 
         {showFilters && (
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <select
+            <SelectField
               value={filterCountry}
-              onChange={(e) => setFilterCountry(e.target.value)}
-              className="px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
-            >
-              <option value="">{t.searchAuPairs.allOriginCountries}</option>
-              {originCountries.map((c) => <option key={c.name} value={c.name}>{tValue(c.name)}</option>)}
-            </select>
-            <select
+              onChange={(v) => setFilterCountry(v)}
+              options={[
+                { value: "", label: t.searchAuPairs.allOriginCountries },
+                ...originCountries.map((c) => ({ value: c.name, label: tValue(c.name) })),
+              ]}
+            />
+            <SelectField
               value={filterLang}
-              onChange={(e) => setFilterLang(e.target.value)}
-              className="px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
-            >
-              <option value="">{t.searchAuPairs.allLanguages}</option>
-              {LANGUAGES.map((l) => <option key={l} value={l}>{tValue(l)}</option>)}
-            </select>
-            <select
+              onChange={(v) => setFilterLang(v)}
+              options={[
+                { value: "", label: t.searchAuPairs.allLanguages },
+                ...LANGUAGES.map((l) => ({ value: String(l), label: tValue(l) })),
+              ]}
+            />
+            <SelectField
               value={filterGender}
-              onChange={(e) => setFilterGender(e.target.value)}
-              className="px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
-            >
-              <option value="">{t.searchAuPairs.allGenders}</option>
-              <option value="Femme">{tValue("Femme")}</option>
-              <option value="Homme">{tValue("Homme")}</option>
-            </select>
-            <select
+              onChange={(v) => setFilterGender(v)}
+              options={[
+                { value: "", label: t.searchAuPairs.allGenders },
+                { value: "Femme", label: tValue("Femme") },
+                { value: "Homme", label: tValue("Homme") },
+              ]}
+            />
+            <SelectField
               value={filterTargetCountry}
-              onChange={(e) => setFilterTargetCountry(e.target.value)}
-              className="px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
-            >
-              <option value="">{t.searchAuPairs.allDestinations}</option>
-              {hostCountries.map((c) => <option key={c.name} value={c.name}>{tValue(c.name)}</option>)}
-            </select>
-            <select
+              onChange={(v) => setFilterTargetCountry(v)}
+              options={[
+                { value: "", label: t.searchAuPairs.allDestinations },
+                ...hostCountries.map((c) => ({ value: c.name, label: tValue(c.name) })),
+              ]}
+            />
+            <SelectField
               value={filterMinAge}
-              onChange={(e) => setFilterMinAge(e.target.value)}
-              className="px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
-            >
-              <option value="">{t.searchAuPairs.minAge}</option>
-              {[18, 20, 22, 25, 28, 30, 35, 40].map((a) => <option key={a} value={a}>{t.searchAuPairs.ageOption(a)}</option>)}
-            </select>
-            <select
+              onChange={(v) => setFilterMinAge(v)}
+              options={[
+                { value: "", label: t.searchAuPairs.minAge },
+                ...[18, 20, 22, 25, 28, 30, 35, 40].map((a) => ({ value: String(a), label: t.searchAuPairs.ageOption(a) })),
+              ]}
+            />
+            <SelectField
               value={filterMaxAge}
-              onChange={(e) => setFilterMaxAge(e.target.value)}
-              className="px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
-            >
-              <option value="">{t.searchAuPairs.maxAge}</option>
-              {[20, 22, 25, 28, 30, 35, 40, 50].map((a) => <option key={a} value={a}>{t.searchAuPairs.ageOption(a)}</option>)}
-            </select>
-            <select
+              onChange={(v) => setFilterMaxAge(v)}
+              options={[
+                { value: "", label: t.searchAuPairs.maxAge },
+                ...[20, 22, 25, 28, 30, 35, 40, 50].map((a) => ({ value: String(a), label: t.searchAuPairs.ageOption(a) })),
+              ]}
+            />
+            <SelectField
               value={filterMinExperience}
-              onChange={(e) => setFilterMinExperience(e.target.value)}
-              className="px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
-            >
-              <option value="">{t.searchAuPairs.minExperience}</option>
-              {[1, 2, 3, 4, 5].map((y) => <option key={y} value={y}>{t.searchAuPairs.experienceOption(y)}</option>)}
-            </select>
+              onChange={(v) => setFilterMinExperience(v)}
+              options={[
+                { value: "", label: t.searchAuPairs.minExperience },
+                ...[1, 2, 3, 4, 5].map((y) => ({ value: String(y), label: t.searchAuPairs.experienceOption(y) })),
+              ]}
+            />
           </div>
         )}
 

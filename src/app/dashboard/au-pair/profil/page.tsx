@@ -6,7 +6,6 @@ import {
   Camera,
   Check,
   CheckCircle,
-  ChevronDown,
   ExternalLink,
   FileText,
   HeartHandshake,
@@ -32,6 +31,7 @@ import { useConstants } from "@/hooks/useConstants";
 import { calculateAge } from "@/lib/utils";
 import { useI18n } from "@/i18n";
 import { formatPhoneDigits } from "@/lib/phone";
+import { SelectField } from "@/components/ui/select-field";
 
 type ProfileStatus = "PENDING" | "ACTIVE" | "HIDDEN" | "SUSPENDED" | "DELETED";
 
@@ -172,18 +172,6 @@ function Field({ label, htmlFor, hint, className = "", children }: {
       </label>
       {children}
       {hint && <p className="text-xs text-gray-500 mt-1.5">{hint}</p>}
-    </div>
-  );
-}
-
-/** Liste native (sélecteur du système sur mobile) habillée comme les champs */
-function NativeSelect({ className = "", children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
-  return (
-    <div className={`relative ${className}`}>
-      <select {...props} className={`${INPUT} appearance-none pr-10 truncate`}>
-        {children}
-      </select>
-      <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} strokeWidth={1.5} />
     </div>
   );
 }
@@ -679,11 +667,17 @@ export default function AuPairProfilPage() {
                   />
                 </Field>
                 <Field label={tp.genderRequired} htmlFor="gender">
-                  <NativeSelect id="gender" value={profile.gender} onChange={(e) => update("gender", e.target.value)}>
-                    <option value="">{t.common.select}</option>
-                    <option value="Femme">{tValue("Femme")}</option>
-                    <option value="Homme">{tValue("Homme")}</option>
-                  </NativeSelect>
+                  <SelectField
+                    id="gender"
+                    value={profile.gender}
+                    onChange={(v) => update("gender", v)}
+                    placeholder={t.common.select}
+                    options={[
+                      { value: "Femme", label: tValue("Femme") },
+                      { value: "Homme", label: tValue("Homme") },
+                    ]}
+                    triggerClassName="sm:h-11"
+                  />
                 </Field>
                 <Field label={tp.nationality} htmlFor="nationality">
                   <input
@@ -695,16 +689,14 @@ export default function AuPairProfilPage() {
                   />
                 </Field>
                 <Field label={tp.countryOfOrigin} htmlFor="countryOfOrigin">
-                  <NativeSelect
+                  <SelectField
                     id="countryOfOrigin"
                     value={profile.countryOfOrigin}
-                    onChange={(e) => update("countryOfOrigin", e.target.value)}
-                  >
-                    <option value="" disabled>{t.common.selectCountry}</option>
-                    {originCountries.map((c) => (
-                      <option key={c.name} value={c.name}>{tValue(c.name)}</option>
-                    ))}
-                  </NativeSelect>
+                    onChange={(v) => update("countryOfOrigin", v)}
+                    placeholder={t.common.selectCountry}
+                    options={originCountries.map((c) => ({ value: c.name, label: tValue(c.name) }))}
+                    triggerClassName="sm:h-11"
+                  />
                 </Field>
                 <Field label={tp.cityOfOrigin} htmlFor="cityOfOrigin">
                   <input
@@ -717,16 +709,14 @@ export default function AuPairProfilPage() {
                   />
                 </Field>
                 <Field label={tp.educationLevel} htmlFor="educationLevel">
-                  <NativeSelect
+                  <SelectField
                     id="educationLevel"
                     value={profile.educationLevel}
-                    onChange={(e) => update("educationLevel", e.target.value)}
-                  >
-                    <option value="">{t.common.select}</option>
-                    {EDUCATION_LEVELS.map((level) => (
-                      <option key={level} value={level}>{tValue(level)}</option>
-                    ))}
-                  </NativeSelect>
+                    onChange={(v) => update("educationLevel", v)}
+                    placeholder={t.common.select}
+                    options={EDUCATION_LEVELS.map((level) => ({ value: String(level), label: tValue(level) }))}
+                    triggerClassName="sm:h-11"
+                  />
                 </Field>
               </div>
             </Section>
@@ -854,16 +844,14 @@ export default function AuPairProfilPage() {
                     />
                   </Field>
                   <Field label={tp.preferredDuration} htmlFor="preferredDuration" className="col-span-2 sm:col-span-1">
-                    <NativeSelect
+                    <SelectField
                       id="preferredDuration"
                       value={profile.preferredDuration}
-                      onChange={(e) => update("preferredDuration", e.target.value)}
-                    >
-                      <option value="">{t.common.select}</option>
-                      {DURATIONS.map((d) => (
-                        <option key={d} value={d}>{tValue(d)}</option>
-                      ))}
-                    </NativeSelect>
+                      onChange={(v) => update("preferredDuration", v)}
+                      placeholder={t.common.select}
+                      options={DURATIONS.map((d) => ({ value: String(d), label: tValue(d) }))}
+                      triggerClassName="sm:h-11"
+                    />
                   </Field>
                 </div>
                 <div>
@@ -897,17 +885,13 @@ export default function AuPairProfilPage() {
                 {phoneFields.map(({ label, codeKey, numberKey, ...rest }) => (
                   <Field key={numberKey} label={label} htmlFor={numberKey} hint={"hint" in rest ? rest.hint : undefined}>
                     <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] sm:grid-cols-[11rem_minmax(0,1fr)] gap-2">
-                      <NativeSelect
+                      <SelectField
                         aria-label={label}
                         value={profile[codeKey]}
-                        onChange={(e) => update(codeKey, e.target.value)}
-                      >
-                        {allCountries.map((c) => (
-                          <option key={c.name} value={c.dialCode}>
-                            {c.dialCode} · {tValue(c.name)}
-                          </option>
-                        ))}
-                      </NativeSelect>
+                        onChange={(v) => update(codeKey, v)}
+                        options={allCountries.map((c) => ({ value: c.dialCode, label: `${c.dialCode} · ${tValue(c.name)}` }))}
+                        triggerClassName="sm:h-11"
+                      />
                       <input
                         id={numberKey}
                         type="tel"

@@ -500,7 +500,15 @@ export const site = {
       regulation: { fr: "Réglementation", en: "Regulations" },
       news: { fr: "Nouveautés", en: "What's new" },
     },
-    read: { fr: "Lire", en: "Read" },
+    read: { fr: "Lire l'article", en: "Read article" },
+    featured: { fr: "À la une", en: "Featured" },
+    searchPlaceholder: { fr: "Rechercher un article...", en: "Search articles..." },
+    articlesCount: {
+      fr: (n: number) => `${n} article${n > 1 ? "s" : ""}`,
+      en: (n: number) => `${n} article${n > 1 ? "s" : ""}`,
+    },
+    noResults: { fr: "Aucun article ne correspond à votre recherche", en: "No article matches your search" },
+    resetSearch: { fr: "Réinitialiser", en: "Reset" },
     back: { fr: "Retour au blog", en: "Back to blog" },
     by: { fr: (author: string) => `Par ${author}`, en: (author: string) => `By ${author}` },
     notFoundTitle: { fr: "Article introuvable", en: "Article not found" },
@@ -666,36 +674,97 @@ export const site = {
     hoursTime: { fr: "9h00 – 18h00 (CET)", en: "9:00am – 6:00pm (CET)" },
   },
 
-  // ─── Annuaires publics (/trouver-au-pair, /trouver-famille) ────────────────
-  // Les filtres et libellés communs viennent de `searchAuPairs`, `searchFamilies` et `common` (dashboard.ts).
-  publicSearch: {
-    auPairTitle: { fr: "Trouver un au pair africain", en: "Find an African au pair" },
-    auPairFreeHint: {
-      fr: " • Inscription famille gratuite pour accéder aux profils complets",
-      en: " • Free family sign-up to access full profiles",
+  // ─── Annuaires (/trouver-au-pair, /trouver-famille, recherche des espaces) ─
+  // Libellés communs ; les filtres viennent de `searchAuPairs`, `searchFamilies` et `common` (dashboard.ts).
+  directory: {
+    allCountries: { fr: "Tous les pays", en: "All countries" },
+    filtersCount: { fr: (n: number) => `Filtres (${n})`, en: (n: number) => `Filters (${n})` },
+    clearAll: { fr: "Tout effacer", en: "Clear all" },
+    sortLabel: { fr: "Trier par", en: "Sort by" },
+    retry: { fr: "Réessayer", en: "Try again" },
+    emptyHint: { fr: "Essayez d'élargir vos critères de recherche.", en: "Try broadening your search criteria." },
+    alreadyMember: { fr: "Déjà inscrit ? Se connecter", en: "Already a member? Log in" },
+    viewProfile: { fr: "Voir le profil", en: "View profile" },
+    noPhoto: { fr: "Photo bientôt disponible", en: "Photo coming soon" },
+  },
+
+  // ─── Trouver un au pair (/trouver-au-pair) ─────────────────────────────────
+  findAuPair: {
+    title: { fr: "Trouvez votre au pair africain", en: "Find your African au pair" },
+    subtitle: {
+      fr: (n: number) => `${n} au pair${n > 1 ? "s" : ""} vérifié${n > 1 ? "s" : ""} prêt${n > 1 ? "s" : ""} à rejoindre votre famille. Filtrez par pays, langue ou expérience.`,
+      en: (n: number) => `${n} verified au pair${n === 1 ? " is" : "s are"} ready to join your family. Filter by country, language or experience.`,
     },
-    familyTitle: { fr: "Trouver une famille d'accueil", en: "Find a host family" },
-    familySubscriptionHint: {
-      fr: " · Abonnement 32€/30 jours pour contacter les familles",
-      en: " · €32/30-day subscription to contact families",
+    subtitleLoading: {
+      fr: "Des au pairs vérifiés sont prêts à rejoindre votre famille. Filtrez par pays, langue ou expérience.",
+      en: "Verified au pairs are ready to join your family. Filter by country, language or experience.",
     },
-    seeFullProfile: { fr: "Voir le profil complet", en: "See full profile" },
-    signUpFree: { fr: "S'inscrire gratuitement", en: "Sign up for free" },
-    signUpPaid: { fr: "S'inscrire — 32€/30j", en: "Sign up — €32/30 days" },
-    familyBannerTitle: {
-      fr: "👨‍👩‍👧 Inscrivez-vous gratuitement pour voir les profils complets",
-      en: "👨‍👩‍👧 Sign up for free to see full profiles",
+    showResults: {
+      fr: (n: number) => `Voir ${n} au pair${n > 1 ? "s" : ""}`,
+      en: (n: number) => `Show ${n} au pair${n === 1 ? "" : "s"}`,
     },
-    familyBannerText: {
-      fr: "Accès aux coordonnées, messagerie, favoris — 100% gratuit pour les familles.",
-      en: "Access to contact details, messaging, favourites — 100% free for families.",
+    sortRecent: { fr: "Plus récents", en: "Most recent" },
+    sortExperience: { fr: "Expérience", en: "Experience" },
+    sortAvailable: { fr: "Disponibles d'abord", en: "Available first" },
+    statExperience: { fr: "Expérience", en: "Experience" },
+    statLanguages: { fr: "Langues", en: "Languages" },
+    statLicense: { fr: "Permis", en: "Licence" },
+    yearsValue: { fr: (n: number) => `${n} an${n > 1 ? "s" : ""}`, en: (n: number) => `${n} yr${n === 1 ? "" : "s"}` },
+    wishes: { fr: "Souhaite partir en", en: "Wants to go to" },
+    lockedProfile: { fr: "Inscrivez-vous pour voir le profil", en: "Sign up to view the profile" },
+    reservedFamilies: { fr: "Profil réservé aux familles", en: "Profile reserved for families" },
+    bannerTitle: { fr: "Accédez aux profils complets gratuitement", en: "Access full profiles for free" },
+    bannerText: {
+      fr: "Coordonnées, messagerie et favoris : l'inscription est 100 % gratuite pour les familles.",
+      en: "Contact details, messaging and favourites: sign-up is 100% free for families.",
     },
-    freeSignup: { fr: "Inscription gratuite", en: "Free sign-up" },
-    auPairBannerTitle: { fr: "👤 Inscrivez-vous pour contacter les familles", en: "👤 Sign up to contact families" },
-    auPairBannerText: {
-      fr: "Abonnement au pair à 32€ pour 30 jours. Messagerie illimitée incluse.",
-      en: "Au pair subscription: €32 for 30 days. Unlimited messaging included.",
+    bannerCta: { fr: "Inscription famille gratuite", en: "Free family sign-up" },
+    loadError: { fr: "Impossible de charger les au pairs pour le moment.", en: "Unable to load au pairs right now." },
+    shownCount: {
+      fr: (shown: number, total: number) => `${shown} sur ${total} au pairs affichés`,
+      en: (shown: number, total: number) => `Showing ${shown} of ${total} au pairs`,
     },
+    showMore: { fr: "Afficher plus d'au pairs", en: "Show more au pairs" },
+  },
+
+  // ─── Trouver une famille (/trouver-famille) ────────────────────────────────
+  // Les libellés des filtres viennent de `searchFamilies` (dashboard.ts).
+  findFamily: {
+    title: { fr: "Trouvez votre famille d'accueil", en: "Find your host family" },
+    subtitle: {
+      fr: (n: number) => `${n} famille${n > 1 ? "s" : ""} vérifiée${n > 1 ? "s" : ""} attend${n > 1 ? "ent" : ""} un au pair. Filtrez par pays, langue ou nombre d'enfants.`,
+      en: (n: number) => `${n} verified ${n === 1 ? "family is" : "families are"} looking for an au pair. Filter by country, language or number of children.`,
+    },
+    subtitleLoading: {
+      fr: "Des familles vérifiées attendent un au pair. Filtrez par pays, langue ou nombre d'enfants.",
+      en: "Verified families are looking for an au pair. Filter by country, language or number of children.",
+    },
+    showResults: {
+      fr: (n: number) => `Voir ${n} famille${n > 1 ? "s" : ""}`,
+      en: (n: number) => `Show ${n} ${n === 1 ? "family" : "families"}`,
+    },
+    sortRecent: { fr: "Plus récentes", en: "Most recent" },
+    sortPocketMoney: { fr: "Argent de poche", en: "Pocket money" },
+    sortKids: { fr: "Nombre d'enfants", en: "Number of children" },
+    statKids: { fr: "Enfants", en: "Children" },
+    statHours: { fr: "Heures/sem.", en: "Hours/week" },
+    statPocketMoney: { fr: "Argent de poche", en: "Pocket money" },
+    hoursValue: { fr: (h: number) => `${h} h`, en: (h: number) => `${h} h` },
+    euroValue: { fr: (m: number) => `${m} €`, en: (m: number) => `€${m}` },
+    lockedProfile: { fr: "Inscrivez-vous pour voir le profil", en: "Sign up to view the profile" },
+    reservedAuPairs: { fr: "Profil réservé aux au pairs", en: "Profile reserved for au pairs" },
+    bannerTitle: { fr: "Contactez les familles qui vous plaisent", en: "Contact the families you like" },
+    bannerText: {
+      fr: (price: number, days: number) => `Abonnement au pair de ${price} € pour ${days} jours : profils complets et messagerie illimitée.`,
+      en: (price: number, days: number) => `Au pair subscription: €${price} for ${days} days — full profiles and unlimited messaging.`,
+    },
+    bannerCta: { fr: "Créer mon profil au pair", en: "Create my au pair profile" },
+    loadError: { fr: "Impossible de charger les familles pour le moment.", en: "Unable to load families right now." },
+    shownCount: {
+      fr: (shown: number, total: number) => `${shown} sur ${total} familles affichées`,
+      en: (shown: number, total: number) => `Showing ${shown} of ${total} families`,
+    },
+    showMore: { fr: "Afficher plus de familles", en: "Show more families" },
   },
 
   // ─── Documents légaux (CGU, confidentialité…) ──────────────────────────────

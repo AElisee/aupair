@@ -11,9 +11,14 @@ export type BlogCategory = "guideAuPair" | "guideFamily" | "testimonial" | "regu
 
 type Localized = { title: string; excerpt: string; author: string; content: string };
 
+/** Icône de couverture (Lucide), rendue par `BlogCover` (src/components/blog/). */
+export type BlogIcon = "landmark" | "scroll" | "mic" | "sparkles" | "wallet" | "users" | "stamp" | "luggage";
+
 export type BlogArticle = {
   slug: string;
-  emoji: string;
+  icon: BlogIcon;
+  /** Drapeau (emoji) du pays concerné, affiché en image sur la couverture. */
+  flag?: string;
   category: BlogCategory;
   readTime: string;
   /** Date de publication (AAAA-MM-JJ), affichée selon la langue. */
@@ -25,7 +30,8 @@ export type BlogArticle = {
 export const BLOG_ARTICLES: BlogArticle[] = [
   {
     slug: "comment-devenir-au-pair-en-france-2026",
-    emoji: "🇫🇷",
+    icon: "landmark",
+    flag: "🇫🇷",
     category: "guideAuPair",
     readTime: "5 min",
     date: "2026-03-05",
@@ -112,7 +118,7 @@ Becoming an au pair in France is an enriching experience that will help you impr
   },
   {
     slug: "regles-aupair-europe",
-    emoji: "📋",
+    icon: "scroll",
     category: "regulation",
     readTime: "7 min",
     date: "2026-02-28",
@@ -231,7 +237,8 @@ Knowing your rights and obligations will let you enjoy your au pair experience w
   },
   {
     slug: "temoignage-cameroun-lyon",
-    emoji: "🎙️",
+    icon: "mic",
+    flag: "🇫🇷",
     category: "testimonial",
     readTime: "4 min",
     date: "2026-02-20",
@@ -328,7 +335,7 @@ I have no regrets. This experience changed my life. If you are still hesitating,
   },
   {
     slug: "matching-aupair-famille-conseils",
-    emoji: "✨",
+    icon: "sparkles",
     category: "news",
     readTime: "3 min",
     date: "2026-02-15",
@@ -425,7 +432,7 @@ AuPair A.EU is not just a matching platform — it is a complete ecosystem that 
   },
   {
     slug: "argent-poche-aupair-europe",
-    emoji: "💰",
+    icon: "wallet",
     category: "guideAuPair",
     readTime: "6 min",
     date: "2026-02-10",
@@ -580,7 +587,7 @@ Being an au pair in Europe is not a way to "get rich" quickly, but it is an expe
   },
   {
     slug: "famille-accueil-choisir-aupair",
-    emoji: "👨‍👩‍👧",
+    icon: "users",
     category: "guideFamily",
     readTime: "5 min",
     date: "2026-02-03",
@@ -705,7 +712,7 @@ The right au pair is not necessarily the most qualified on paper, but the one yo
   },
   {
     slug: "visa-au-pair-cameroun-senegal-cotedivoire",
-    emoji: "🛂",
+    icon: "stamp",
     category: "regulation",
     readTime: "8 min",
     date: "2026-01-25",
@@ -844,7 +851,7 @@ Contact us through the Contact page if you have questions specific to your situa
   },
   {
     slug: "preparer-valise-au-pair-europe",
-    emoji: "🧳",
+    icon: "luggage",
     category: "guideAuPair",
     readTime: "4 min",
     date: "2026-01-18",
@@ -1001,7 +1008,8 @@ Have a good trip and welcome to your new adventure!
   },
   {
     slug: "temoignage-kofi-berlin",
-    emoji: "🇩🇪",
+    icon: "mic",
+    flag: "🇩🇪",
     category: "testimonial",
     readTime: "5 min",
     date: "2026-01-10",

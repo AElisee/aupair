@@ -7,6 +7,7 @@ import { Wallet, CreditCard, Smartphone, Globe, Download, Loader2, FileText, Cal
 import { useI18n } from "@/i18n";
 import { Separator } from "@/components/ui/separator";
 import { BLUE, GREEN, ICON, INDIGO, ORANGE, PAGE_TITLE, TEAL, KpiGrid, Panel, PanelHeader, pct } from "@/components/admin/AdminUI";
+import { SelectField } from "@/components/ui/select-field";
 
 type Payment = {
   id: string;
@@ -249,32 +250,32 @@ export default function PaiementsPage() {
                       className={`w-full pl-9 pr-4 ${FILTER_INPUT}`}
                     />
                   </div>
-                  <select
+                  <SelectField
                     value={filterStatus}
-                    onChange={(e) => {
-                      setFilterStatus(e.target.value);
+                    onChange={(v) => {
+                      setFilterStatus(v);
                       setPage(1);
                     }}
-                    className={`px-3 ${FILTER_INPUT}`}
-                  >
-                    <option value="">{tp.allStatuses}</option>
-                    {STATUSES.map((s) => (
-                      <option key={s} value={s}>{tp.statuses[s]}</option>
-                    ))}
-                  </select>
-                  <select
+                    options={[
+                      { value: "", label: tp.allStatuses },
+                      ...STATUSES.map((s) => ({ value: String(s), label: tp.statuses[s] })),
+                    ]}
+                    size="sm"
+                    className="w-full sm:w-44"
+                  />
+                  <SelectField
                     value={filterMethod}
-                    onChange={(e) => {
-                      setFilterMethod(e.target.value);
+                    onChange={(v) => {
+                      setFilterMethod(v);
                       setPage(1);
                     }}
-                    className={`px-3 ${FILTER_INPUT}`}
-                  >
-                    <option value="">{tp.allMethods}</option>
-                    {METHODS.map((m) => (
-                      <option key={m} value={m}>{tp.methods[m]}</option>
-                    ))}
-                  </select>
+                    options={[
+                      { value: "", label: tp.allMethods },
+                      ...METHODS.map((m) => ({ value: String(m), label: tp.methods[m] })),
+                    ]}
+                    size="sm"
+                    className="w-full sm:w-44"
+                  />
                 </div>
               </div>
               <div className="overflow-x-auto">

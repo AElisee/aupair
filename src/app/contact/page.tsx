@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Mail, MessageCircle, Clock, CheckCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n";
+import { SelectField } from "@/components/ui/select-field";
 
 const SUBJECTS = ["inscription", "paiement", "profil", "signalement", "autre"] as const;
 
@@ -78,16 +79,13 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">{c.subject}</label>
-                  <select
-                    required value={form.subject}
-                    onChange={e => setForm({ ...form, subject: e.target.value })}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] focus:border-transparent bg-white"
-                  >
-                    <option value="">{c.chooseSubject}</option>
-                    {SUBJECTS.map((key) => (
-                      <option key={key} value={key}>{c.subjects[key]}</option>
-                    ))}
-                  </select>
+                  <SelectField
+                    required
+                    value={form.subject}
+                    onChange={(v) => setForm({ ...form, subject: v })}
+                    placeholder={c.chooseSubject}
+                    options={SUBJECTS.map((key) => ({ value: String(key), label: c.subjects[key] }))}
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">{c.message}</label>

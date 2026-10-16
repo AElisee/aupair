@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Shield, Globe, Users, CheckCircle } from "lucide-react";
+import { Shield, Globe, Users, CheckCircle, Home, User } from "lucide-react";
 import { useI18n } from "@/i18n";
 
 interface HeroSectionProps {
@@ -48,12 +48,12 @@ export default function HeroSection({ heroImageUrl }: HeroSectionProps) {
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-14">
           <Link href="/trouver-famille">
             <Button size="lg" className="whitespace-normal text-center text-base px-6 sm:px-8 py-6 sm:text-lg shadow-lg shadow-[#E87722]/30">
-              🏡 {h.ctaFamily}
+              <Home className="w-5 h-5 shrink-0" /> {h.ctaFamily}
             </Button>
           </Link>
           <Link href="/trouver-au-pair">
             <Button variant="outline" size="lg" className="whitespace-normal text-center text-base px-6 sm:px-8 py-6 sm:text-lg border-white text-white hover:bg-white hover:text-[#1A1A2E]">
-              👤 {h.ctaAuPair}
+              <User className="w-5 h-5 shrink-0" /> {h.ctaAuPair}
             </Button>
           </Link>
         </div>

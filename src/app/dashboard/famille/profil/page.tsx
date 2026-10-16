@@ -10,6 +10,7 @@ import PhotoViewerModal from "@/components/ui/photo-viewer-modal";
 import { useI18n } from "@/i18n";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { formatPhoneDigits } from "@/lib/phone";
+import { SelectField } from "@/components/ui/select-field";
 
 type ProfileStatus = "PENDING" | "ACTIVE" | "HIDDEN" | "SUSPENDED" | "DELETED";
 
@@ -213,11 +214,13 @@ export default function FamilleProfilPage() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">{tf.hostCountry}</label>
-              <select value={profile.country} onChange={e => setProfile({ ...profile, country: e.target.value })}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
-                <option value="">{t.common.selectCountry}</option>
-                {hostCountries.map(c => <option key={c.name} value={c.name}>{tValue(c.name)}</option>)}
-              </select>
+              <SelectField
+                triggerClassName="h-[42px]"
+                value={profile.country}
+                onChange={(v) => setProfile({ ...profile, country: v })}
+                placeholder={t.common.selectCountry}
+                options={hostCountries.map((c) => ({ value: c.name, label: tValue(c.name) }))}
+              />
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">{tf.city}</label>
@@ -231,10 +234,12 @@ export default function FamilleProfilPage() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">{tf.maritalStatus}</label>
-              <select value={profile.maritalStatus} onChange={e => setProfile({ ...profile, maritalStatus: e.target.value })}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
-                {MARITAL_STATUSES.map(m => <option key={m} value={m}>{t.maritalStatus[m]}</option>)}
-              </select>
+              <SelectField
+                triggerClassName="h-[42px]"
+                value={profile.maritalStatus}
+                onChange={(v) => setProfile({ ...profile, maritalStatus: v })}
+                options={MARITAL_STATUSES.map((m) => ({ value: String(m), label: t.maritalStatus[m] }))}
+              />
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">{tf.parentsAges}</label>
@@ -304,12 +309,16 @@ export default function FamilleProfilPage() {
           <div className="grid sm:grid-cols-3 gap-4 mb-5">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">{tf.preferredGender}</label>
-              <select value={profile.preferredGender} onChange={e => setProfile({ ...profile, preferredGender: e.target.value })}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
-                <option value="">{tf.noPreference}</option>
-                <option value="Femme">{tValue("Femme")}</option>
-                <option value="Homme">{tValue("Homme")}</option>
-              </select>
+              <SelectField
+                triggerClassName="h-[42px]"
+                value={profile.preferredGender}
+                onChange={(v) => setProfile({ ...profile, preferredGender: v })}
+                options={[
+                  { value: "", label: tf.noPreference },
+                  { value: "Femme", label: tValue("Femme") },
+                  { value: "Homme", label: tValue("Homme") },
+                ]}
+              />
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">{tf.minAge}</label>
@@ -355,12 +364,13 @@ export default function FamilleProfilPage() {
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">{tf.whatsappNumber}</label>
             <div className="flex flex-col sm:flex-row gap-2">
-              <select value={profile.phoneCountryCode} onChange={e => setProfile({ ...profile, phoneCountryCode: e.target.value })}
-                className="w-full sm:w-auto min-w-0 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722] bg-white">
-                {allCountries.map(c => (
-                  <option key={c.name} value={c.dialCode}>{tValue(c.name)} ({c.dialCode})</option>
-                ))}
-              </select>
+              <SelectField
+                triggerClassName="h-[42px]"
+                value={profile.phoneCountryCode}
+                onChange={(v) => setProfile({ ...profile, phoneCountryCode: v })}
+                options={allCountries.map((c) => ({ value: c.dialCode, label: `${tValue(c.name)} (${c.dialCode})` }))}
+                className="w-full sm:w-64 shrink-0"
+              />
               <input type="tel" inputMode="tel" value={formatPhoneDigits(profile.phoneNumber)} onChange={e => setProfile({ ...profile, phoneNumber: formatPhoneDigits(e.target.value) })}
                 className="w-full sm:flex-1 min-w-0 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
                 placeholder="01 02 03 04 05" />

@@ -1,12 +1,21 @@
 "use client";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Globe, Heart, DollarSign, Home, ArrowRight } from "lucide-react";
+import { Check, Globe, Heart, DollarSign, Home, ArrowRight, ChevronDown } from "lucide-react";
 import { CountryFlag } from "@/components/ui/CountryFlag";
 import { useI18n } from "@/i18n";
 
 // Icônes des avantages, dans le même ordre que `becomeAuPair.advantages` (src/i18n/site.ts)
 const advantageIcons = [Globe, Heart, DollarSign, Home];
+
+function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+  return (
+    <div className="text-center mb-6 sm:mb-8">
+      <h2 className="text-xl sm:text-2xl font-bold text-[#1A1A2E]">{title}</h2>
+      {subtitle && <p className="text-sm text-gray-500 mt-1.5 max-w-xl mx-auto">{subtitle}</p>}
+    </div>
+  );
+}
 
 export default function DevenirAuPairContent({ originCountries }: { originCountries: { name: string; flag: string }[] }) {
   const { t, tValue } = useI18n();
@@ -14,36 +23,39 @@ export default function DevenirAuPairContent({ originCountries }: { originCountr
 
   return (
     <div>
-      {/* Hero */}
-      <section className="bg-[#E87722] py-20">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4">{p.heroTitle}</h1>
-          <p className="text-white/90 text-xl mb-8 max-w-2xl mx-auto">{p.heroSubtitle}</p>
-          <Link href="/inscription?role=au-pair">
-            <Button size="lg" className="bg-white text-[#E87722] hover:bg-gray-100 px-8 text-base font-bold">
-              {p.heroCta} <ArrowRight className="w-5 h-5" />
+      {/* ─── Hero ─────────────────────────────────────────────────────── */}
+      <section
+        className="relative overflow-hidden"
+        style={{ background: "linear-gradient(135deg, #1A1A2E 0%, #16213e 50%, #0f3460 100%)" }}
+      >
+        <div className="absolute -top-24 -right-24 w-80 h-80 bg-[#E87722] opacity-15 rounded-full blur-3xl" />
+        <div className="relative max-w-3xl mx-auto px-4 py-10 sm:py-14 text-center">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight">{p.heroTitle}</h1>
+          <p className="text-gray-300 text-sm sm:text-base mt-3 max-w-xl mx-auto">{p.heroSubtitle}</p>
+          <Link href="/inscription?role=au-pair" className="inline-block mt-6">
+            <Button className="px-5">
+              {p.heroCta} <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
         </div>
       </section>
 
-      {/* Avantages */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-extrabold text-[#1A1A2E] mb-3">{p.whyTitle}</h2>
-            <p className="text-gray-500">{p.whySubtitle}</p>
-          </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* ─── Avantages ────────────────────────────────────────────────── */}
+      <section className="py-10 sm:py-14 bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <SectionHeader title={p.whyTitle} subtitle={p.whySubtitle} />
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {p.advantages.map((a, i) => {
               const Icon = advantageIcons[i];
               return (
-                <div key={i} className="bg-[#FFF3E0] rounded-2xl p-6 text-center">
-                  <div className="w-14 h-14 bg-[#E87722] rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Icon className="w-7 h-7 text-white" />
+                <div key={i} className="flex gap-3 rounded-xl border border-gray-100 bg-[#FFF3E0]/60 p-4">
+                  <div className="w-9 h-9 shrink-0 rounded-lg bg-[#E87722] flex items-center justify-center">
+                    <Icon className="w-[18px] h-[18px] text-white" strokeWidth={1.75} />
                   </div>
-                  <h3 className="font-bold text-[#1A1A2E] mb-2">{a.title}</h3>
-                  <p className="text-gray-500 text-sm">{a.desc}</p>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold text-[#1A1A2E]">{a.title}</h3>
+                    <p className="text-[13px] text-gray-500 mt-0.5 leading-snug">{a.desc}</p>
+                  </div>
                 </div>
               );
             })}
@@ -51,93 +63,90 @@ export default function DevenirAuPairContent({ originCountries }: { originCountr
         </div>
       </section>
 
-      {/* Conditions */}
-      <section className="py-20 bg-[#F5F5F5]">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-extrabold text-[#1A1A2E] mb-3">{p.whoTitle}</h2>
-          </div>
-          <div className="bg-white rounded-2xl p-8 shadow-sm">
-            <div className="grid sm:grid-cols-2 gap-4">
+      {/* ─── Conditions + Processus ───────────────────────────────────── */}
+      <section className="py-10 sm:py-14 bg-[#F5F5F5]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-6 lg:gap-8">
+          <div>
+            <h2 className="text-lg sm:text-xl font-bold text-[#1A1A2E] mb-4">{p.whoTitle}</h2>
+            <ul className="bg-white rounded-xl border border-gray-100 p-4 sm:p-5 space-y-2.5">
               {p.conditions.map((c) => (
-                <div key={c} className="flex items-center gap-3">
-                  <CheckCircle className="w-5 h-5 text-[#E87722] flex-shrink-0" />
-                  <span className="text-gray-700">{c}</span>
-                </div>
+                <li key={c} className="flex items-start gap-2.5 text-sm text-gray-700">
+                  <span className="mt-0.5 w-4 h-4 shrink-0 rounded-full bg-[#E87722]/15 flex items-center justify-center">
+                    <Check className="w-3 h-3 text-[#E87722]" strokeWidth={2.5} />
+                  </span>
+                  {c}
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
-        </div>
-      </section>
 
-      {/* Processus */}
-      <section className="py-20 bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-extrabold text-[#1A1A2E] mb-3">{p.howTitle}</h2>
-            <p className="text-gray-500">{p.howSubtitle}</p>
-          </div>
-          <div className="relative">
-            <div className="space-y-8">
+          <div>
+            <h2 className="text-lg sm:text-xl font-bold text-[#1A1A2E]">{p.howTitle}</h2>
+            <p className="text-sm text-gray-500 mt-1 mb-4">{p.howSubtitle}</p>
+            <ol className="relative space-y-3">
               {p.steps.map((s, i) => (
-                <div key={i} className="flex flex-col md:flex-row items-start md:items-center gap-6">
-                  <div className="flex-shrink-0 w-16 h-16 bg-[#E87722] rounded-full flex items-center justify-center text-white text-2xl font-extrabold shadow-lg">
-                    {i + 1}
+                <li key={i} className="flex gap-3">
+                  <div className="flex flex-col items-center">
+                    <span className="w-7 h-7 shrink-0 rounded-full bg-[#E87722] text-white text-xs font-semibold flex items-center justify-center">
+                      {i + 1}
+                    </span>
+                    {i < p.steps.length - 1 && <span className="w-px flex-1 bg-[#E87722]/25 mt-1" />}
                   </div>
-                  <div className="bg-[#FFF3E0] rounded-xl p-5 flex-1">
-                    <h3 className="font-bold text-[#1A1A2E] text-lg mb-1">{s.title}</h3>
-                    <p className="text-gray-500">{s.desc}</p>
+                  <div className="bg-white rounded-xl border border-gray-100 px-4 py-3 flex-1">
+                    <h3 className="text-sm font-semibold text-[#1A1A2E]">{s.title}</h3>
+                    <p className="text-[13px] text-gray-500 mt-0.5 leading-snug">{s.desc}</p>
                   </div>
-                </div>
+                </li>
               ))}
-            </div>
+            </ol>
           </div>
         </div>
       </section>
 
-      {/* Pays d'origine */}
-      <section className="py-20 bg-[#F5F5F5]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-extrabold text-[#1A1A2E] mb-3">{p.countriesTitle}</h2>
-            <p className="text-gray-500">{p.countriesSubtitle}</p>
-          </div>
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
+      {/* ─── Pays d'origine ───────────────────────────────────────────── */}
+      <section className="py-10 sm:py-14 bg-white">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <SectionHeader title={p.countriesTitle} subtitle={p.countriesSubtitle} />
+          <div className="flex flex-wrap justify-center gap-2">
             {originCountries.map((c) => (
-              <div key={c.name} className="bg-white rounded-xl p-4 text-center shadow-sm hover:shadow-md transition-shadow">
-                <CountryFlag flag={c.flag} className="h-8 w-auto rounded-sm mx-auto mb-2" />
-                <div className="text-sm font-medium text-[#1A1A2E]">{tValue(c.name)}</div>
-              </div>
+              <span
+                key={c.name}
+                className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-[13px] font-medium text-[#1A1A2E]"
+              >
+                <CountryFlag flag={c.flag} className="h-3.5 w-auto rounded-[2px]" />
+                {tValue(c.name)}
+              </span>
             ))}
           </div>
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="py-20 bg-white">
+      {/* ─── FAQ ──────────────────────────────────────────────────────── */}
+      <section className="py-10 sm:py-14 bg-[#F5F5F5]">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-extrabold text-[#1A1A2E] mb-3">{p.faqTitle}</h2>
-          </div>
-          <div className="space-y-4">
+          <SectionHeader title={p.faqTitle} />
+          <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100">
             {p.faqs.map((f, i) => (
-              <div key={i} className="bg-[#FFF3E0] rounded-xl p-6">
-                <h3 className="font-bold text-[#1A1A2E] mb-2">{f.q}</h3>
-                <p className="text-gray-600 text-sm">{f.a}</p>
-              </div>
+              <details key={i} className="group px-4 sm:px-5" open={i === 0}>
+                <summary className="flex items-center justify-between gap-3 py-3.5 cursor-pointer list-none text-sm font-medium text-[#1A1A2E] [&::-webkit-details-marker]:hidden">
+                  {f.q}
+                  <ChevronDown className="w-4 h-4 shrink-0 text-gray-400 transition-transform group-open:rotate-180" />
+                </summary>
+                <p className="pb-4 -mt-1 text-[13px] text-gray-600 leading-relaxed">{f.a}</p>
+              </details>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA final */}
-      <section className="py-16 bg-[#1A1A2E]">
+      {/* ─── CTA final ────────────────────────────────────────────────── */}
+      <section className="py-10 sm:py-12 bg-[#1A1A2E]">
         <div className="max-w-2xl mx-auto px-4 text-center">
-          <h2 className="text-3xl font-extrabold text-white mb-4">{p.finalTitle}</h2>
-          <p className="text-gray-400 mb-8">{p.finalSubtitle}</p>
-          <Link href="/inscription?role=au-pair">
-            <Button size="lg" className="px-10">
-              {p.finalCta} <ArrowRight className="w-5 h-5" />
+          <h2 className="text-xl sm:text-2xl font-bold text-white">{p.finalTitle}</h2>
+          <p className="text-sm text-gray-400 mt-2 mb-6">{p.finalSubtitle}</p>
+          <Link href="/inscription?role=au-pair" className="inline-block">
+            <Button className="px-5">
+              {p.finalCta} <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
         </div>

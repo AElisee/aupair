@@ -144,6 +144,24 @@ a[href] {
   animation: slideIn 0.4s ease-out forwards;
 }
 
+@keyframes drawerIn {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-drawer-in {
+  animation: drawerIn 0.25s ease-out;
+}
+
+@keyframes drawerInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-drawer-in-right {
+  animation: drawerInRight 0.25s ease-out;
+}
+
 /* Utilitaires personnalisés */
 .text-gradient {
   background: linear-gradient(135deg, #e87722, #ff9a3c);

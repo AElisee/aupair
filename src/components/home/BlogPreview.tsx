@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { ArrowRight, Clock } from "lucide-react";
 import { BLOG_ARTICLES } from "@/content/blog-articles";
+import { BlogCover } from "@/components/blog/BlogCover";
 import { useI18n } from "@/i18n";
 
 // Les 3 premiers articles du blog (src/content/blog-articles.ts)
@@ -33,9 +34,7 @@ export default function BlogPreview() {
             const text = article[lang];
             return (
               <Link key={article.slug} href={`/blog/${article.slug}`} className="group">
-                <div className="bg-[#FFF3E0] rounded-2xl h-40 mb-4 flex items-center justify-center group-hover:bg-[#E87722] transition-colors">
-                  <span className="text-4xl">📖</span>
-                </div>
+                <BlogCover article={article} className="rounded-2xl h-40 mb-4" />
                 <div className="px-1">
                   <div className="flex items-center gap-3 mb-2">
                     <span className="text-xs font-semibold text-[#E87722] bg-[#FFF3E0] px-2 py-1 rounded-full">

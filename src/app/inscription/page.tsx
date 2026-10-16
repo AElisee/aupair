@@ -34,6 +34,9 @@ const EXPERIENCE_OPTIONS = [
   "5 ans et plus",
 ];
 
+const PAGE_BACKGROUND =
+  "bg-[radial-gradient(ellipse_at_top_left,rgba(232,119,34,0.18),transparent_55%),radial-gradient(ellipse_at_top_right,rgba(58,91,168,0.14),transparent_50%),radial-gradient(ellipse_at_bottom,rgba(63,164,91,0.12),transparent_60%),linear-gradient(180deg,#FFF8F1_0%,#F7F4FA_55%,#F1F6F3_100%)] bg-fixed";
+
 function InscriptionContent() {
   const searchParams = useSearchParams();
   const defaultRole = (searchParams.get("role") as Role) || null;
@@ -174,7 +177,7 @@ function InscriptionContent() {
 
   if (done) {
     return (
-      <div className="min-h-dvh flex items-center justify-center p-8">
+      <div className={`min-h-dvh flex items-center justify-center p-8 ${PAGE_BACKGROUND}`}>
         <div className="text-center max-w-md">
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle className="w-10 h-10 text-green-500" />
@@ -198,7 +201,7 @@ function InscriptionContent() {
   }
 
   return (
-    <div className="min-h-dvh bg-[#F5F5F5] py-12 px-4">
+    <div className={`min-h-dvh py-12 px-4 ${PAGE_BACKGROUND}`}>
       <div className="max-w-xl mx-auto">
         {/* Logo */}
         <Link href="/" className="flex items-center justify-center gap-2 mb-8">
@@ -735,7 +738,7 @@ export default function InscriptionPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-dvh flex items-center justify-center">
+        <div className={`min-h-dvh flex items-center justify-center ${PAGE_BACKGROUND}`}>
           <div className="w-8 h-8 border-4 border-[#E87722] border-t-transparent rounded-full animate-spin" />
         </div>
       }

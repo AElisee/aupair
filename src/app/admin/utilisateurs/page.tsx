@@ -22,6 +22,7 @@ import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { useI18n } from "@/i18n";
 import { Separator } from "@/components/ui/separator";
 import { GREEN, INDIGO, NAVY, ORANGE, PAGE_TITLE, TEAL, KpiGrid, pct } from "@/components/admin/AdminUI";
+import { SelectField } from "@/components/ui/select-field";
 
 type AdminUser = {
   id: string;
@@ -231,33 +232,37 @@ export default function UtilisateursPage() {
               className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#E87722]"
             />
           </div>
-          <select
+          <SelectField
             value={filterRole}
-            onChange={(e) => {
-              setFilterRole(e.target.value);
+            onChange={(v) => {
+              setFilterRole(v);
               setPage(1);
             }}
-            className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none bg-white"
-          >
-            <option value="">{tu.allRoles}</option>
-            <option value="AU_PAIR">{c.roleAuPair}</option>
-            <option value="FAMILLE">{c.roleFamily}</option>
-          </select>
+            options={[
+              { value: "", label: tu.allRoles },
+              { value: "AU_PAIR", label: c.roleAuPair },
+              { value: "FAMILLE", label: c.roleFamily },
+            ]}
+            size="sm"
+            className="w-full sm:w-44"
+          />
           {view === "active" && (
-            <select
+            <SelectField
               value={filterStatus}
-              onChange={(e) => {
-                setFilterStatus(e.target.value);
+              onChange={(v) => {
+                setFilterStatus(v);
                 setPage(1);
               }}
-              className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none bg-white"
-            >
-              <option value="">{tu.allStatuses}</option>
-              <option value="ACTIVE">{c.profileStatus.ACTIVE}</option>
-              <option value="PENDING">{c.profileStatus.PENDING}</option>
-              <option value="HIDDEN">{c.profileStatus.HIDDEN}</option>
-              <option value="SUSPENDED">{c.profileStatus.SUSPENDED}</option>
-            </select>
+              options={[
+                { value: "", label: tu.allStatuses },
+                { value: "ACTIVE", label: c.profileStatus.ACTIVE },
+                { value: "PENDING", label: c.profileStatus.PENDING },
+                { value: "HIDDEN", label: c.profileStatus.HIDDEN },
+                { value: "SUSPENDED", label: c.profileStatus.SUSPENDED },
+              ]}
+              size="sm"
+              className="w-full sm:w-44"
+            />
           )}
         </div>
 

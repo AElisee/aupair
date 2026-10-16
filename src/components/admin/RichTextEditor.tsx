@@ -12,6 +12,7 @@ import {
   Link2, Unlink, Table, Quote, Minus, Trash2, Check, X,
 } from "lucide-react";
 import { useI18n } from "@/i18n";
+import { SelectField } from "@/components/ui/select-field";
 
 type Props = {
   /** HTML initial. Le composant n'est pas contrôlé : changer `key` pour recharger un autre contenu. */
@@ -113,17 +114,19 @@ function Toolbar({ editor }: { editor: Editor }) {
         <Btn title={te.undo} disabled={!s.canUndo} onClick={() => chain().undo().run()}><Undo2 /></Btn>
         <Btn title={te.redo} disabled={!s.canRedo} onClick={() => chain().redo().run()}><Redo2 /></Btn>
         <Sep />
-        <select
+        <SelectField
           value={s.block}
-          onChange={(e) => setBlock(e.target.value)}
-          className="h-8 rounded-lg border border-gray-200 bg-white px-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#E87722]"
+          onChange={(v) => setBlock(v)}
           title={te.textStyle}
-        >
-          <option value="p">{te.paragraph}</option>
-          <option value="h2">{te.heading}</option>
-          <option value="h3">{te.subheading}</option>
-          <option value="h4">{te.smallHeading}</option>
-        </select>
+          options={[
+            { value: "p", label: te.paragraph },
+            { value: "h2", label: te.heading },
+            { value: "h3", label: te.subheading },
+            { value: "h4", label: te.smallHeading },
+          ]}
+          size="xs"
+          className="w-40"
+        />
         <Sep />
         <Btn title={te.bold} active={s.bold} onClick={() => chain().toggleBold().run()}><Bold /></Btn>
         <Btn title={te.italic} active={s.italic} onClick={() => chain().toggleItalic().run()}><Italic /></Btn>
