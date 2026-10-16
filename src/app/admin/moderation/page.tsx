@@ -2,11 +2,13 @@
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, X, Eye, EyeOff, Ban, Trash2, Clock, Loader2, Flag } from "lucide-react";
+import { CheckCircle, X, Eye, EyeOff, Ban, Trash2, Clock, Loader2, Flag, Hourglass, BadgeCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { useI18n } from "@/i18n";
+import { Separator } from "@/components/ui/separator";
+import { BLUE, GREEN, INDIGO, ORANGE, PAGE_TITLE, KpiGrid, pct } from "@/components/admin/AdminUI";
 
 type PendingProfile = {
   userId: string;
@@ -103,13 +105,27 @@ export default function ModerationPage() {
     }
   };
 
+  const auPairPending = profiles.filter((p) => p.role === "AU_PAIR").length;
+  const completeCount = profiles.filter((p) => p.hasPhoto && p.hasId).length;
+  const maxWait = profiles.reduce((max, p) => Math.max(max, p.waitingDays), 0);
+  const avgWait = profiles.length > 0 ? Math.round(profiles.reduce((sum, p) => sum + p.waitingDays, 0) / profiles.length) : 0;
+  const kpis = [
+    { icon: Hourglass, value: profiles.length, label: m.kpiPending, caption: m.kpiAuPairShare(auPairPending), ratio: pct(auPairPending, profiles.length), color: ORANGE },
+    { icon: Clock, value: m.days(avgWait), label: m.kpiAvgWait, caption: m.kpiMaxWait(maxWait), ratio: pct(avgWait, maxWait), color: INDIGO },
+    { icon: BadgeCheck, value: completeCount, label: m.kpiComplete, caption: m.kpiCompleteCaption(pct(completeCount, profiles.length)), ratio: pct(completeCount, profiles.length), color: GREEN },
+    { icon: Flag, value: reports.length, label: m.kpiReports, caption: m.kpiReportsCaption, ratio: reports.length > 0 ? 100 : 0, color: BLUE },
+  ];
+
   return (
     <AdminLayout>
       <div className="space-y-5">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{m.title}</h1>
+          <h1 className={PAGE_TITLE}>{m.title}</h1>
           <Badge variant="warning">{m.pendingCount(profiles.length)}</Badge>
         </div>
+        <Separator />
+
+        {!loading && <KpiGrid items={kpis} />}
 
         {loading ? (
           <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
@@ -119,7 +135,7 @@ export default function ModerationPage() {
         ) : profiles.length === 0 ? (
           <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
             <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
-            <h2 className="font-bold text-[#1A1A2E] text-lg">{m.emptyTitle}</h2>
+            <h2 className="font-medium text-[#1A1A2E] text-lg">{m.emptyTitle}</h2>
             <p className="text-gray-500">{m.emptyText}</p>
           </div>
         ) : (
@@ -128,7 +144,7 @@ export default function ModerationPage() {
               <div key={p.userId} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                   <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 bg-[#E87722] rounded-full flex items-center justify-center text-white text-xl font-bold flex-shrink-0 overflow-hidden">
+                    <div className="w-14 h-14 bg-[#E87722] rounded-full flex items-center justify-center text-white text-xl font-medium flex-shrink-0 overflow-hidden">
                       {p.photoUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={p.photoUrl} alt="" className="w-full h-full object-cover object-top" />
@@ -138,7 +154,7 @@ export default function ModerationPage() {
                     </div>
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-bold text-[#1A1A2E]">{p.name}</h3>
+                        <h3 className="font-medium text-[#1A1A2E]">{p.name}</h3>
                         <span className="text-lg">{p.flag}</span>
                         <Badge variant={p.role === "AU_PAIR" ? "default" : "secondary"}>
                           {p.role === "AU_PAIR" ? c.roleAuPair : c.roleFamily}
@@ -166,7 +182,7 @@ export default function ModerationPage() {
                       href={`/admin/profil/${p.userId}?role=${p.role}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl font-semibold transition-all duration-200 h-8 px-3 text-xs border-2 border-blue-200 text-blue-600 bg-transparent hover:bg-blue-50"
+                      className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl font-medium transition-all duration-200 h-8 px-3 text-xs border-2 border-blue-200 text-blue-600 bg-transparent hover:bg-blue-50"
                     >
                       <Eye className="w-3.5 h-3.5 mr-1" /> {c.viewProfile}
                     </Link>
@@ -196,7 +212,7 @@ export default function ModerationPage() {
       {/* Signalements */}
       <div className="space-y-4 mt-8">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-extrabold text-[#1A1A2E]">{m.reportsTitle}</h2>
+          <h2 className="text-lg font-medium text-[#1A1A2E]">{m.reportsTitle}</h2>
           <Badge variant="destructive">{m.openReports(reports.length)}</Badge>
         </div>
 
@@ -218,11 +234,11 @@ export default function ModerationPage() {
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <Flag className="w-4 h-4 text-red-500" />
-                      <span className="font-bold text-[#1A1A2E]">{tValue(r.reason)}</span>
+                      <span className="font-medium text-[#1A1A2E]">{tValue(r.reason)}</span>
                     </div>
                     <p className="text-sm text-gray-600 mb-2">
-                      <span className="font-semibold">{r.reporter?.name ?? c.unknownUser}</span> {m.reported}{" "}
-                      <span className="font-semibold">{r.reported?.name ?? c.unknownUser}</span>
+                      <span className="font-medium">{r.reporter?.name ?? c.unknownUser}</span> {m.reported}{" "}
+                      <span className="font-medium">{r.reported?.name ?? c.unknownUser}</span>
                     </p>
                     {r.description && (
                       <p className="text-sm text-gray-500 italic mb-2">&laquo; {r.description} &raquo;</p>
@@ -250,7 +266,7 @@ export default function ModerationPage() {
           description={
             <>
               {m.profileOf}{" "}
-              <span className="font-semibold text-[#1A1A2E]">{deleteTarget.name}</span>{" "}
+              <span className="font-medium text-[#1A1A2E]">{deleteTarget.name}</span>{" "}
               {c.willBeDeleted} {c.irreversible}
             </>
           }

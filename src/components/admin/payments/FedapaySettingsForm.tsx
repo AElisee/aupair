@@ -51,7 +51,7 @@ export default function FedapaySettingsForm({
   return (
     <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm space-y-5">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-lg font-bold text-[#1A1A2E]">{ts.fedapayTitle}</h2>
+        <h2 className="text-lg font-medium text-[#1A1A2E]">{ts.fedapayTitle}</h2>
         <Button onClick={handleSave} disabled={saving}>
           {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
           {c.save}
@@ -60,7 +60,7 @@ export default function FedapaySettingsForm({
 
       {/* Environnement */}
       <div>
-        <label className="font-semibold text-[#1A1A2E] flex items-center gap-2 mb-1">
+        <label className="font-medium text-[#1A1A2E] flex items-center gap-2 mb-1">
           <ShieldCheck className="w-4 h-4 text-[#E87722]" />
           {ts.environment}
         </label>
@@ -79,16 +79,16 @@ export default function FedapaySettingsForm({
 
       {/* Clé publique */}
       <div>
-        <label className="font-semibold text-[#1A1A2E] flex items-center gap-2 mb-1">
+        <label className="font-medium text-[#1A1A2E] flex items-center gap-2 mb-1">
           <Key className="w-4 h-4 text-[#E87722]" />
           {ts.publicKey}
         </label>
         <p className="text-sm text-gray-500 mb-2">
           {c.currentStatus}{" "}
           {settings.fedapayPublicKeyConfigured ? (
-            <span className="text-green-600 font-semibold">{c.configured}</span>
+            <span className="text-green-600 font-medium">{c.configured}</span>
           ) : (
-            <span className="text-red-500 font-semibold">{ts.publicKeyMissing}</span>
+            <span className="text-red-500 font-medium">{ts.publicKeyMissing}</span>
           )}
         </p>
         <div className="flex gap-2">
@@ -114,16 +114,16 @@ export default function FedapaySettingsForm({
 
       {/* Clé secrète */}
       <div>
-        <label className="font-semibold text-[#1A1A2E] flex items-center gap-2 mb-1">
+        <label className="font-medium text-[#1A1A2E] flex items-center gap-2 mb-1">
           <Lock className="w-4 h-4 text-[#E87722]" />
           {ts.secretKey}
         </label>
         <p className="text-sm text-gray-500 mb-2">
           {c.currentStatus}{" "}
           {settings.fedapaySecretKeyConfigured ? (
-            <span className="text-green-600 font-semibold">{c.configured}</span>
+            <span className="text-green-600 font-medium">{c.configured}</span>
           ) : (
-            <span className="text-red-500 font-semibold">{ts.secretKeyMissing}</span>
+            <span className="text-red-500 font-medium">{ts.secretKeyMissing}</span>
           )}
         </p>
         <div className="flex gap-2">
@@ -149,16 +149,16 @@ export default function FedapaySettingsForm({
 
       {/* Clé secrète de webhook */}
       <div>
-        <label className="font-semibold text-[#1A1A2E] flex items-center gap-2 mb-1">
+        <label className="font-medium text-[#1A1A2E] flex items-center gap-2 mb-1">
           <Lock className="w-4 h-4 text-[#E87722]" />
           {ts.webhookSecret}
         </label>
         <p className="text-sm text-gray-500 mb-2">
           {ts.webhookSecretHint} {c.currentStatus}{" "}
           {settings.fedapayWebhookSecretConfigured ? (
-            <span className="text-green-600 font-semibold">{c.configured}</span>
+            <span className="text-green-600 font-medium">{c.configured}</span>
           ) : (
-            <span className="text-red-500 font-semibold">{ts.webhookSecretMissing}</span>
+            <span className="text-red-500 font-medium">{ts.webhookSecretMissing}</span>
           )}
         </p>
         <div className="flex gap-2">
@@ -208,7 +208,7 @@ export default function FedapaySettingsForm({
 
       {/* URL Webhook */}
       <div>
-        <p className="text-xs font-semibold text-gray-500 mb-1">{ts.webhookUrl}</p>
+        <p className="text-xs font-medium text-gray-500 mb-1">{ts.webhookUrl}</p>
         <code className="block bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 break-all">
           {typeof window !== "undefined" ? window.location.origin : ""}/api/webhooks/fedapay
         </code>

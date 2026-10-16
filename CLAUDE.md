@@ -78,7 +78,7 @@ All of these call `auth()` first and return `401` if `!session?.user?.id`.
 
 ## Admin back-office
 
-`/admin/*` pages (`AdminLayout`, sidebar nav: Dashboard, Utilisateurs, Modération, Paiements, Analytics, Blog, FAQ, Tickets, Pays) are backed by `/api/admin/*` routes, all gated by `requireAdminSession()` (`src/lib/admin.ts`) which returns `null` (→ `403`) unless `session.user.role === "ADMIN"`:
+`/admin/*` pages (`AdminLayout`, sidebar nav: Dashboard, Utilisateurs, Modération, Paiements, Pays, Blog, FAQ, Tickets) are backed by `/api/admin/*` routes, all gated by `requireAdminSession()` (`src/lib/admin.ts`) which returns `null` (→ `403`) unless `session.user.role === "ADMIN"`:
 
 - `/api/admin/dashboard` (GET) — KPIs (`totalUsers`, `signups30d`, `revenue30d`, `activeSubscriptions`, `pendingProfiles`), recent users, recent payments
 - `/api/admin/users` (GET/PATCH) — combined AuPair + Family list; PATCH applies `action: "validate" | "hide" | "unhide" | "suspend" | "delete"` via `setProfileStatus()`
@@ -90,7 +90,7 @@ All of these call `auth()` first and return `401` if `!session?.user?.id`.
 
 `setProfileStatus()` (`src/lib/admin.ts`) sets `validatedAt`/`validatedBy` when transitioning a profile to `ACTIVE`.
 
-Only `/admin`, `/admin/utilisateurs`, `/admin/moderation`, `/admin/paiements`, `/admin/pays` have pages; Analytics, Blog, FAQ, Tickets in the sidebar nav are not yet implemented. `/admin/paiements` still renders with hardcoded/mock data.
+The `/admin` dashboard fetches both `/api/admin/dashboard` and `/api/admin/analytics` (ring KPIs, sign-ups area chart, validation gauge, top countries, revenue bars — shadcn charts, brand palette orange `#E87722` / blue `#3A5BA8` / green `#3FA45B` from the logo, plus teal `#2A9D8F` / indigo `#5B63C9`; cards take a light brand-tinted gradient via `Panel tint`); `/admin/analytics` now redirects to `/admin`. Admin icons are Lucide at `size={20} strokeWidth={1.25}`. Shared back-office building blocks live in `src/components/admin/AdminUI.tsx` (palette constants, `ICON`, `PAGE_TITLE` h1 class, `Panel`, `PanelHeader`, `IconChip`, ring `KpiCard` / `KpiGrid`) — the dashboard, `/admin/paiements`, `/admin/utilisateurs`, `/admin/moderation` and `/admin/tickets` use them. Admin typography: h1 `PAGE_TITLE` (font-medium), section titles `text-[15px] font-medium`, nothing heavier than `font-medium` except KPI values (`font-semibold`). `/admin/paiements` lists each payment's expiration date (`Subscription.expiresAt`, 30 days from payment).
 
 ## Internationalization
 

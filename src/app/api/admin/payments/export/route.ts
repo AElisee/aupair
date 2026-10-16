@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin";
 import { formatDate } from "@/lib/utils";
 import { PAYMENT_METHOD_LABELS } from "@/lib/constants";
+import type { Prisma } from "@/generated/prisma/client";
 
 const STATUS_LABELS: Record<string, string> = {
   ACTIVE: "Actif",
@@ -18,13 +19,40 @@ function escapeCsvField(value: string): string {
   return value;
 }
 
-export async function GET() {
+const STATUSES = ["ACTIVE", "EXPIRED", "CANCELLED", "REFUNDED"] as const;
+const METHODS = ["MOBILE_MONEY", "CARD", "FEDAPAY", "GENIUSPAY"] as const;
+
+/** Mêmes filtres que le tableau de /admin/paiements (?q=&status=&method=) */
+function buildWhere(params: URLSearchParams): Prisma.SubscriptionWhereInput {
+  const where: Prisma.SubscriptionWhereInput = {};
+  const status = params.get("status");
+  const method = params.get("method");
+  const q = params.get("q")?.trim();
+  if (status && (STATUSES as readonly string[]).includes(status)) {
+    where.status = status as (typeof STATUSES)[number];
+  }
+  if (method && (METHODS as readonly string[]).includes(method)) {
+    where.paymentMethod = method as (typeof METHODS)[number];
+  }
+  if (q) {
+    where.user = {
+      OR: [
+        { name: { contains: q, mode: "insensitive" } },
+        { email: { contains: q, mode: "insensitive" } },
+      ],
+    };
+  }
+  return where;
+}
+
+export async function GET(req: NextRequest) {
   const session = await requireAdminSession();
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
 
   const subscriptions = await prisma.subscription.findMany({
+    where: buildWhere(req.nextUrl.searchParams),
     orderBy: { createdAt: "desc" },
     include: { user: { select: { name: true, email: true } } },
   });

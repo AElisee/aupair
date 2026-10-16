@@ -3,8 +3,10 @@ import { useEffect, useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Mail, Send, Inbox } from "lucide-react";
+import { Loader2, Mail, Send, Inbox, Clock, CheckCircle, AlertTriangle } from "lucide-react";
 import { useI18n } from "@/i18n";
+import { Separator } from "@/components/ui/separator";
+import { BLUE, GREEN, INDIGO, ORANGE, PAGE_TITLE, KpiGrid, pct } from "@/components/admin/AdminUI";
 
 type TicketStatus = "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
 type TicketPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
@@ -134,13 +136,27 @@ export default function AdminTicketsPage() {
 
   const filtered = tickets.filter((t) => !statusFilter || t.status === statusFilter);
 
+  const countWhere = (match: (t: TicketListItem) => boolean) => tickets.filter(match).length;
+  const kpiItem = (icon: typeof Inbox, label: string, value: number, color: string) => ({
+    icon, label, value, color, caption: tt.shareOfTickets(pct(value, tickets.length)), ratio: pct(value, tickets.length),
+  });
+  const kpis = [
+    kpiItem(Inbox, tt.kpiOpen, countWhere((t) => t.status === "OPEN"), ORANGE),
+    kpiItem(Clock, tt.kpiInProgress, countWhere((t) => t.status === "IN_PROGRESS"), BLUE),
+    kpiItem(CheckCircle, tt.kpiDone, countWhere((t) => t.status === "RESOLVED" || t.status === "CLOSED"), GREEN),
+    kpiItem(AlertTriangle, tt.kpiUrgent, countWhere((t) => t.priority === "HIGH" || t.priority === "URGENT"), INDIGO),
+  ];
+
   return (
     <AdminLayout>
       <div className="space-y-5">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{tt.title}</h1>
+          <h1 className={PAGE_TITLE}>{tt.title}</h1>
           <div className="text-sm text-gray-500">{tt.count(filtered.length)}</div>
         </div>
+        <Separator />
+
+        {!loading && <KpiGrid items={kpis} />}
 
         {/* Filtres statut */}
         <div className="flex gap-2 flex-wrap">
@@ -177,7 +193,7 @@ export default function AdminTicketsPage() {
                     className={`w-full text-left p-4 hover:bg-gray-50 transition-colors ${selectedId === t.id ? "bg-[#FFF3E0]" : ""}`}
                   >
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <span className="font-semibold text-[#1A1A2E] text-sm line-clamp-1">{t.subject}</span>
+                      <span className="font-medium text-[#1A1A2E] text-sm line-clamp-1">{t.subject}</span>
                       {statusBadge(t.status)}
                     </div>
                     <p className="text-xs text-gray-500 line-clamp-1 mb-1">{requesterName(t, tt.anonymous)} · {requesterEmail(t)}</p>
@@ -207,7 +223,7 @@ export default function AdminTicketsPage() {
               <div className="space-y-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h2 className="font-bold text-[#1A1A2E] text-lg">{detail.subject}</h2>
+                    <h2 className="font-medium text-[#1A1A2E] text-lg">{detail.subject}</h2>
                     <p className="text-sm text-gray-500">{requesterName(detail, tt.anonymous)} · {requesterEmail(detail)}</p>
                     <p className="text-xs text-gray-400">{new Date(detail.createdAt).toLocaleString(locale)}</p>
                   </div>

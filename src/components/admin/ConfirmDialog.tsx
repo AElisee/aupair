@@ -45,7 +45,7 @@ export default function ConfirmDialog({
             />
           </div>
           <div className="flex-1">
-            <h3 className="font-bold text-[#1A1A2E]">{title}</h3>
+            <h3 className="font-medium text-[#1A1A2E]">{title}</h3>
             <div className="text-sm text-gray-500 mt-1">{description}</div>
           </div>
           <button

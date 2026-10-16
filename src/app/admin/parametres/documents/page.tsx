@@ -8,6 +8,7 @@ import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import RichTextEditor from "@/components/admin/RichTextEditor";
 import { useI18n } from "@/i18n";
 import { SUGGESTED_DOCUMENTS, getDocumentPublicPath, normalizeDocumentSlug, toDocumentHtml } from "@/lib/legal-documents";
+import { Separator } from "@/components/ui/separator";
 
 type LegalDocument = {
   id: string;
@@ -180,13 +181,13 @@ export default function AdminDocumentsPage() {
       <div className="space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{ts.documentsTitle}</h1>
-            <p className="text-sm text-gray-500">{ts.documentsSubtitle}</p>
+            <h1 className="text-2xl sm:text-[28px] font-medium text-[#1A1A2E] tracking-tight">{ts.documentsTitle}</h1>
           </div>
           <Button onClick={() => openNew()}>
             <Plus className="w-4 h-4 mr-1" /> {ts.newDocument}
           </Button>
         </div>
+        <Separator />
 
         {!loading && missingSuggestions.length > 0 && (
           <div className="bg-[#FFF3E0] rounded-2xl p-4 text-sm text-[#1A1A2E] flex flex-wrap items-center gap-2">
@@ -196,7 +197,7 @@ export default function AdminDocumentsPage() {
                 key={s.slug}
                 type="button"
                 onClick={() => openNew(s)}
-                className="px-3 py-1 rounded-xl bg-white border border-[#E87722] text-[#E87722] font-semibold hover:bg-[#E87722] hover:text-white transition-colors"
+                className="px-3 py-1 rounded-xl bg-white border border-[#E87722] text-[#E87722] font-medium hover:bg-[#E87722] hover:text-white transition-colors"
               >
                 + {lang === "en" ? s.titleEn : s.title}
               </button>
@@ -216,11 +217,11 @@ export default function AdminDocumentsPage() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b border-gray-100">
                   <tr>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{ts.colDocument}</th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{ts.colPublicUrl}</th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{ts.colUpdated}</th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{c.status}</th>
-                    <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{c.actions}</th>
+                    <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{ts.colDocument}</th>
+                    <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{ts.colPublicUrl}</th>
+                    <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{ts.colUpdated}</th>
+                    <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{c.status}</th>
+                    <th className="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{c.actions}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -232,7 +233,7 @@ export default function AdminDocumentsPage() {
                     sortedItems.map((item) => (
                       <tr key={item.id} className={`hover:bg-gray-50 transition-colors ${editingId === item.id ? "bg-[#FFF3E0]" : ""}`}>
                         <td className="px-5 py-3.5">
-                          <div className="font-semibold text-[#1A1A2E]">{item.title}</div>
+                          <div className="font-medium text-[#1A1A2E]">{item.title}</div>
                           {!item.contentEn && <div className="text-xs text-gray-400">{ts.noEnglish}</div>}
                         </td>
                         <td className="px-5 py-3.5">
@@ -291,7 +292,7 @@ export default function AdminDocumentsPage() {
         {/* Éditeur */}
         {editorOpen && (
           <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-            <h2 className="font-bold text-[#1A1A2E] mb-4 flex items-center gap-2">
+            <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-4 flex items-center gap-2">
               {editingId ? <Pencil className="w-4 h-4 text-[#E87722]" /> : <FileCheck className="w-4 h-4 text-[#E87722]" />}
               {editingId ? ts.editDocument : ts.newDocument}
             </h2>
@@ -392,7 +393,7 @@ export default function AdminDocumentsPage() {
           title={ts.deleteDocumentTitle}
           description={
             <>
-              <span className="font-semibold text-[#1A1A2E]">{deleteTarget.title}</span> {ts.deleteDocumentText} {c.irreversible}
+              <span className="font-medium text-[#1A1A2E]">{deleteTarget.title}</span> {ts.deleteDocumentText} {c.irreversible}
             </>
           }
           confirmLabel={c.delete}

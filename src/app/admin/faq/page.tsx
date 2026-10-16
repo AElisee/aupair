@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Pencil, Trash2, Eye, EyeOff, Loader2, HelpCircle, Search } from "lucide-react";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { useI18n } from "@/i18n";
+import { Separator } from "@/components/ui/separator";
 
 type FaqItem = {
   id: string;
@@ -176,13 +177,14 @@ export default function AdminFaqPage() {
     <AdminLayout>
       <div className="space-y-5">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{tf.title}</h1>
+          <h1 className="text-2xl sm:text-[28px] font-medium text-[#1A1A2E] tracking-tight">{tf.title}</h1>
           <div className="text-sm text-gray-500">{tf.count(filtered.length)}</div>
         </div>
+        <Separator />
 
         {/* Formulaire */}
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-3 flex items-center gap-2">
+          <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-3 flex items-center gap-2">
             {editingId ? <Pencil className="w-4 h-4 text-[#E87722]" /> : <HelpCircle className="w-4 h-4 text-[#E87722]" />}
             {editingId ? tf.editTitle : tf.newTitle}
           </h2>
@@ -291,11 +293,11 @@ export default function AdminFaqPage() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b border-gray-100">
                   <tr>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{tf.colQuestion}</th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{tf.category}</th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{tf.order}</th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{c.status}</th>
-                    <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{c.actions}</th>
+                    <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{tf.colQuestion}</th>
+                    <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{tf.category}</th>
+                    <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{tf.order}</th>
+                    <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{c.status}</th>
+                    <th className="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{c.actions}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -306,7 +308,7 @@ export default function AdminFaqPage() {
                   ) : (
                     paginated.map((item) => (
                       <tr key={item.id} className={`hover:bg-gray-50 transition-colors ${editingId === item.id ? "bg-[#FFF3E0]" : ""}`}>
-                        <td className="px-5 py-3.5 font-semibold text-[#1A1A2E] max-w-md">
+                        <td className="px-5 py-3.5 font-medium text-[#1A1A2E] max-w-md">
                           <span className="line-clamp-1">{item.question}</span>
                         </td>
                         <td className="px-5 py-3.5">
@@ -368,7 +370,7 @@ export default function AdminFaqPage() {
           title={tf.deleteTitle}
           description={
             <>
-              <span className="font-semibold text-[#1A1A2E]">{deleteTarget.question}</span> {tf.willBeDeleted} {c.irreversible}
+              <span className="font-medium text-[#1A1A2E]">{deleteTarget.question}</span> {tf.willBeDeleted} {c.irreversible}
             </>
           }
           confirmLabel={c.delete}

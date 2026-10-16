@@ -86,7 +86,7 @@ const STATUS_VARIANTS: Record<ProfileStatus, "warning" | "success" | "secondary"
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
-      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-0.5">{label}</p>
+      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-0.5">{label}</p>
       <p className="text-sm text-[#1A1A2E]">{value || "—"}</p>
     </div>
   );
@@ -168,7 +168,7 @@ export default function AdminProfilePage() {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-start justify-between gap-4 flex-wrap">
               <div className="flex items-center gap-4">
                 <div className="relative">
-                  <div className="w-16 h-16 bg-[#E87722] rounded-full flex items-center justify-center text-white text-2xl font-bold flex-shrink-0 overflow-hidden">
+                  <div className="w-16 h-16 bg-[#E87722] rounded-full flex items-center justify-center text-white text-2xl font-medium flex-shrink-0 overflow-hidden">
                     {photoUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={photoUrl} alt="" className="w-full h-full object-cover object-top" />
@@ -188,7 +188,7 @@ export default function AdminProfilePage() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h1 className="font-bold text-[#1A1A2E] text-lg">
+                    <h1 className="font-medium text-[#1A1A2E] text-lg">
                       {data.role === "AU_PAIR" ? `${data.firstName} ${data.lastName}` : data.name ?? tp.familyFallback}
                     </h1>
                     <span className="text-lg">{flagMap[data.role === "AU_PAIR" ? data.countryOfOrigin : data.country] ?? ""}</span>
@@ -216,7 +216,7 @@ export default function AdminProfilePage() {
             {data.role === "AU_PAIR" ? (
               <>
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                  <h3 className="font-bold text-[#1A1A2E] mb-3">{tp.general}</h3>
+                  <h3 className="text-[15px] font-medium text-[#1A1A2E] mb-3">{tp.general}</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <Field label={tp.age} value={tp.ageValue(data.age)} />
                     <Field label={tp.dateOfBirth} value={formatDate(data.dateOfBirth)} />
@@ -230,7 +230,7 @@ export default function AdminProfilePage() {
                 </div>
 
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                  <h3 className="font-bold text-[#1A1A2E] mb-3">{tp.experience}</h3>
+                  <h3 className="text-[15px] font-medium text-[#1A1A2E] mb-3">{tp.experience}</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <Field label={tp.yearsOfExperience} value={data.childcareYears != null ? tp.experienceYears(data.childcareYears) : null} />
                     <Field label={tp.firstAid} value={<YesNo value={data.firstAidCertified} />} />
@@ -244,7 +244,7 @@ export default function AdminProfilePage() {
                 </div>
 
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                  <h3 className="font-bold text-[#1A1A2E] mb-3">{tp.availability}</h3>
+                  <h3 className="text-[15px] font-medium text-[#1A1A2E] mb-3">{tp.availability}</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <Field label={tp.targetCountries} value={data.targetCountries.map((country) => `${flagMap[country] ?? ""} ${tValue(country)}`).join(", ")} />
                     <Field label={tp.preferredDuration} value={tValue(data.preferredDuration)} />
@@ -254,7 +254,7 @@ export default function AdminProfilePage() {
                 </div>
 
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                  <h3 className="font-bold text-[#1A1A2E] mb-3">{tp.health}</h3>
+                  <h3 className="text-[15px] font-medium text-[#1A1A2E] mb-3">{tp.health}</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <Field label={tp.smoker} value={<YesNo value={data.isSmoker} />} />
                     <Field label={tp.criminalRecord} value={<YesNo value={data.hasCriminalRecord} />} />
@@ -268,14 +268,14 @@ export default function AdminProfilePage() {
 
                 {(data.description || data.motivation) && (
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                    <h3 className="font-bold text-[#1A1A2E] mb-3">{tp.presentation}</h3>
+                    <h3 className="text-[15px] font-medium text-[#1A1A2E] mb-3">{tp.presentation}</h3>
                     {data.description && <Field label={tp.description} value={<span className="whitespace-pre-wrap">{data.description}</span>} />}
                     {data.motivation && <div className="mt-3"><Field label={tp.motivation} value={<span className="whitespace-pre-wrap">{data.motivation}</span>} /></div>}
                   </div>
                 )}
 
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                  <h3 className="font-bold text-[#1A1A2E] mb-3">{tp.contact}</h3>
+                  <h3 className="text-[15px] font-medium text-[#1A1A2E] mb-3">{tp.contact}</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <Field label={tp.email} value={data.email} />
                     <Field label="WhatsApp" value={data.phoneWhatsapp1} />
@@ -285,7 +285,7 @@ export default function AdminProfilePage() {
                 </div>
 
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                  <h3 className="font-bold text-[#1A1A2E] mb-3">{tp.documents}</h3>
+                  <h3 className="text-[15px] font-medium text-[#1A1A2E] mb-3">{tp.documents}</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <Field
                       label={tp.profilePhoto}
@@ -311,7 +311,7 @@ export default function AdminProfilePage() {
             ) : (
               <>
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                  <h3 className="font-bold text-[#1A1A2E] mb-3">{tp.general}</h3>
+                  <h3 className="text-[15px] font-medium text-[#1A1A2E] mb-3">{tp.general}</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <Field label={tp.country} value={tValue(data.country)} />
                     <Field label={tp.city} value={data.city} />
@@ -322,7 +322,7 @@ export default function AdminProfilePage() {
                 </div>
 
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                  <h3 className="font-bold text-[#1A1A2E] mb-3">{tp.children}</h3>
+                  <h3 className="text-[15px] font-medium text-[#1A1A2E] mb-3">{tp.children}</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <Field label={tp.numberOfKids} value={data.numberOfKids} />
                     <Field label={tp.kidsAges} value={data.kidsAges.join(", ")} />
@@ -330,7 +330,7 @@ export default function AdminProfilePage() {
                 </div>
 
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                  <h3 className="font-bold text-[#1A1A2E] mb-3">{tp.conditions}</h3>
+                  <h3 className="text-[15px] font-medium text-[#1A1A2E] mb-3">{tp.conditions}</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <Field label={tp.hoursPerWeek} value={data.hoursPerWeek != null ? `${data.hoursPerWeek}h` : null} />
                     <Field label={tp.pocketMoney} value={data.pocketMoney != null ? `${data.pocketMoney} €` : null} />
@@ -345,7 +345,7 @@ export default function AdminProfilePage() {
                 </div>
 
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                  <h3 className="font-bold text-[#1A1A2E] mb-3">{tp.wantedAuPair}</h3>
+                  <h3 className="text-[15px] font-medium text-[#1A1A2E] mb-3">{tp.wantedAuPair}</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <Field label={tp.preferredGender} value={data.preferredGender ? tValue(data.preferredGender) : null} />
                     <Field
@@ -358,13 +358,13 @@ export default function AdminProfilePage() {
 
                 {data.description && (
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                    <h3 className="font-bold text-[#1A1A2E] mb-3">{tp.presentation}</h3>
+                    <h3 className="text-[15px] font-medium text-[#1A1A2E] mb-3">{tp.presentation}</h3>
                     <Field label={tp.description} value={<span className="whitespace-pre-wrap">{data.description}</span>} />
                   </div>
                 )}
 
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                  <h3 className="font-bold text-[#1A1A2E] mb-3">{tp.contact}</h3>
+                  <h3 className="text-[15px] font-medium text-[#1A1A2E] mb-3">{tp.contact}</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <Field label={tp.email} value={data.email} />
                     <Field label="WhatsApp" value={data.phoneWhatsapp} />
@@ -373,7 +373,7 @@ export default function AdminProfilePage() {
                 </div>
 
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                  <h3 className="font-bold text-[#1A1A2E] mb-3">{tp.documents}</h3>
+                  <h3 className="text-[15px] font-medium text-[#1A1A2E] mb-3">{tp.documents}</h3>
                   <Field
                     label={tp.familyPhoto}
                     value={data.familyPhotoUrl ? <a href={data.familyPhotoUrl} target="_blank" rel="noreferrer" className="text-[#E87722] underline">{c.viewPhoto}</a> : null}

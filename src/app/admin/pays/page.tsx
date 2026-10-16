@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { useI18n } from "@/i18n";
+import { Separator } from "@/components/ui/separator";
 
 type Country = {
   id: string;
@@ -255,13 +256,14 @@ export default function AdminPaysPage() {
     <AdminLayout>
       <div className="space-y-5">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{tc.title}</h1>
+          <h1 className="text-2xl sm:text-[28px] font-medium text-[#1A1A2E] tracking-tight">{tc.title}</h1>
           <div className="text-sm text-gray-500">{tc.count(filtered.length)}</div>
         </div>
+        <Separator />
 
         {/* Formulaire d'ajout / modification */}
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-3 flex items-center gap-2">
+          <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-3 flex items-center gap-2">
             {editingId ? (
               <Pencil className="w-4 h-4 text-[#E87722]" />
             ) : (
@@ -412,22 +414,22 @@ export default function AdminPaysPage() {
                       className="w-4 h-4 rounded border-gray-300 text-[#E87722] focus:ring-[#E87722]"
                     />
                   </th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {tc.colFlag}
                   </th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {tc.colName}
                   </th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {tc.dialCode}
                   </th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {tc.type}
                   </th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {ac.status}
                   </th>
-                  <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {ac.actions}
                   </th>
                 </tr>
@@ -459,7 +461,7 @@ export default function AdminPaysPage() {
                       <td className="px-5 py-3.5 text-md leading-none">
                         {c.flag}
                       </td>
-                      <td className="px-5 py-3.5 font-semibold text-[#1A1A2E]">
+                      <td className="px-5 py-3.5 font-medium text-[#1A1A2E]">
                         {formatCountryName(c.name)}
                       </td>
                       <td className="px-5 py-3.5 text-gray-500">
@@ -538,7 +540,7 @@ export default function AdminPaysPage() {
           title={tc.deleteTitle}
           description={
             <>
-              <span className="font-semibold text-[#1A1A2E]">
+              <span className="font-medium text-[#1A1A2E]">
                 {deleteTarget.flag} {deleteTarget.name}
               </span>{" "}
               {t.adminCommon.willBeDeleted} {t.adminCommon.irreversible}

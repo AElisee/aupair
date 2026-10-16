@@ -39,7 +39,7 @@ export default function PaymentProviderActivation({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Power className="w-4 h-4 text-[#E87722]" />
-          <span className="font-semibold text-[#1A1A2E]">{ts.providerTitle}</span>
+          <span className="font-medium text-[#1A1A2E]">{ts.providerTitle}</span>
           <Badge variant={isActive ? "success" : "secondary"}>
             {isActive ? ts.providerActiveBadge : ts.providerInactiveBadge}
           </Badge>

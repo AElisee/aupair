@@ -91,7 +91,7 @@ export default function GeniuspaySettingsForm({
   return (
     <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm space-y-5">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-lg font-bold text-[#1A1A2E]">{ts.geniuspayTitle}</h2>
+        <h2 className="text-lg font-medium text-[#1A1A2E]">{ts.geniuspayTitle}</h2>
         <Button onClick={handleSave} disabled={saving}>
           {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
           {c.save}
@@ -100,13 +100,13 @@ export default function GeniuspaySettingsForm({
 
       {/* Environnement (déduit des clés) */}
       <div>
-        <p className="font-semibold text-[#1A1A2E] flex items-center gap-2 mb-1">
+        <p className="font-medium text-[#1A1A2E] flex items-center gap-2 mb-1">
           <ShieldCheck className="w-4 h-4 text-[#E87722]" />
           {ts.environment}
         </p>
         <p className="text-sm text-gray-500">{ts.geniuspayEnvironmentHint}</p>
         {settings.geniuspayPublicKeyConfigured && (
-          <p className="text-sm font-semibold text-[#1A1A2E] mt-1">
+          <p className="text-sm font-medium text-[#1A1A2E] mt-1">
             {settings.geniuspayEnvironment
               ? ts.geniuspayEnvironmentDetected(settings.geniuspayEnvironment === "live" ? ts.live : ts.sandbox)
               : ts.geniuspayEnvironmentUnknown}
@@ -116,7 +116,7 @@ export default function GeniuspaySettingsForm({
 
       {keyFields.map(({ field, icon: Icon, label, hint, configured: isSet, missing, placeholder, removeLabel, type }) => (
         <div key={field}>
-          <label className="font-semibold text-[#1A1A2E] flex items-center gap-2 mb-1">
+          <label className="font-medium text-[#1A1A2E] flex items-center gap-2 mb-1">
             <Icon className="w-4 h-4 text-[#E87722]" />
             {label}
           </label>
@@ -124,9 +124,9 @@ export default function GeniuspaySettingsForm({
             {hint && `${hint} `}
             {c.currentStatus}{" "}
             {isSet ? (
-              <span className="text-green-600 font-semibold">{c.configured}</span>
+              <span className="text-green-600 font-medium">{c.configured}</span>
             ) : (
-              <span className="text-red-500 font-semibold">{missing}</span>
+              <span className="text-red-500 font-medium">{missing}</span>
             )}
           </p>
           <div className="flex gap-2">
@@ -174,7 +174,7 @@ export default function GeniuspaySettingsForm({
 
       {/* URL Webhook */}
       <div>
-        <p className="text-xs font-semibold text-gray-500 mb-1">{ts.geniuspayWebhookUrl}</p>
+        <p className="text-xs font-medium text-gray-500 mb-1">{ts.geniuspayWebhookUrl}</p>
         <code className="block bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 break-all">
           {typeof window !== "undefined" ? window.location.origin : ""}/api/webhooks/geniuspay
         </code>

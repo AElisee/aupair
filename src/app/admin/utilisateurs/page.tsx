@@ -13,9 +13,15 @@ import {
   RotateCcw,
   Mail,
   Loader2,
+  Users,
+  BadgeCheck,
+  Hourglass,
+  CreditCard,
 } from "lucide-react";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { useI18n } from "@/i18n";
+import { Separator } from "@/components/ui/separator";
+import { GREEN, INDIGO, NAVY, ORANGE, PAGE_TITLE, TEAL, KpiGrid, pct } from "@/components/admin/AdminUI";
 
 type AdminUser = {
   id: string;
@@ -132,6 +138,25 @@ export default function UtilisateursPage() {
 
   const trashCount = users.filter((u) => u.status === "DELETED").length;
 
+  // KPIs calculés sur les comptes hors corbeille
+  const accounts = users.filter((u) => u.status !== "DELETED");
+  const monthAgo = new Date();
+  monthAgo.setDate(monthAgo.getDate() - 30);
+  const countStatus = (...statuses: string[]) => accounts.filter((u) => statuses.includes(u.status)).length;
+  const auPairCount = accounts.filter((u) => u.role === "AU_PAIR").length;
+  const subscribedCount = accounts.filter((u) => u.role === "AU_PAIR" && u.subscribed).length;
+  const newCount = accounts.filter((u) => new Date(u.createdAt) >= monthAgo).length;
+  const activeCount = countStatus("ACTIVE");
+  const pendingCount = countStatus("PENDING");
+  const restrictedCount = countStatus("HIDDEN", "SUSPENDED");
+  const kpis = [
+    { icon: Users, value: accounts.length, label: tu.kpiTotal, caption: t.adminDashboard.newThisMonth(newCount), ratio: pct(newCount, accounts.length), color: NAVY },
+    { icon: BadgeCheck, value: activeCount, label: tu.kpiActive, caption: tu.shareOfAccounts(pct(activeCount, accounts.length)), ratio: pct(activeCount, accounts.length), color: GREEN },
+    { icon: Hourglass, value: pendingCount, label: tu.kpiPending, caption: tu.shareOfAccounts(pct(pendingCount, accounts.length)), ratio: pct(pendingCount, accounts.length), color: ORANGE },
+    { icon: EyeOff, value: restrictedCount, label: tu.kpiRestricted, caption: tu.shareOfAccounts(pct(restrictedCount, accounts.length)), ratio: pct(restrictedCount, accounts.length), color: INDIGO },
+    { icon: CreditCard, value: subscribedCount, label: tu.kpiSubscribed, caption: t.adminDashboard.shareOfAuPairs(pct(subscribedCount, auPairCount)), ratio: pct(subscribedCount, auPairCount), color: TEAL },
+  ];
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const paginated = filtered.slice(
@@ -152,9 +177,12 @@ export default function UtilisateursPage() {
     <AdminLayout>
       <div className="space-y-5">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{tu.title}</h1>
+          <h1 className={PAGE_TITLE}>{tu.title}</h1>
           <div className="text-sm text-gray-500">{tu.count(filtered.length)}</div>
         </div>
+        <Separator />
+
+        {!loading && <KpiGrid items={kpis} />}
 
         {/* Onglets */}
         <div className="flex gap-2">
@@ -163,7 +191,7 @@ export default function UtilisateursPage() {
               setView("active");
               setPage(1);
             }}
-            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
               view === "active" ? "bg-[#1A1A2E] text-white" : "bg-white text-gray-500 border border-gray-200 hover:border-[#E87722]"
             }`}
           >
@@ -174,7 +202,7 @@ export default function UtilisateursPage() {
               setView("trash");
               setPage(1);
             }}
-            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors flex items-center gap-1.5 ${
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-1.5 ${
               view === "trash" ? "bg-[#1A1A2E] text-white" : "bg-white text-gray-500 border border-gray-200 hover:border-[#E87722]"
             }`}
           >
@@ -245,22 +273,22 @@ export default function UtilisateursPage() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b border-gray-100">
                   <tr>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
                       {tu.colUser}
                     </th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
                       {tu.colRole}
                     </th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
                       {c.status}
                     </th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
                       {tu.colSubscription}
                     </th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
                       {tu.colSignedUp}
                     </th>
-                    <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <th className="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
                       {c.actions}
                     </th>
                   </tr>
@@ -273,7 +301,7 @@ export default function UtilisateursPage() {
                     >
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-[#E87722] rounded-full flex items-center justify-center text-white text-xs font-bold  shrink-0 overflow-hidden">
+                          <div className="w-8 h-8 bg-[#E87722] rounded-full flex items-center justify-center text-white text-xs font-medium  shrink-0 overflow-hidden">
                             {u.photoUrl ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
@@ -286,7 +314,7 @@ export default function UtilisateursPage() {
                             )}
                           </div>
                           <div>
-                            <p className="font-semibold text-[#1A1A2E]">
+                            <p className="font-medium text-[#1A1A2E]">
                               {u.name}
                             </p>
                             <p className="text-xs text-gray-400">{u.email}</p>
@@ -305,7 +333,7 @@ export default function UtilisateursPage() {
                       <td className="px-5 py-3.5">{statusBadge(u.status)}</td>
                       <td className="px-5 py-3.5">
                         {u.subscribed ? (
-                          <span className="text-green-600 text-xs font-semibold flex items-center gap-1">
+                          <span className="text-green-600 text-xs font-medium flex items-center gap-1">
                             <CheckCircle className="w-3.5 h-3.5" />
                             {c.active}
                           </span>
@@ -419,7 +447,7 @@ export default function UtilisateursPage() {
           description={
             <>
               {tu.accountOf}{" "}
-              <span className="font-semibold text-[#1A1A2E]">
+              <span className="font-medium text-[#1A1A2E]">
                 {deleteTarget.name}
               </span>{" "}
               {tu.trashText}
@@ -438,7 +466,7 @@ export default function UtilisateursPage() {
           description={
             <>
               {tu.accountOf}{" "}
-              <span className="font-semibold text-[#1A1A2E]">
+              <span className="font-medium text-[#1A1A2E]">
                 {purgeTarget.name}
               </span>{" "}
               {tu.purgeText} {c.irreversible}

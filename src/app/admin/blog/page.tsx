@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Pencil, Trash2, Eye, EyeOff, Loader2, FileText, Search, ExternalLink } from "lucide-react";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { useI18n } from "@/i18n";
+import { Separator } from "@/components/ui/separator";
 
 type BlogPost = {
   id: string;
@@ -195,13 +196,14 @@ export default function AdminBlogPage() {
     <AdminLayout>
       <div className="space-y-5">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{tb.title}</h1>
+          <h1 className="text-2xl sm:text-[28px] font-medium text-[#1A1A2E] tracking-tight">{tb.title}</h1>
           <div className="text-sm text-gray-500">{tb.count(filtered.length)}</div>
         </div>
+        <Separator />
 
         {/* Formulaire */}
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-3 flex items-center gap-2">
+          <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-3 flex items-center gap-2">
             {editingId ? <Pencil className="w-4 h-4 text-[#E87722]" /> : <FileText className="w-4 h-4 text-[#E87722]" />}
             {editingId ? tb.editTitle : tb.newTitle}
           </h2>
@@ -351,12 +353,12 @@ export default function AdminBlogPage() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b border-gray-100">
                   <tr>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{tb.colTitle}</th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{tb.category}</th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{tb.author}</th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{tb.colViews}</th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{c.status}</th>
-                    <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{c.actions}</th>
+                    <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{tb.colTitle}</th>
+                    <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{tb.category}</th>
+                    <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{tb.author}</th>
+                    <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{tb.colViews}</th>
+                    <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{c.status}</th>
+                    <th className="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{c.actions}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -367,7 +369,7 @@ export default function AdminBlogPage() {
                   ) : (
                     paginated.map((p) => (
                       <tr key={p.id} className={`hover:bg-gray-50 transition-colors ${editingId === p.id ? "bg-[#FFF3E0]" : ""}`}>
-                        <td className="px-5 py-3.5 font-semibold text-[#1A1A2E] max-w-xs">
+                        <td className="px-5 py-3.5 font-medium text-[#1A1A2E] max-w-xs">
                           <span className="line-clamp-1">{p.title}</span>
                         </td>
                         <td className="px-5 py-3.5 text-gray-500">{p.category}</td>
@@ -437,7 +439,7 @@ export default function AdminBlogPage() {
           title={tb.deleteTitle}
           description={
             <>
-              <span className="font-semibold text-[#1A1A2E]">{deleteTarget.title}</span> {c.willBeDeleted} {c.irreversible}
+              <span className="font-medium text-[#1A1A2E]">{deleteTarget.title}</span> {c.willBeDeleted} {c.irreversible}
             </>
           }
           confirmLabel={c.delete}

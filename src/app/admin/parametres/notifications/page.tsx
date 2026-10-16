@@ -4,6 +4,7 @@ import AdminLayout from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Eye, BarChart2, Loader2, Save, CheckCircle } from "lucide-react";
 import { useI18n } from "@/i18n";
+import { Separator } from "@/components/ui/separator";
 
 interface Settings {
   notifyProfileViewEnabled: boolean;
@@ -28,7 +29,7 @@ function ToggleRow({
       <div className="flex items-start gap-3">
         <div className="mt-0.5">{icon}</div>
         <div>
-          <p className="font-semibold text-[#1A1A2E]">{title}</p>
+          <p className="font-medium text-[#1A1A2E]">{title}</p>
           <p className="text-sm text-gray-500">{description}</p>
         </div>
       </div>
@@ -109,7 +110,7 @@ export default function AdminNotificationsSettingsPage() {
     <AdminLayout>
       <div className="space-y-5">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">
+          <h1 className="text-2xl sm:text-[28px] font-medium text-[#1A1A2E] tracking-tight">
             {ts.notificationsTitle}
           </h1>
           <Button onClick={handleSave} disabled={saving}>
@@ -121,6 +122,7 @@ export default function AdminNotificationsSettingsPage() {
             {c.save}
           </Button>
         </div>
+        <Separator />
 
         {error && <p className="text-red-500 text-sm">{error}</p>}
         {saved && (

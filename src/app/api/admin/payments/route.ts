@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin";
 import { formatCurrency } from "@/lib/utils";
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+const EXPIRING_SOON_DAYS = 7;
+
 export async function GET() {
   const session = await requireAdminSession();
   if (!session) {
@@ -22,6 +25,11 @@ export async function GET() {
     .filter((s) => s.currency === "XOF")
     .reduce((sum, s) => sum + s.amount, 0);
   const mobileMoneyCount = subscriptions.filter((s) => s.paymentMethod === "MOBILE_MONEY").length;
+  const cardCount = subscriptions.filter((s) => s.paymentMethod === "CARD").length;
+  const now = Date.now();
+  const expiringSoon = activeSubs.filter(
+    (s) => s.expiresAt.getTime() > now && s.expiresAt.getTime() - now <= EXPIRING_SOON_DAYS * DAY_MS,
+  ).length;
 
   const payments = subscriptions.map((s) => ({
     id: s.id,
@@ -31,6 +39,8 @@ export async function GET() {
     method: s.paymentMethod,
     status: s.status,
     date: s.createdAt.toISOString(),
+    // Abonnement de 30 jours à compter du jour du paiement
+    expiresAt: s.expiresAt.toISOString(),
     invoiceUrl: s.invoiceUrl,
   }));
 
@@ -40,6 +50,9 @@ export async function GET() {
       revenueActiveEur: revenueActiveEur > 0 ? formatCurrency(revenueActiveEur, "EUR") : null,
       activeSubscriptions: activeSubs.length,
       mobileMoneyCount,
+      cardCount,
+      expiringSoon,
+      totalPayments: subscriptions.length,
     },
     payments,
   });

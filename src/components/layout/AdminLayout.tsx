@@ -7,7 +7,7 @@ import { signOut } from "next-auth/react";
 import { useI18n } from "@/i18n";
 import type { admin } from "@/i18n/admin";
 import { LanguageToggle } from "./LanguageToggle";
-import { Globe, LayoutDashboard, Users, Shield, DollarSign, BarChart2, FileText, HelpCircle, Mail, LogOut, Bell, Settings, ChevronDown, SlidersHorizontal, Menu, X, Send, Wallet, KeyRound, FileCheck } from "lucide-react";
+import { Globe, LayoutDashboard, Users, Shield, DollarSign, FileText, HelpCircle, Mail, LogOut, Bell, Settings, ChevronDown, SlidersHorizontal, Menu, X, Send, Wallet, KeyRound, FileCheck, ChevronRight } from "lucide-react";
 
 // Libellés : section `adminNav` de src/i18n/admin.ts
 type NavKey = keyof typeof admin.adminNav;
@@ -18,7 +18,6 @@ const navItems: { href: string; icon: React.ElementType; labelKey: NavKey; badge
   { href: "/admin/moderation", icon: Shield, labelKey: "moderation", badge: true },
   { href: "/admin/paiements", icon: DollarSign, labelKey: "payments" },
   { href: "/admin/pays", icon: Globe, labelKey: "countries" },
-  { href: "/admin/analytics", icon: BarChart2, labelKey: "analytics" },
   { href: "/admin/blog", icon: FileText, labelKey: "blog" },
   { href: "/admin/faq", icon: HelpCircle, labelKey: "faq" },
   { href: "/admin/tickets", icon: Mail, labelKey: "tickets" },
@@ -36,6 +35,47 @@ const settingsNav: { icon: React.ElementType; labelKey: NavKey; children: { href
     { href: "/admin/parametres/compte", icon: KeyRound, labelKey: "account" },
   ],
 };
+
+/** Fil d'Ariane de la top bar, déduit de l'URL et des libellés du menu */
+function Breadcrumb({ pathname }: { pathname: string }) {
+  const { t } = useI18n();
+  const nav = t.adminNav;
+  const crumbs: { label: string; href?: string }[] = [{ label: nav.breadcrumbHome, href: "/admin" }];
+
+  const item = navItems.find((i) => i.href !== "/admin" && pathname.startsWith(i.href));
+  const child = settingsNav.children.find((c) => pathname.startsWith(c.href));
+  if (child) {
+    crumbs.push({ label: nav[settingsNav.labelKey] }, { label: nav[child.labelKey] });
+  } else if (item) {
+    crumbs.push({ label: nav[item.labelKey] });
+  } else if (pathname.startsWith("/admin/profil")) {
+    crumbs.push({ label: nav.users, href: "/admin/utilisateurs" }, { label: nav.breadcrumbProfile });
+  } else {
+    crumbs.push({ label: nav.dashboard });
+  }
+
+  return (
+    <nav aria-label={nav.breadcrumbLabel} className="min-w-0">
+      <ol className="flex items-center gap-1 text-xs text-gray-500 truncate">
+        {crumbs.map((crumb, i) => {
+          const isLast = i === crumbs.length - 1;
+          return (
+            <li key={i} className={`flex items-center gap-1 min-w-0 ${!isLast && i === 0 ? "hidden sm:flex" : ""}`}>
+              {i > 0 && <ChevronRight size={12} strokeWidth={1.25} className={`shrink-0 text-gray-400 ${i === 1 ? "hidden sm:block" : ""}`} />}
+              {isLast ? (
+                <span className="font-medium text-[#1A1A2E] truncate" aria-current="page">{crumb.label}</span>
+              ) : crumb.href ? (
+                <Link href={crumb.href} className="hover:text-[#E87722] truncate">{crumb.label}</Link>
+              ) : (
+                <span className="truncate">{crumb.label}</span>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+}
 
 function SidebarContent({
   pathname,
@@ -95,7 +135,7 @@ function SidebarContent({
               className={`relative flex items-center py-2.5 rounded-xl text-sm font-medium transition-all ${itemLayout} ${
                 isActive ? "bg-[#E87722] text-white" : "text-gray-400 hover:bg-white/10 hover:text-white"
               }`}>
-              <Icon className="w-4 h-4 shrink-0" />
+              <Icon size={20} strokeWidth={1.25} className="shrink-0" />
               {!collapsed && t.adminNav[item.labelKey]}
               {item.badge && pendingCount > 0 && collapsed && (
                 <span className="absolute top-1.5 right-2 w-2 h-2 bg-red-500 rounded-full" />
@@ -119,7 +159,7 @@ function SidebarContent({
               isSettingsActive ? "bg-[#E87722] text-white" : "text-gray-400 hover:bg-white/10 hover:text-white"
             }`}
           >
-            <settingsNav.icon className="w-4 h-4 shrink-0" />
+            <settingsNav.icon size={20} strokeWidth={1.25} className="shrink-0" />
             {!collapsed && t.adminNav[settingsNav.labelKey]}
             {!collapsed && <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${settingsOpen ? "rotate-180" : ""}`} />}
           </button>
@@ -134,7 +174,7 @@ function SidebarContent({
                     className={`flex items-center py-2 rounded-xl text-sm font-medium transition-all ${itemLayout} ${
                       isChildActive ? "text-[#E87722]" : "text-gray-400 hover:bg-white/10 hover:text-white"
                     }`}>
-                    <ChildIcon className="w-4 h-4 shrink-0" />
+                    <ChildIcon size={20} strokeWidth={1.25} className="shrink-0" />
                     {!collapsed && t.adminNav[child.labelKey]}
                   </Link>
                 );
@@ -150,7 +190,7 @@ function SidebarContent({
           title={collapsed ? t.adminNav.signOut : undefined}
           className={`flex items-center py-2 rounded-xl text-sm text-gray-400 hover:bg-white/10 hover:text-white w-full transition-all ${itemLayout}`}
         >
-          <LogOut className="w-4 h-4 shrink-0" />
+          <LogOut size={20} strokeWidth={1.25} className="shrink-0" />
           {!collapsed && t.adminNav.signOut}
         </button>
       </div>
@@ -190,7 +230,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [mobileMenuOpen]);
 
   return (
-    <div className="min-h-dvh bg-gray-50 flex">
+    <div className="min-h-dvh flex bg-[#F6F7FB] bg-[radial-gradient(1200px_600px_at_85%_-10%,rgba(58,91,168,0.07),transparent_60%),radial-gradient(900px_500px_at_10%_110%,rgba(42,157,143,0.06),transparent_60%),linear-gradient(180deg,#F7F8FC_0%,#F3F5FA_100%)] bg-fixed">
       {/* Sidebar desktop */}
       <aside
         className={`hidden md:flex flex-col bg-[#1A1A2E] h-dvh fixed left-0 top-0 z-40 transition-[width] duration-300 ease-in-out ${
@@ -235,14 +275,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       <main className={`flex-1 min-w-0 min-h-dvh transition-[margin] duration-300 ease-in-out ${sidebarOpen ? "md:ml-60" : "md:ml-16"}`}>
         {/* Top bar */}
-        <div className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 flex items-center justify-between sticky top-0 z-30">
-          <div className="flex items-center gap-3">
+        <div className="bg-white/70 backdrop-blur-md border-b border-white/80 px-4 sm:px-6 py-3 flex items-center justify-between sticky top-0 z-30">
+          <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={() => setMobileMenuOpen(true)}
               className="md:hidden -ml-1 p-1 text-gray-500 hover:text-[#E87722]"
               aria-label={t.adminNav.openMenu}
             >
-              <Menu className="w-5 h-5" />
+              <Menu size={20} strokeWidth={1.25} />
             </button>
             <button
               onClick={() => setSidebarOpen((open) => !open)}
@@ -250,16 +290,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               aria-label={sidebarOpen ? t.adminNav.closeMenu : t.adminNav.openMenu}
               title={sidebarOpen ? t.adminNav.closeMenu : t.adminNav.openMenu}
             >
-              <Menu className="w-5 h-5" />
+              <Menu size={20} strokeWidth={1.25} />
             </button>
-            <h1 className="text-sm font-semibold text-gray-500">
-              <span className="hidden sm:inline">{t.adminNav.topTitle}</span>AuPair A.EU
-            </h1>
+            <Breadcrumb pathname={pathname} />
           </div>
           <div className="flex items-center gap-3">
             <LanguageToggle />
             <button className="relative p-2 text-gray-500 hover:text-[#E87722]">
-              <Bell className="w-5 h-5" />
+              <Bell size={20} strokeWidth={1.25} />
               <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
             </button>
             <div className="w-8 h-8 bg-[#E87722] rounded-full flex items-center justify-center text-white text-xs font-bold">A</div>

@@ -18,6 +18,7 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import { useI18n } from "@/i18n";
+import { Separator } from "@/components/ui/separator";
 
 interface Settings {
   languages: string[];
@@ -56,7 +57,7 @@ function EditableList({
 
   return (
     <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-      <h2 className="font-bold text-[#1A1A2E] mb-3 flex items-center gap-2">
+      <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-3 flex items-center gap-2">
         {icon}
         {title}
       </h2>
@@ -183,7 +184,7 @@ export default function AdminConstantesPage() {
     <AdminLayout>
       <div className="space-y-5">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">
+          <h1 className="text-2xl sm:text-[28px] font-medium text-[#1A1A2E] tracking-tight">
             {ts.constantsTitle}
           </h1>
           <Button onClick={handleSave} disabled={saving}>
@@ -195,6 +196,7 @@ export default function AdminConstantesPage() {
             {c.save}
           </Button>
         </div>
+        <Separator />
 
         <p className="text-sm text-gray-500">{ts.constantsHint}</p>
 
@@ -238,7 +240,7 @@ export default function AdminConstantesPage() {
         </div>
 
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-4 flex items-center gap-2">
+          <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-4 flex items-center gap-2">
             <CreditCard className="w-4 h-4 text-[#E87722]" />
             {ts.subscription}
           </h2>
@@ -301,7 +303,7 @@ export default function AdminConstantesPage() {
         </div>
 
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-[#1A1A2E] mb-4 flex items-center gap-2">
+          <h2 className="text-[15px] font-medium text-[#1A1A2E] mb-4 flex items-center gap-2">
             <ImageIcon className="w-4 h-4 text-[#E87722]" />
             {ts.heroImageTitle}
           </h2>

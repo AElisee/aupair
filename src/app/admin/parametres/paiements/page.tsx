@@ -12,6 +12,7 @@ import {
   type PaymentProvider,
   type PaymentSettings,
 } from "@/components/admin/payments/types";
+import { Separator } from "@/components/ui/separator";
 
 export default function AdminPaymentMethodsPage() {
   const [settings, setSettings] = useState<PaymentSettings | null>(null);
@@ -76,7 +77,8 @@ export default function AdminPaymentMethodsPage() {
   return (
     <AdminLayout>
       <div className="space-y-5">
-        <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{ts.paymentMethodsTitle}</h1>
+        <h1 className="text-2xl sm:text-[28px] font-medium text-[#1A1A2E] tracking-tight">{ts.paymentMethodsTitle}</h1>
+        <Separator />
 
         <div className="flex gap-1 border-b border-gray-200">
           {(Object.keys(PROVIDER_NAMES) as PaymentProvider[]).map((provider) => (
@@ -84,7 +86,7 @@ export default function AdminPaymentMethodsPage() {
               key={provider}
               type="button"
               onClick={() => setTab(provider)}
-              className={`px-4 py-2 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+              className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
                 currentTab === provider
                   ? "border-[#E87722] text-[#E87722]"
                   : "border-transparent text-gray-500 hover:text-[#1A1A2E]"

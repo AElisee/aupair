@@ -4,6 +4,7 @@ import AdminLayout from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Mail, Key, Loader2, Save, CheckCircle, Trash2, ExternalLink } from "lucide-react";
 import { useI18n } from "@/i18n";
+import { Separator } from "@/components/ui/separator";
 
 interface Settings {
   emailFrom: string | null;
@@ -85,12 +86,13 @@ export default function AdminEmailSettingsPage() {
     <AdminLayout>
       <div className="space-y-5">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold text-[#1A1A2E]">{ts.emailTitle}</h1>
+          <h1 className="text-2xl sm:text-[28px] font-medium text-[#1A1A2E] tracking-tight">{ts.emailTitle}</h1>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
             {c.save}
           </Button>
         </div>
+        <Separator />
 
         {error && <p className="text-red-500 text-sm">{error}</p>}
         {saved && (
@@ -102,16 +104,16 @@ export default function AdminEmailSettingsPage() {
 
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm space-y-5">
           <div>
-            <label className="font-semibold text-[#1A1A2E] flex items-center gap-2 mb-1">
+            <label className="font-medium text-[#1A1A2E] flex items-center gap-2 mb-1">
               <Key className="w-4 h-4 text-[#E87722]" />
               {ts.resendKey}
             </label>
             <p className="text-sm text-gray-500 mb-2">
               {c.currentStatus}{" "}
               {settings.resendApiKeyConfigured ? (
-                <span className="text-green-600 font-semibold">{c.configured}</span>
+                <span className="text-green-600 font-medium">{c.configured}</span>
               ) : (
-                <span className="text-red-500 font-semibold">{ts.resendNotConfigured}</span>
+                <span className="text-red-500 font-medium">{ts.resendNotConfigured}</span>
               )}
             </p>
             <div className="flex gap-2">
@@ -144,7 +146,7 @@ export default function AdminEmailSettingsPage() {
           </div>
 
           <div>
-            <label className="font-semibold text-[#1A1A2E] flex items-center gap-2 mb-1">
+            <label className="font-medium text-[#1A1A2E] flex items-center gap-2 mb-1">
               <Mail className="w-4 h-4 text-[#E87722]" />
               {ts.emailFrom}
             </label>
