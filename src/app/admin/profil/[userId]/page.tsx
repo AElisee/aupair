@@ -140,11 +140,16 @@ const STATUS_VARIANTS: Record<ProfileStatus, "warning" | "success" | "secondary"
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/** Libellé de champ : petites capitales grises, pour le distinguer nettement de la valeur */
+const LABEL = "text-[11px] uppercase tracking-wider text-gray-400";
+/** Valeur de champ : plus grande, foncée et en font-medium */
+const VALUE = "text-[15px] font-medium text-[#1A1A2E]";
+
 function Field({ label, value, wide }: { label: string; value: React.ReactNode; wide?: boolean }) {
   return (
     <div className={wide ? "sm:col-span-2" : undefined}>
-      <p className="text-xs text-gray-500 mb-0.5">{label}</p>
-      <div className="text-sm text-[#1A1A2E] break-words">{value || <span className="text-gray-300">—</span>}</div>
+      <p className={`${LABEL} mb-1`}>{label}</p>
+      <div className={`${VALUE} break-words`}>{value || <span className="text-gray-300 font-normal">—</span>}</div>
     </div>
   );
 }
@@ -158,8 +163,8 @@ function LongText({ label, text }: { label: string; text: string | null }) {
   if (!text) return null;
   return (
     <div className="mt-4">
-      <p className="text-xs text-gray-500 mb-1.5">{label}</p>
-      <p className="text-sm text-[#1A1A2E] leading-relaxed whitespace-pre-wrap bg-white/70 border border-gray-100 rounded-xl p-3.5">
+      <p className={`${LABEL} mb-1.5`}>{label}</p>
+      <p className="text-[15px] text-[#1A1A2E] leading-relaxed whitespace-pre-wrap bg-white/70 border border-gray-100 rounded-xl p-3.5">
         {text}
       </p>
     </div>
@@ -189,7 +194,7 @@ function Declaration({ label, value }: { label: string; value: boolean }) {
   const { t } = useI18n();
   return (
     <li className="flex items-center justify-between gap-3 py-2.5">
-      <span className="text-sm text-gray-700">{label}</span>
+      <span className={LABEL}>{label}</span>
       <span
         className={`text-xs font-medium px-2.5 py-1 rounded-full ${
           value ? "bg-red-50 text-red-600" : "bg-green-50 text-green-700"
@@ -225,7 +230,7 @@ function ContactLine({ icon: Icon, children }: { icon: LucideIcon; children: Rea
   return (
     <li className="flex items-center gap-3 py-2.5 min-w-0">
       <Icon size={16} strokeWidth={ICON.strokeWidth} className="text-gray-400 shrink-0" />
-      <div className="text-sm text-[#1A1A2E] min-w-0 truncate">{children}</div>
+      <div className={`${VALUE} min-w-0 truncate`}>{children}</div>
     </li>
   );
 }
@@ -610,7 +615,7 @@ export default function AdminProfilePage() {
             <Section title={tp.documents} icon={FileText} color={ORANGE}>
               <div className="space-y-3">
                 <div>
-                  <p className="text-xs text-gray-500 mb-1.5">{isAuPair ? tp.profilePhoto : tp.familyPhoto}</p>
+                  <p className={`${LABEL} mb-1.5`}>{isAuPair ? tp.profilePhoto : tp.familyPhoto}</p>
                   {photoUrl ? (
                     <button
                       type="button"
@@ -631,7 +636,7 @@ export default function AdminProfilePage() {
                 </div>
                 {isAuPair && (
                   <div>
-                    <p className="text-xs text-gray-500 mb-1.5">{tp.idDocument}</p>
+                    <p className={`${LABEL} mb-1.5`}>{tp.idDocument}</p>
                     {data.idDocumentUrls.length > 0 ? (
                       <div className="space-y-2">
                         {data.idDocumentUrls.map((url, i) => (
@@ -669,18 +674,18 @@ export default function AdminProfilePage() {
             )}
 
             <Section title={tp.activity} icon={History} color={BLUE}>
-              <ul className="divide-y divide-gray-100 -my-2.5 text-sm">
-                <li className="flex justify-between gap-3 py-2.5">
-                  <span className="text-gray-500">{tp.lastUpdate}</span>
-                  <span className="text-[#1A1A2E] text-right">{relativeDate(data.updatedAt)}</span>
+              <ul className="divide-y divide-gray-100 -my-2.5">
+                <li className="flex items-center justify-between gap-3 py-2.5">
+                  <span className={LABEL}>{tp.lastUpdate}</span>
+                  <span className={`${VALUE} text-right`}>{relativeDate(data.updatedAt)}</span>
                 </li>
-                <li className="flex justify-between gap-3 py-2.5">
-                  <span className="text-gray-500">{tp.kpiValidation}</span>
-                  <span className="text-[#1A1A2E] text-right">{data.validatedAt ? formatDate(data.validatedAt) : tp.notValidated}</span>
+                <li className="flex items-center justify-between gap-3 py-2.5">
+                  <span className={LABEL}>{tp.kpiValidation}</span>
+                  <span className={`${VALUE} text-right`}>{data.validatedAt ? formatDate(data.validatedAt) : tp.notValidated}</span>
                 </li>
-                <li className="flex justify-between gap-3 py-2.5">
-                  <span className="text-gray-500">{tp.memberSince}</span>
-                  <span className="text-[#1A1A2E] text-right">{formatDate(data.memberSince)}</span>
+                <li className="flex items-center justify-between gap-3 py-2.5">
+                  <span className={LABEL}>{tp.memberSince}</span>
+                  <span className={`${VALUE} text-right`}>{formatDate(data.memberSince)}</span>
                 </li>
               </ul>
             </Section>
