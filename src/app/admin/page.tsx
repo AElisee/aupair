@@ -5,9 +5,10 @@ import {
   Area,
   AreaChart,
   Bar,
-  BarChart,
   CartesianGrid,
   Cell,
+  ComposedChart,
+  Line,
   PolarAngleAxis,
   RadialBar,
   RadialBarChart,
@@ -77,7 +78,7 @@ type DashboardData = {
 
 type AnalyticsData = {
   signupsByMonth: { month: string; auPair: number; famille: number }[];
-  revenueByMonth: { month: string; amount: number }[];
+  revenueByMonth: { month: string; amount: number; mobileMoney: number; card: number }[];
   auPairStatus: Record<string, number>;
   familyStatus: Record<string, number>;
   topCountries: { country: string; flag: string; count: number }[];
@@ -171,7 +172,11 @@ export default function AdminPage() {
     auPair: { label: ta.auPairs, color: ORANGE },
     famille: { label: ta.families, color: BLUE },
   };
-  const revenueConfig: ChartConfig = { amount: { label: ta.revenueTitle, color: ORANGE } };
+  const revenueConfig = {
+    amount: { label: ta.revenueTotal, color: ORANGE },
+    mobileMoney: { label: ta.revenueMobileMoney, color: GREEN },
+    card: { label: ta.revenueCard, color: BLUE },
+  } satisfies ChartConfig;
   const gaugeConfig: ChartConfig = { value: { label: d.validationTitle, color: GREEN } };
   const lastMonthIndex = analytics.revenueByMonth.length - 1;
 
@@ -351,8 +356,16 @@ export default function AdminPage() {
                 </div>
               }
             />
+            <div className="flex flex-wrap items-center gap-3 mb-2 text-xs text-gray-500">
+              {Object.values(revenueConfig).map((s) => (
+                <span key={s.label} className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full" style={{ background: s.color }} />
+                  {s.label}
+                </span>
+              ))}
+            </div>
             <ChartContainer config={revenueConfig} className="aspect-auto h-[220px] w-full">
-              <BarChart data={analytics.revenueByMonth} margin={{ left: 0, right: 8, top: 8 }} barCategoryGap="30%">
+              <ComposedChart data={analytics.revenueByMonth} margin={{ left: 0, right: 8, top: 8 }} barCategoryGap="30%">
                 <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={10} interval={0} tickFormatter={formatMonth} />
                 <YAxis tickLine={false} axisLine={false} width={40} tickFormatter={(v) => compact.format(Number(v))} />
@@ -361,9 +374,15 @@ export default function AdminPage() {
                   content={
                     <ChartTooltipContent
                       labelFormatter={(value) => formatMonth(String(value))}
-                      formatter={(value) => (
+                      formatter={(value, name) => (
                         <div className="flex w-full items-center justify-between gap-4">
-                          <span className="text-muted-foreground">{ta.revenueTitle}</span>
+                          <span className="flex items-center gap-1.5 text-muted-foreground">
+                            <span
+                              className="w-2 h-2 rounded-full"
+                              style={{ background: revenueConfig[name as keyof typeof revenueConfig]?.color }}
+                            />
+                            {revenueConfig[name as keyof typeof revenueConfig]?.label ?? name}
+                          </span>
                           <span className="text-foreground font-medium tabular-nums">
                             {formatCurrency(Number(value), "XOF", locale)}
                           </span>
@@ -377,7 +396,9 @@ export default function AdminPage() {
                     <Cell key={entry.month} fill={ORANGE} fillOpacity={i === lastMonthIndex ? 1 : 0.35} />
                   ))}
                 </Bar>
-              </BarChart>
+                <Line dataKey="mobileMoney" type="monotone" stroke="var(--color-mobileMoney)" strokeWidth={2} dot={{ r: 3, strokeWidth: 0, fill: "var(--color-mobileMoney)" }} activeDot={{ r: 5, strokeWidth: 2, stroke: "#fff" }} />
+                <Line dataKey="card" type="monotone" stroke="var(--color-card)" strokeWidth={2} dot={{ r: 3, strokeWidth: 0, fill: "var(--color-card)" }} activeDot={{ r: 5, strokeWidth: 2, stroke: "#fff" }} />
+              </ComposedChart>
             </ChartContainer>
           </Panel>
         </div>

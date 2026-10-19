@@ -41,7 +41,7 @@ export async function GET() {
     prisma.user.findMany({ where: { createdAt: { gte: since } }, select: { createdAt: true, role: true } }),
     prisma.subscription.findMany({
       where: { createdAt: { gte: since }, currency: "XOF", status: { in: ["ACTIVE", "EXPIRED"] } },
-      select: { createdAt: true, amount: true },
+      select: { createdAt: true, amount: true, paymentMethod: true },
     }),
     prisma.auPairProfile.groupBy({ by: ["status"], _count: { _all: true } }),
     prisma.familyProfile.groupBy({ by: ["status"], _count: { _all: true } }),
@@ -68,12 +68,17 @@ export async function GET() {
     famille: users.filter((u) => monthKey(u.createdAt) === key && u.role === "FAMILLE").length,
   }));
 
-  const revenueByMonth = months.map(({ key, label }) => ({
-    month: label,
-    amount: subscriptions
-      .filter((s) => monthKey(s.createdAt) === key)
-      .reduce((sum, s) => sum + s.amount, 0),
-  }));
+  // Total du mois + détail Mobile Money / carte (les méthodes génériques FEDAPAY/GENIUSPAY ne comptent que dans le total)
+  const revenueByMonth = months.map(({ key, label }) => {
+    const ofMonth = subscriptions.filter((s) => monthKey(s.createdAt) === key);
+    const sumOf = (list: typeof ofMonth) => list.reduce((sum, s) => sum + s.amount, 0);
+    return {
+      month: label,
+      amount: sumOf(ofMonth),
+      mobileMoney: sumOf(ofMonth.filter((s) => s.paymentMethod === "MOBILE_MONEY")),
+      card: sumOf(ofMonth.filter((s) => s.paymentMethod === "CARD")),
+    };
+  });
 
   const profileStatusCounts = (groups: { status: string; _count: { _all: number } }[]) => {
     const result: Record<string, number> = { PENDING: 0, ACTIVE: 0, HIDDEN: 0, SUSPENDED: 0, DELETED: 0 };

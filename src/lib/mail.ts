@@ -11,6 +11,15 @@ function maskApiKey(key: string) {
 }
 
 /**
+ * Remplace la partie locale de l'adresse d'expédition par "no-reply", en gardant
+ * le nom affiché et le domaine (déjà vérifié chez Resend) :
+ * "AuPair A.EU <contact@domaine.com>" -> "AuPair A.EU <no-reply@domaine.com>".
+ */
+function toNoReplyAddress(from: string) {
+  return from.replace(/[^\s<@]+@([^\s>]+)/, "no-reply@$1");
+}
+
+/**
  * Envoie un email via l'API officielle Resend (`resend.emails.send`), en utilisant
  * la clé API et l'adresse d'expédition configurées par l'admin (Paramètres > Email),
  * jamais via des variables d'environnement.
@@ -18,12 +27,19 @@ function maskApiKey(key: string) {
  * Ne lève jamais : une erreur d'envoi ne doit pas bloquer la transaction principale.
  * Le résultat permet à l'appelant de journaliser/réagir si besoin.
  */
-export async function sendMail(params: { to: string; subject: string; html: string }): Promise<SendMailResult> {
-  const { to, subject, html } = params;
+export async function sendMail(params: {
+  to: string;
+  subject: string;
+  html: string;
+  /** Envoie depuis no-reply@<domaine> pour que le destinataire ne puisse pas répondre. */
+  noReply?: boolean;
+}): Promise<SendMailResult> {
+  const { to, subject, html, noReply } = params;
 
   const settings = await getAppSettings();
   const apiKey = settings.resendApiKey?.trim();
-  const from = settings.emailFrom?.trim();
+  const configuredFrom = settings.emailFrom?.trim();
+  const from = configuredFrom && noReply ? toNoReplyAddress(configuredFrom) : configuredFrom;
 
   console.log(
     `[mail] Préparation de l'envoi — to="${to}", from="${from ?? "MANQUANT"}", ` +

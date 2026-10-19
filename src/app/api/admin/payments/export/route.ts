@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin";
 import { formatDate } from "@/lib/utils";
 import { PAYMENT_METHOD_LABELS } from "@/lib/constants";
+import { effectiveSubscriptionStatus } from "@/lib/payments";
 import type { Prisma } from "@/generated/prisma/client";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -23,12 +24,18 @@ const STATUSES = ["ACTIVE", "EXPIRED", "CANCELLED", "REFUNDED"] as const;
 const METHODS = ["MOBILE_MONEY", "CARD", "FEDAPAY", "GENIUSPAY"] as const;
 
 /** Mêmes filtres que le tableau de /admin/paiements (?q=&status=&method=) */
-function buildWhere(params: URLSearchParams): Prisma.SubscriptionWhereInput {
+function buildWhere(params: URLSearchParams, now: Date): Prisma.SubscriptionWhereInput {
   const where: Prisma.SubscriptionWhereInput = {};
   const status = params.get("status");
   const method = params.get("method");
   const q = params.get("q")?.trim();
-  if (status && (STATUSES as readonly string[]).includes(status)) {
+  // "Actif" / "Expiré" suivent la date d'échéance, le statut en base restant ACTIVE après expiration
+  if (status === "ACTIVE") {
+    where.status = "ACTIVE";
+    where.expiresAt = { gt: now };
+  } else if (status === "EXPIRED") {
+    where.OR = [{ status: "EXPIRED" }, { status: "ACTIVE", expiresAt: { lte: now } }];
+  } else if (status && (STATUSES as readonly string[]).includes(status)) {
     where.status = status as (typeof STATUSES)[number];
   }
   if (method && (METHODS as readonly string[]).includes(method)) {
@@ -51,8 +58,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
 
+  const now = new Date();
   const subscriptions = await prisma.subscription.findMany({
-    where: buildWhere(req.nextUrl.searchParams),
+    where: buildWhere(req.nextUrl.searchParams, now),
     orderBy: { createdAt: "desc" },
     include: { user: { select: { name: true, email: true } } },
   });
@@ -64,7 +72,7 @@ export async function GET(req: NextRequest) {
     s.amount.toString(),
     s.currency,
     PAYMENT_METHOD_LABELS[s.paymentMethod] ?? s.paymentMethod,
-    STATUS_LABELS[s.status] ?? s.status,
+    STATUS_LABELS[effectiveSubscriptionStatus(s, now)] ?? s.status,
     formatDate(s.createdAt),
     formatDate(s.expiresAt),
   ]);

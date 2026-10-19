@@ -74,5 +74,8 @@ export function accountValidatedEmailHtml(params: {
       </a>
     </div>
     <p>— L'équipe AuPair A.EU</p>
+    <p style="color:#888888;font-size:12px;">
+      Cet email est envoyé automatiquement, merci de ne pas y répondre.
+    </p>
   `);
 }

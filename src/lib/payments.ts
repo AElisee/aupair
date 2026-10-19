@@ -1,5 +1,5 @@
 import { prisma } from "./prisma";
-import type { PaymentMethod } from "@/generated/prisma/client";
+import type { PaymentMethod, SubscriptionStatus } from "@/generated/prisma/client";
 
 export const PAYMENT_PROVIDERS = ["fedapay", "geniuspay"] as const;
 export type PaymentProvider = (typeof PAYMENT_PROVIDERS)[number];
@@ -25,6 +25,14 @@ export function isProviderConfigured(provider: PaymentProvider, settings: Settin
   return provider === "fedapay"
     ? !!settings.fedapayPublicKey && !!settings.fedapaySecretKey
     : !!settings.geniuspayPublicKey && !!settings.geniuspaySecretKey;
+}
+
+/** Rien ne bascule le statut en base à l'échéance : un abonnement "ACTIVE" dont la date est passée est expiré. */
+export function effectiveSubscriptionStatus(
+  s: { status: SubscriptionStatus; expiresAt: Date },
+  now: Date = new Date(),
+): SubscriptionStatus {
+  return s.status === "ACTIVE" && s.expiresAt <= now ? "EXPIRED" : s.status;
 }
 
 /** Crée l'abonnement lié à un paiement confirmé — idempotent sur `paymentId` (verify et webhook peuvent arriver tous les deux). */

@@ -5,21 +5,7 @@ import { ProfileStatus } from "@/generated/prisma/client";
 import { calculateAge } from "@/lib/utils";
 import { getCountryFlagMap } from "@/lib/countries";
 import { rankSuggestions } from "@/lib/suggestions";
-
-/** Champs facultatifs du profil pris en compte pour le taux de complétion. */
-const COMPLETION_FIELDS = [
-  "gender",
-  "cityOfOrigin",
-  "educationLevel",
-  "childcareExperience",
-  "childcareYears",
-  "preferredDuration",
-  "description",
-  "motivation",
-  "phoneWhatsapp1",
-  "profilePhotoUrl",
-  "availableFrom",
-] as const;
+import { AU_PAIR_COMPLETION_FIELDS, getProfileCompletion } from "@/lib/profile-completion";
 
 export async function GET() {
   const session = await auth();
@@ -49,13 +35,7 @@ export async function GET() {
       }),
     ]);
 
-  const missingFields = COMPLETION_FIELDS.filter((field) => {
-    const value = profile[field as keyof typeof profile];
-    return Array.isArray(value) ? value.length === 0 : value === null || value === undefined || value === "";
-  });
-  const profileCompletion = Math.round(
-    ((COMPLETION_FIELDS.length - missingFields.length) / COMPLETION_FIELDS.length) * 100
-  );
+  const { completion: profileCompletion, missingFields } = getProfileCompletion(profile, AU_PAIR_COMPLETION_FIELDS);
 
   let daysLeft = 0;
   let subscriptionActive = false;

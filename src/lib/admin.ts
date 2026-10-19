@@ -54,6 +54,7 @@ export async function setProfileStatus(
     const result = await sendMail({
       to: recipient.email,
       subject: "Votre compte AuPair A.EU a été validé !",
+      noReply: true,
       html: accountValidatedEmailHtml({
         name: recipient.name,
         role,

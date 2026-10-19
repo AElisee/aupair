@@ -81,13 +81,14 @@ export function extractUserIdFromGeniuspayPayment(payment: GeniuspayPayment): st
 }
 
 /**
- * Déduit MOBILE_MONEY vs CARD à partir de `payment_method`. `paystack` couvre à la fois cartes et
- * Mobile Money, et une valeur absente/inconnue reste générique ("GENIUSPAY") plutôt que devinée.
+ * Déduit MOBILE_MONEY vs CARD à partir de `payment_method`. Le Mobile Money passe par ses propres
+ * canaux (wave, orange_money…) : `paystack` est le canal carte bancaire de la page de paiement GeniusPay.
+ * Une valeur absente/inconnue reste générique ("GENIUSPAY") plutôt que devinée.
  */
 export function resolvePaymentMethodFromGeniuspay(method: string | null | undefined): "MOBILE_MONEY" | "CARD" | "GENIUSPAY" {
   if (!method) return "GENIUSPAY";
   const m = method.toLowerCase();
-  if (m === "card") return "CARD";
+  if (m === "card" || m === "paystack") return "CARD";
   if (["wave", "orange_money", "mtn_money", "mtn_momo", "moov_money", "pawapay"].includes(m)) return "MOBILE_MONEY";
   return "GENIUSPAY";
 }

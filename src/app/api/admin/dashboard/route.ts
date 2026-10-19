@@ -4,6 +4,7 @@ import { requireAdminSession } from "@/lib/admin";
 import { ProfileStatus } from "@/generated/prisma/client";
 import { getCountryFlagMap } from "@/lib/countries";
 import { formatCurrency, formatRevenueByCurrency } from "@/lib/utils";
+import { effectiveSubscriptionStatus } from "@/lib/payments";
 
 export async function GET() {
   const session = await requireAdminSession();
@@ -47,7 +48,7 @@ export async function GET() {
       _sum: { amount: true },
       where: { status: { in: ["ACTIVE", "EXPIRED"] } },
     }),
-    prisma.subscription.count({ where: { status: "ACTIVE" } }),
+    prisma.subscription.count({ where: { status: "ACTIVE", expiresAt: { gt: new Date() } } }),
     prisma.auPairProfile.count({ where: { status: ProfileStatus.PENDING } }),
     prisma.familyProfile.count({ where: { status: ProfileStatus.PENDING } }),
     prisma.report.count({ where: { isResolved: false } }),
@@ -65,7 +66,7 @@ export async function GET() {
       take: 5,
       orderBy: { createdAt: "desc" },
       select: {
-        id: true, amount: true, currency: true, paymentMethod: true, status: true, createdAt: true,
+        id: true, amount: true, currency: true, paymentMethod: true, status: true, createdAt: true, expiresAt: true,
         user: { select: { name: true } },
       },
     }),
@@ -111,7 +112,7 @@ export async function GET() {
     user: s.user.name ?? "",
     amount: formatCurrency(s.amount, s.currency),
     method: s.paymentMethod,
-    status: s.status,
+    status: effectiveSubscriptionStatus(s),
     date: s.createdAt.toISOString(),
   }));
 

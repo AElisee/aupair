@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin";
 import { calculateAge } from "@/lib/utils";
+import { AU_PAIR_COMPLETION_FIELDS, FAMILY_COMPLETION_FIELDS, getProfileCompletion } from "@/lib/profile-completion";
 
 export async function GET(
   req: Request,
@@ -25,11 +26,28 @@ export async function GET(
       return NextResponse.json({ error: "Profil introuvable" }, { status: 404 });
     }
 
+    const subscription = await prisma.subscription.findFirst({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      select: { status: true, expiresAt: true, amount: true, currency: true },
+    });
+    const { completion, missingFields } = getProfileCompletion(profile, AU_PAIR_COMPLETION_FIELDS);
+
     return NextResponse.json({
       role: "AU_PAIR",
       email: profile.user.email,
       memberSince: profile.user.createdAt,
       status: profile.status,
+      profileViews: profile.profileViews,
+      validatedAt: profile.validatedAt,
+      updatedAt: profile.updatedAt,
+      completion,
+      missingFields,
+      // Un abonnement ACTIVE dont la date est passée est présenté comme expiré (comme /api/subscription)
+      subscription: subscription && {
+        ...subscription,
+        status: subscription.status === "ACTIVE" && subscription.expiresAt < new Date() ? "EXPIRED" : subscription.status,
+      },
       firstName: profile.firstName,
       lastName: profile.lastName,
       age: calculateAge(profile.dateOfBirth),
@@ -71,12 +89,19 @@ export async function GET(
       return NextResponse.json({ error: "Profil introuvable" }, { status: 404 });
     }
 
+    const { completion, missingFields } = getProfileCompletion(profile, FAMILY_COMPLETION_FIELDS);
+
     return NextResponse.json({
       role: "FAMILLE",
       name: profile.user.name,
       email: profile.user.email,
       memberSince: profile.user.createdAt,
       status: profile.status,
+      profileViews: profile.profileViews,
+      validatedAt: profile.validatedAt,
+      updatedAt: profile.updatedAt,
+      completion,
+      missingFields,
       country: profile.country,
       city: profile.city,
       address: profile.address,

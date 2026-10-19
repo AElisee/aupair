@@ -5,20 +5,7 @@ import { ProfileStatus } from "@/generated/prisma/client";
 import { calculateAge } from "@/lib/utils";
 import { getCountryFlagMap } from "@/lib/countries";
 import { rankSuggestions } from "@/lib/suggestions";
-
-/** Champs facultatifs du profil pris en compte pour le taux de complétion. */
-const COMPLETION_FIELDS = [
-  "address",
-  "auPairTasks",
-  "hoursPerWeek",
-  "pocketMoney",
-  "accommodation",
-  "description",
-  "familyPhotoUrl",
-  "phoneWhatsapp",
-  "preferredGender",
-  "preferredLanguages",
-] as const;
+import { FAMILY_COMPLETION_FIELDS, getProfileCompletion } from "@/lib/profile-completion";
 
 export async function GET() {
   const session = await auth();
@@ -44,16 +31,7 @@ export async function GET() {
     }),
   ]);
 
-  let filledCount = 0;
-  for (const field of COMPLETION_FIELDS) {
-    const value = profile[field as keyof typeof profile];
-    if (Array.isArray(value) ? value.length > 0 : value !== null && value !== undefined && value !== "") {
-      filledCount++;
-    }
-  }
-  const profileCompletion = Math.round(
-    (filledCount / COMPLETION_FIELDS.length) * 100
-  );
+  const { completion: profileCompletion } = getProfileCompletion(profile, FAMILY_COMPLETION_FIELDS);
 
   // Suggestions d'au pairs : favoris, pays ciblé, âge/genre/langues préférés
   const [auPairProfiles, favorites, flagMap] = await Promise.all([
