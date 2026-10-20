@@ -52,6 +52,9 @@ export const PAYMENT_METHOD_LABELS: Record<string, string> = {
   GENIUSPAY: "GeniusPay",
 };
 
+/** Boîte qui reçoit les messages du formulaire /contact (affichée aussi sur la page). */
+export const CONTACT_EMAIL = "contact@aupairaeu.com";
+
 export const CONTACT_SUBJECTS: Record<string, string> = {
   inscription: "Inscription / Compte",
   paiement: "Paiement / Abonnement",

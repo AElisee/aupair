@@ -293,6 +293,7 @@ export default function AdminFaqPage() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b border-gray-100">
                   <tr>
+                    <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider w-12">#</th>
                     <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{tf.colQuestion}</th>
                     <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{tf.category}</th>
                     <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{tf.order}</th>
@@ -300,14 +301,15 @@ export default function AdminFaqPage() {
                     <th className="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{c.actions}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-gray-200">
                   {paginated.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-5 py-8 text-center text-gray-400">{tf.none}</td>
+                      <td colSpan={6} className="px-5 py-8 text-center text-gray-400">{tf.none}</td>
                     </tr>
                   ) : (
-                    paginated.map((item) => (
+                    paginated.map((item, i) => (
                       <tr key={item.id} className={`hover:bg-gray-50 transition-colors ${editingId === item.id ? "bg-[#FFF3E0]" : ""}`}>
+                        <td className="px-5 py-3.5 text-xs text-gray-400 tabular-nums">{(currentPage - 1) * PAGE_SIZE + i + 1}</td>
                         <td className="px-5 py-3.5 font-medium text-[#1A1A2E] max-w-md">
                           <span className="line-clamp-1">{item.question}</span>
                         </td>

@@ -32,6 +32,7 @@ import { calculateAge } from "@/lib/utils";
 import { useI18n } from "@/i18n";
 import { formatPhoneDigits } from "@/lib/phone";
 import { SelectField } from "@/components/ui/select-field";
+import { DateField } from "@/components/ui/date-field";
 
 type ProfileStatus = "PENDING" | "ACTIVE" | "HIDDEN" | "SUSPENDED" | "DELETED";
 
@@ -152,7 +153,7 @@ const sectionDomId = (id: SectionId) => `profil-${id}`;
 
 // Champs : 48px de haut et 16px de texte sur mobile (cible tactile, pas de zoom auto sur iOS)
 const INPUT =
-  "w-full h-12 sm:h-11 rounded-xl border border-gray-200 bg-white px-4 text-base sm:text-sm text-[#1A1A2E] placeholder:text-gray-400 focus:outline-none focus:border-[#E87722] focus:ring-2 focus:ring-[#E87722]/25 transition [&::-webkit-date-and-time-value]:text-left";
+  "w-full h-12 sm:h-11 rounded-xl border border-gray-200 bg-white px-4 text-base sm:text-sm text-[#1A1A2E] placeholder:text-gray-400 focus:outline-none focus:border-[#E87722] focus:ring-2 focus:ring-[#E87722]/25 transition";
 const TEXTAREA =
   "w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-base sm:text-sm text-[#1A1A2E] leading-relaxed placeholder:text-gray-400 focus:outline-none focus:border-[#E87722] focus:ring-2 focus:ring-[#E87722]/25 transition resize-y min-h-28";
 const PRIMARY_BUTTON =
@@ -657,12 +658,11 @@ export default function AuPairProfilPage() {
                   />
                 </Field>
                 <Field label={tp.dateOfBirth} htmlFor="dateOfBirth">
-                  <input
+                  <DateField
                     id="dateOfBirth"
-                    type="date"
-                    autoComplete="bday"
                     value={profile.dateOfBirth}
-                    onChange={(e) => update("dateOfBirth", e.target.value)}
+                    max={new Date().toISOString().slice(0, 10)}
+                    onChange={(v) => update("dateOfBirth", v)}
                     className={INPUT}
                   />
                 </Field>
@@ -825,21 +825,19 @@ export default function AuPairProfilPage() {
               <div className="space-y-5">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                   <Field label={tp.availableFrom} htmlFor="availableFrom">
-                    <input
+                    <DateField
                       id="availableFrom"
-                      type="date"
                       value={profile.availableFrom}
-                      onChange={(e) => update("availableFrom", e.target.value)}
+                      onChange={(v) => update("availableFrom", v)}
                       className={INPUT}
                     />
                   </Field>
                   <Field label={tp.availableTo} htmlFor="availableTo">
-                    <input
+                    <DateField
                       id="availableTo"
-                      type="date"
                       min={profile.availableFrom || undefined}
                       value={profile.availableTo}
-                      onChange={(e) => update("availableTo", e.target.value)}
+                      onChange={(v) => update("availableTo", v)}
                       className={INPUT}
                     />
                   </Field>

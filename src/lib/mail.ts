@@ -33,8 +33,10 @@ export async function sendMail(params: {
   html: string;
   /** Envoie depuis no-reply@<domaine> pour que le destinataire ne puisse pas répondre. */
   noReply?: boolean;
+  /** Adresse utilisée quand le destinataire clique sur « Répondre ». */
+  replyTo?: string;
 }): Promise<SendMailResult> {
-  const { to, subject, html, noReply } = params;
+  const { to, subject, html, noReply, replyTo } = params;
 
   const settings = await getAppSettings();
   const apiKey = settings.resendApiKey?.trim();
@@ -62,6 +64,7 @@ export async function sendMail(params: {
       to,
       subject,
       html,
+      ...(replyTo ? { replyTo } : {}),
     });
 
     console.log(`[mail] Réponse complète de Resend pour "${to}":`, JSON.stringify(response, null, 2));

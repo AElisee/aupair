@@ -198,7 +198,7 @@ function SidebarContent({
               href={item.href}
               onClick={onNavigate}
               title={collapsed ? t.nav[item.labelKey] : undefined}
-              className={`relative flex items-center py-2.5 rounded-xl text-sm font-medium transition-all ${itemLayout} ${
+              className={`relative flex items-center py-2.5 rounded-xl text-[13px] font-medium transition-all ${itemLayout} ${
                 isActive
                   ? "bg-[#E87722] text-white"
                   : "text-gray-400 hover:bg-white/10 hover:text-white"
@@ -227,7 +227,7 @@ function SidebarContent({
             href="/dashboard/au-pair/abonnement"
             onClick={onNavigate}
             title={collapsed ? t.layout.premium : undefined}
-            className={`flex items-center py-2.5 rounded-xl text-sm font-medium bg-[linear-gradient(135deg,#1E4A2C_0%,#163A22_55%,#0F2A19_100%)] border border-[#D4A93A]/50 text-white shadow-[inset_0_1px_0_rgba(246,223,160,0.15)] hover:border-[#F2C94C] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F2C94C] ${itemLayout}`}
+            className={`flex items-center py-2.5 rounded-xl text-[13px] font-medium bg-[linear-gradient(135deg,#1E4A2C_0%,#163A22_55%,#0F2A19_100%)] border border-[#D4A93A]/50 text-white shadow-[inset_0_1px_0_rgba(246,223,160,0.15)] hover:border-[#F2C94C] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F2C94C] ${itemLayout}`}
           >
             <Crown {...ICON} className="shrink-0 text-[#F2C94C]" />
             {!collapsed && (
@@ -365,7 +365,7 @@ export default function DashboardLayout({ children, role, userName }: DashboardL
       {/* Sidebar desktop */}
       <aside
         className={`hidden md:flex flex-col bg-[#1A1A2E] h-dvh fixed left-0 top-0 z-40 transition-[width] duration-300 ease-in-out ${
-          collapsed ? "w-16" : "w-64"
+          collapsed ? "w-16" : "w-[255px]"
         }`}
       >
         <SidebarContent {...sidebarProps} collapsed={collapsed} />
@@ -395,7 +395,7 @@ export default function DashboardLayout({ children, role, userName }: DashboardL
 
       {/* Contenu principal */}
       <main
-        className={`flex-1 min-w-0 min-h-dvh transition-[margin] duration-300 ease-in-out ${collapsed ? "md:ml-16" : "md:ml-64"}`}
+        className={`flex-1 min-w-0 min-h-dvh transition-[margin] duration-300 ease-in-out ${collapsed ? "md:ml-16" : "md:ml-[255px]"}`}
       >
         {/* Top bar (même structure que celle du back-office) */}
         <div className="bg-white/70 backdrop-blur-md border-b border-white/80 px-4 sm:px-6 py-3 flex items-center justify-between gap-3 sticky top-0 z-30">

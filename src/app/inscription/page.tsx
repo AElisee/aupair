@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SelectField } from "@/components/ui/select-field";
+import { DateField } from "@/components/ui/date-field";
 import { useCountries } from "@/hooks/useCountries";
 import { useConstants } from "@/hooks/useConstants";
 import { calculateAge } from "@/lib/utils";
@@ -483,12 +484,10 @@ function InscriptionContent() {
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
                     {s.dateOfBirth}
                   </label>
-                  <input
-                    type="date"
+                  <DateField
                     value={form.dateOfBirth}
-                    onChange={(e) =>
-                      setForm({ ...form, dateOfBirth: e.target.value })
-                    }
+                    max={new Date().toISOString().slice(0, 10)}
+                    onChange={(v) => setForm({ ...form, dateOfBirth: v })}
                     onBlur={() => markBlurred("dateOfBirth")}
                     className={inputClass("dateOfBirth")}
                   />

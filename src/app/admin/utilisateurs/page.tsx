@@ -19,6 +19,7 @@ import {
   CreditCard,
 } from "lucide-react";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import SendEmailDialog from "@/components/admin/SendEmailDialog";
 import { useI18n } from "@/i18n";
 import { Separator } from "@/components/ui/separator";
 import { GREEN, INDIGO, NAVY, ORANGE, PAGE_TITLE, TEAL, KpiGrid, pct } from "@/components/admin/AdminUI";
@@ -50,6 +51,8 @@ export default function UtilisateursPage() {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null);
   const [purgeTarget, setPurgeTarget] = useState<AdminUser | null>(null);
+  const [emailTarget, setEmailTarget] = useState<AdminUser | null>(null);
+  const [notice, setNotice] = useState("");
   const [page, setPage] = useState(1);
   const { t, locale } = useI18n();
   const c = t.adminCommon;
@@ -121,6 +124,12 @@ export default function UtilisateursPage() {
     await performAction(purgeTarget, "purge");
     setPurgeTarget(null);
   };
+
+  useEffect(() => {
+    if (!notice) return;
+    const timer = setTimeout(() => setNotice(""), 4000);
+    return () => clearTimeout(timer);
+  }, [notice]);
 
   const filtered = users.filter((u) => {
     const matchSearch =
@@ -219,7 +228,7 @@ export default function UtilisateursPage() {
 
         {/* Filtres */}
         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-wrap gap-3">
-          <div className="relative flex-1 min-w-48">
+          <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
@@ -278,6 +287,7 @@ export default function UtilisateursPage() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b border-gray-100">
                   <tr>
+                    <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider w-12">#</th>
                     <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
                       {tu.colUser}
                     </th>
@@ -298,12 +308,13 @@ export default function UtilisateursPage() {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {paginated.map((u) => (
+                <tbody className="divide-y divide-gray-200">
+                  {paginated.map((u, i) => (
                     <tr
                       key={u.id}
                       className="hover:bg-gray-50 transition-colors"
                     >
+                      <td className="px-5 py-3.5 text-xs text-gray-400 tabular-nums">{(currentPage - 1) * PAGE_SIZE + i + 1}</td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 bg-[#E87722] rounded-full flex items-center justify-center text-white text-xs font-medium  shrink-0 overflow-hidden">
@@ -411,6 +422,7 @@ export default function UtilisateursPage() {
                                 </button>
                               )}
                               <button
+                                onClick={() => setEmailTarget(u)}
                                 className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-xl transition-colors"
                                 title={tu.sendEmail}
                               >
@@ -482,6 +494,26 @@ export default function UtilisateursPage() {
           onConfirm={confirmPurge}
           onCancel={() => setPurgeTarget(null)}
         />
+      )}
+      {emailTarget && (
+        <SendEmailDialog
+          user={emailTarget}
+          onSent={() => {
+            setNotice(tu.emailSent(emailTarget.name));
+            setEmailTarget(null);
+          }}
+          onCancel={() => setEmailTarget(null)}
+        />
+      )}
+
+      {notice && (
+        <div
+          role="status"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-[#1A1A2E] text-white text-sm px-4 py-3 rounded-xl shadow-lg"
+        >
+          <CheckCircle className="w-4 h-4 text-green-400" />
+          {notice}
+        </div>
       )}
     </AdminLayout>
   );

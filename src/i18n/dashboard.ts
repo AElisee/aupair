@@ -73,6 +73,15 @@ export const dashboard = {
     lastWeek: { fr: "Semaine dernière", en: "Last week" },
   },
 
+  // ─── Sélecteur de date (DateField) ─────────────────────────────────────────
+  datePicker: {
+    placeholder: { fr: "jj/mm/aaaa", en: "dd/mm/yyyy" },
+    previousMonth: { fr: "Mois précédent", en: "Previous month" },
+    nextMonth: { fr: "Mois suivant", en: "Next month" },
+    month: { fr: "Mois", en: "Month" },
+    year: { fr: "Année", en: "Year" },
+  },
+
   // ─── Menu latéral ──────────────────────────────────────────────────────────
   nav: {
     dashboard: { fr: "Tableau de bord", en: "Dashboard" },

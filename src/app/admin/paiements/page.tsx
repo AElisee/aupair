@@ -8,6 +8,7 @@ import { useI18n } from "@/i18n";
 import { Separator } from "@/components/ui/separator";
 import { BLUE, GREEN, ICON, INDIGO, ORANGE, PAGE_TITLE, TEAL, KpiGrid, Panel, PanelHeader, pct } from "@/components/admin/AdminUI";
 import { SelectField } from "@/components/ui/select-field";
+import { DateField } from "@/components/ui/date-field";
 
 type Payment = {
   id: string;
@@ -54,6 +55,27 @@ const STATUS_VARIANTS: Record<Payment["status"], "success" | "secondary" | "warn
 const STATUSES = Object.keys(STATUS_VARIANTS) as Payment["status"][];
 const METHODS: Payment["method"][] = ["MOBILE_MONEY", "CARD", "FEDAPAY", "GENIUSPAY"];
 
+type Period = "all" | "day" | "week" | "month";
+const PERIODS: Period[] = ["all", "day", "week", "month"];
+
+/** "YYYY-MM-DD" en heure locale (valeur d'un <input type="date">) */
+const toDateInput = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+/** Période calendaire contenant la date choisie (jour, semaine à partir du lundi, mois), heure locale, fin exclue */
+const periodRange = (period: Period, ref: string): { from: Date; to: Date } | null => {
+  if (period === "all" || !ref) return null;
+  const [y, m, d] = ref.split("-").map(Number);
+  const from = new Date(y, m - 1, d);
+  if (period === "week") from.setDate(from.getDate() - ((from.getDay() + 6) % 7));
+  if (period === "month") from.setDate(1);
+  const to = new Date(from);
+  if (period === "day") to.setDate(to.getDate() + 1);
+  if (period === "week") to.setDate(to.getDate() + 7);
+  if (period === "month") to.setMonth(to.getMonth() + 1);
+  return { from, to };
+};
+
 const HTML_ESCAPES: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
 const escapeHtml = (value: string) => value.replace(/[&<>"']/g, (ch) => HTML_ESCAPES[ch]);
 
@@ -69,6 +91,9 @@ export default function PaiementsPage() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterMethod, setFilterMethod] = useState("");
+  const [period, setPeriod] = useState<Period>("all");
+  // Date de référence de la période ; vide = aujourd'hui
+  const [refDate, setRefDate] = useState("");
   // Instant de chargement, référence pour le compte à rebours d'expiration
   const [loadedAt, setLoadedAt] = useState(0);
   const { t, locale } = useI18n();
@@ -85,15 +110,21 @@ export default function PaiementsPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const today = loadedAt ? toDateInput(new Date(loadedAt)) : "";
+  const range = useMemo(() => periodRange(period, refDate || today), [period, refDate, today]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const fromMs = range?.from.getTime() ?? 0;
+    const toMs = range?.to.getTime() ?? Infinity;
     return (data?.payments ?? []).filter(
       (p) =>
         (!q || p.user.toLowerCase().includes(q) || p.email.toLowerCase().includes(q)) &&
         (!filterStatus || p.status === filterStatus) &&
-        (!filterMethod || p.method === filterMethod),
+        (!filterMethod || p.method === filterMethod) &&
+        (!range || (new Date(p.date).getTime() >= fromMs && new Date(p.date).getTime() < toMs)),
     );
-  }, [data, search, filterStatus, filterMethod]);
+  }, [data, search, filterStatus, filterMethod, range]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -104,6 +135,10 @@ export default function PaiementsPage() {
   if (search.trim()) exportParams.set("q", search.trim());
   if (filterStatus) exportParams.set("status", filterStatus);
   if (filterMethod) exportParams.set("method", filterMethod);
+  if (range) {
+    exportParams.set("from", range.from.toISOString());
+    exportParams.set("to", range.to.toISOString());
+  }
   const exportQuery = exportParams.toString();
   const exportUrl = `/api/admin/payments/export${exportQuery ? `?${exportQuery}` : ""}`;
 
@@ -236,8 +271,40 @@ export default function PaiementsPage() {
                   }
                 />
                 {/* Filtres */}
-                <div className="flex flex-wrap gap-3 pb-4">
-                  <div className="relative flex-1 min-w-48">
+                <div className="flex flex-wrap items-center gap-3 pb-4">
+                  <div className="inline-flex h-9 items-center rounded-xl border border-gray-200 bg-white/90 p-0.5">
+                    {PERIODS.map((value) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => {
+                          setPeriod(value);
+                          setPage(1);
+                        }}
+                        aria-pressed={period === value}
+                        className={`h-full px-3 rounded-[10px] text-sm transition ${
+                          period === value ? "bg-[#E87722] text-white" : "text-gray-600 hover:bg-gray-100"
+                        }`}
+                      >
+                        {tp.periods[value]}
+                      </button>
+                    ))}
+                  </div>
+                  <DateField
+                    iconLeft
+                    aria-label={tp.pickDate}
+                    title={tp.pickDate}
+                    value={refDate || today}
+                    max={today || undefined}
+                    onChange={(v) => {
+                      setRefDate(v);
+                      // Choisir une date sans période active filtre sur ce jour
+                      if (period === "all") setPeriod("day");
+                      setPage(1);
+                    }}
+                    className={`px-3 text-gray-700 ${FILTER_INPUT}`}
+                  />
+                  <div className="relative w-full sm:w-60">
                     <Search {...ICON} size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
                       type="search"
@@ -282,6 +349,7 @@ export default function PaiementsPage() {
                 <table className="w-full text-sm">
                   <thead className="border-y border-gray-200/60 bg-white/60">
                     <tr>
+                      <th className={`text-left ${TH} w-12`}>#</th>
                       <th className={`text-left ${TH}`}>{tp.colUser}</th>
                       <th className={`text-left ${TH}`}>{tp.colAmount}</th>
                       <th className={`text-left ${TH}`}>{tp.colMethod}</th>
@@ -291,11 +359,12 @@ export default function PaiementsPage() {
                       <th className={`text-right ${TH}`}>{tp.colInvoice}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200/50">
-                    {paginated.map((p) => {
+                  <tbody className="divide-y divide-gray-200">
+                    {paginated.map((p, i) => {
                       const hint = expiryHint(p.expiresAt);
                       return (
                         <tr key={p.id} className="hover:bg-white/70 transition-colors">
+                          <td className="px-5 py-3 text-xs text-gray-400 tabular-nums">{(currentPage - 1) * PAGE_SIZE + i + 1}</td>
                           <td className="px-5 py-3">
                             <p className="text-sm text-[#1A1A2E]">{p.user || c.unknownUser}</p>
                             <p className="text-xs text-gray-400">{p.email}</p>

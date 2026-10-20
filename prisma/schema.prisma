@@ -74,6 +74,11 @@ enum TicketPriority {
   URGENT
 }
 
+enum AdminEmailStatus {
+  SENT
+  FAILED
+}
+
 enum CountryType {
   ORIGIN
   HOST
@@ -113,6 +118,7 @@ model User {
   profileViewsMade     ProfileView[] @relation("ProfileViewViewer")
   profileViewsReceived ProfileView[] @relation("ProfileViewTarget")
   passwordResetTokens  PasswordResetToken[]
+  adminEmailsReceived  AdminEmail[]
 
   @@map("users")
 }
@@ -526,6 +532,28 @@ model TicketMessage {
   ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
   @@map("ticket_messages")
+}
+
+// Trace des emails envoyés à un utilisateur depuis /admin/utilisateurs. Le destinataire
+// est copié (email, nom) pour que la trace survive à la suppression définitive du compte.
+model AdminEmail {
+  id             String           @id @default(cuid())
+  userId         String?
+  recipientEmail String
+  recipientName  String?
+  subject        String
+  message        String           @db.Text
+  status         AdminEmailStatus
+  error          String?
+  resendId       String?
+  sentById       String
+  sentByName     String?
+  createdAt      DateTime         @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@map("admin_emails")
 }
 
 // ─── PARAMÈTRES (constantes éditables par l'admin) ───────────────────────────

@@ -23,12 +23,22 @@ function escapeCsvField(value: string): string {
 const STATUSES = ["ACTIVE", "EXPIRED", "CANCELLED", "REFUNDED"] as const;
 const METHODS = ["MOBILE_MONEY", "CARD", "FEDAPAY", "GENIUSPAY"] as const;
 
-/** Mêmes filtres que le tableau de /admin/paiements (?q=&status=&method=) */
+/** Mêmes filtres que le tableau de /admin/paiements (?q=&status=&method=&from=&to=) */
 function buildWhere(params: URLSearchParams, now: Date): Prisma.SubscriptionWhereInput {
   const where: Prisma.SubscriptionWhereInput = {};
   const status = params.get("status");
   const method = params.get("method");
   const q = params.get("q")?.trim();
+  // Période (jour/semaine/mois) calculée côté client, dans son fuseau horaire ; fin exclue
+  const parseDate = (value: string | null) => {
+    const date = value ? new Date(value) : null;
+    return date && !Number.isNaN(date.getTime()) ? date : undefined;
+  };
+  const from = parseDate(params.get("from"));
+  const to = parseDate(params.get("to"));
+  if (from || to) {
+    where.createdAt = { gte: from, lt: to };
+  }
   // "Actif" / "Expiré" suivent la date d'échéance, le statut en base restant ACTIVE après expiration
   if (status === "ACTIVE") {
     where.status = "ACTIVE";

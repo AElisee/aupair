@@ -157,6 +157,8 @@ const SERVER_ERRORS: Record<string, string> = {
   "Document introuvable.": "Document not found.",
   "Conversation invalide": "Invalid conversation.",
   "Paramètres manquants": "Missing parameters.",
+  "L'envoi d'emails n'est pas configuré (Paramètres > Email).": "Email sending is not configured (Settings > Email).",
+  "Échec de l'envoi de l'email.": "Failed to send the email.",
   "Tous les champs sont obligatoires.": "All fields are required.",
   "Le genre est obligatoire.": "Gender is required.",
   "Erreur lors de la sauvegarde du profil.": "Error while saving your profile.",
@@ -213,6 +215,7 @@ const SERVER_ERRORS: Record<string, string> = {
   "Le mot de passe doit contenir au moins 8 caractères.": "The password must be at least 8 characters long.",
   "Le message doit contenir au moins 10 caractères.": "The message must be at least 10 characters long.",
   "Sujet invalide.": "Invalid subject.",
+  "Merci de préciser l'objet (100 caractères max).": "Please specify the subject (100 characters max).",
   "Trop de messages envoyés. Merci de réessayer plus tard.": "Too many messages sent. Please try again later.",
   // Back-office
   "Article introuvable": "Article not found.",

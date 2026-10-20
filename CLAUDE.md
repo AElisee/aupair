@@ -82,6 +82,7 @@ All of these call `auth()` first and return `401` if `!session?.user?.id`.
 
 - `/api/admin/dashboard` (GET) — KPIs (`totalUsers`, `signups30d`, `revenue30d`, `activeSubscriptions`, `pendingProfiles`), recent users, recent payments
 - `/api/admin/users` (GET/PATCH) — combined AuPair + Family list; PATCH applies `action: "validate" | "hide" | "unhide" | "suspend" | "delete"` via `setProfileStatus()`
+- `/api/admin/users/email` (GET `?userId=` / POST) — free-form email to a user from `/admin/utilisateurs` (`SendEmailDialog`: new message + history tabs). Recipient address read from the DB; every attempt (sent or failed) is logged in `AdminEmail` (`admin_emails`, recipient email/name copied so the log survives a purge)
 - `/api/admin/moderation` (GET/PATCH) — `PENDING` profiles sorted by waiting time; PATCH applies `action: "validate" | "reject"`
 - `/api/admin/profile/[userId]` (GET, `?role=AU_PAIR|FAMILLE`) — full profile detail, rendered by `src/app/admin/profil/[userId]/page.tsx` (full-page view, opened in a new tab via the "eye" icon in `/admin/utilisateurs` and `/admin/moderation`; header with status actions via `PATCH /api/admin/users`, KPI row — completion, views, latest subscription / kids, validation — and a two-column layout). Profile completion fields live in `src/lib/profile-completion.ts`, shared with `/api/dashboard/*`
 - `/api/admin/countries` (GET/POST/PATCH/DELETE) — CRUD for the `Country` table, used by `/admin/pays`
@@ -125,6 +126,7 @@ Profile status lifecycle: `PENDING → ACTIVE → HIDDEN / SUSPENDED / DELETED`
 - Accent background: `#FFF3E0`, Page backgrounds: `#FFFFFF` / `#F5F5F5`
 - Font: Inter (Google Fonts)
 - UI primitives: `src/components/ui/` (Button, Badge, Card)
+- Date inputs: always `DateField` (`src/components/ui/date-field.tsx`, Radix Popover calendar, value `YYYY-MM-DD`, month/year `SelectField`s, Monday-first, today green, selected orange) — never a native `<input type="date">`
 
 ## Layout system
 

@@ -217,6 +217,7 @@ export default function AdminDocumentsPage() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b border-gray-100">
                   <tr>
+                    <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider w-12">#</th>
                     <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{ts.colDocument}</th>
                     <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{ts.colPublicUrl}</th>
                     <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{ts.colUpdated}</th>
@@ -224,14 +225,15 @@ export default function AdminDocumentsPage() {
                     <th className="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{c.actions}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-gray-200">
                   {sortedItems.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-5 py-8 text-center text-gray-400">{ts.noDocuments}</td>
+                      <td colSpan={6} className="px-5 py-8 text-center text-gray-400">{ts.noDocuments}</td>
                     </tr>
                   ) : (
-                    sortedItems.map((item) => (
+                    sortedItems.map((item, i) => (
                       <tr key={item.id} className={`hover:bg-gray-50 transition-colors ${editingId === item.id ? "bg-[#FFF3E0]" : ""}`}>
+                        <td className="px-5 py-3.5 text-xs text-gray-400 tabular-nums">{i + 1}</td>
                         <td className="px-5 py-3.5">
                           <div className="font-medium text-[#1A1A2E]">{item.title}</div>
                           {!item.contentEn && <div className="text-xs text-gray-400">{ts.noEnglish}</div>}

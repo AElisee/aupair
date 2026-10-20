@@ -12,15 +12,18 @@ import { Globe, LayoutDashboard, Users, Shield, DollarSign, FileText, HelpCircle
 // Libellés : section `adminNav` de src/i18n/admin.ts
 type NavKey = keyof typeof admin.adminNav;
 
-const navItems: { href: string; icon: React.ElementType; labelKey: NavKey; badge?: boolean }[] = [
+/** Compteurs affichés en badge dans le menu */
+type BadgeCounts = { moderation: number; tickets: number };
+
+const navItems: { href: string; icon: React.ElementType; labelKey: NavKey; badge?: keyof BadgeCounts }[] = [
   { href: "/admin", icon: LayoutDashboard, labelKey: "dashboard" },
   { href: "/admin/utilisateurs", icon: Users, labelKey: "users" },
-  { href: "/admin/moderation", icon: Shield, labelKey: "moderation", badge: true },
+  { href: "/admin/moderation", icon: Shield, labelKey: "moderation", badge: "moderation" },
   { href: "/admin/paiements", icon: DollarSign, labelKey: "payments" },
   { href: "/admin/pays", icon: Globe, labelKey: "countries" },
   { href: "/admin/blog", icon: FileText, labelKey: "blog" },
   { href: "/admin/faq", icon: HelpCircle, labelKey: "faq" },
-  { href: "/admin/tickets", icon: Mail, labelKey: "tickets" },
+  { href: "/admin/tickets", icon: Mail, labelKey: "tickets", badge: "tickets" },
 ];
 
 const settingsNav: { icon: React.ElementType; labelKey: NavKey; children: { href: string; icon: React.ElementType; labelKey: NavKey }[] } = {
@@ -81,7 +84,7 @@ function SidebarContent({
   pathname,
   isSettingsActive,
   settingsOpen,
-  pendingCount,
+  badgeCounts,
   onToggleSettings,
   onNavigate,
   onClose,
@@ -90,7 +93,7 @@ function SidebarContent({
   pathname: string;
   isSettingsActive: boolean;
   settingsOpen: boolean;
-  pendingCount: number;
+  badgeCounts: BadgeCounts;
   onToggleSettings: () => void;
   onNavigate?: () => void;
   onClose?: () => void;
@@ -129,20 +132,21 @@ function SidebarContent({
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));
+          const count = item.badge ? badgeCounts[item.badge] : 0;
           return (
             <Link key={item.href} href={item.href} onClick={onNavigate}
               title={collapsed ? t.adminNav[item.labelKey] : undefined}
-              className={`relative flex items-center py-2.5 rounded-xl text-sm font-medium transition-all ${itemLayout} ${
+              className={`relative flex items-center py-2.5 rounded-xl text-[13px] font-medium transition-all ${itemLayout} ${
                 isActive ? "bg-[#E87722] text-white" : "text-gray-400 hover:bg-white/10 hover:text-white"
               }`}>
               <Icon size={20} strokeWidth={1.25} className="shrink-0" />
               {!collapsed && t.adminNav[item.labelKey]}
-              {item.badge && pendingCount > 0 && collapsed && (
+              {count > 0 && collapsed && (
                 <span className="absolute top-1.5 right-2 w-2 h-2 bg-red-500 rounded-full" />
               )}
-              {item.badge && pendingCount > 0 && !collapsed && (
+              {count > 0 && !collapsed && (
                 <span className="ml-auto bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
-                  {pendingCount > 99 ? "99+" : pendingCount}
+                  {count > 99 ? "99+" : count}
                 </span>
               )}
             </Link>
@@ -155,7 +159,7 @@ function SidebarContent({
             type="button"
             onClick={onToggleSettings}
             title={collapsed ? t.adminNav[settingsNav.labelKey] : undefined}
-            className={`flex items-center py-2.5 rounded-xl text-sm font-medium transition-all w-full ${itemLayout} ${
+            className={`flex items-center py-2.5 rounded-xl text-[13px] font-medium transition-all w-full ${itemLayout} ${
               isSettingsActive ? "bg-[#E87722] text-white" : "text-gray-400 hover:bg-white/10 hover:text-white"
             }`}
           >
@@ -171,7 +175,7 @@ function SidebarContent({
                 return (
                   <Link key={child.href} href={child.href} onClick={onNavigate}
                     title={collapsed ? t.adminNav[child.labelKey] : undefined}
-                    className={`flex items-center py-2 rounded-xl text-sm font-medium transition-all ${itemLayout} ${
+                    className={`flex items-center py-2 rounded-xl text-[13px] font-medium transition-all ${itemLayout} ${
                       isChildActive ? "text-[#E87722]" : "text-gray-400 hover:bg-white/10 hover:text-white"
                     }`}>
                     <ChildIcon size={20} strokeWidth={1.25} className="shrink-0" />
@@ -188,7 +192,7 @@ function SidebarContent({
         <button
           onClick={() => signOut({ callbackUrl: "/connexion" })}
           title={collapsed ? t.adminNav.signOut : undefined}
-          className={`flex items-center py-2 rounded-xl text-sm text-gray-400 hover:bg-white/10 hover:text-white w-full transition-all ${itemLayout}`}
+          className={`flex items-center py-2 rounded-xl text-[13px] text-gray-400 hover:bg-white/10 hover:text-white w-full transition-all ${itemLayout}`}
         >
           <LogOut size={20} strokeWidth={1.25} className="shrink-0" />
           {!collapsed && t.adminNav.signOut}
@@ -206,13 +210,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [prevPathname, setPrevPathname] = useState(pathname);
-  const [pendingCount, setPendingCount] = useState(0);
+  const [badgeCounts, setBadgeCounts] = useState<BadgeCounts>({ moderation: 0, tickets: 0 });
 
   useEffect(() => {
-    fetch("/api/admin/moderation/count")
-      .then((r) => r.json())
-      .then((d) => setPendingCount(d.count ?? 0))
-      .catch(() => {});
+    const load = (key: keyof BadgeCounts, url: string) =>
+      fetch(url)
+        .then((r) => r.json())
+        .then((d) => setBadgeCounts((prev) => ({ ...prev, [key]: d.count ?? 0 })))
+        .catch(() => {});
+    load("moderation", "/api/admin/moderation/count");
+    load("tickets", "/api/admin/tickets/count");
   }, [pathname]);
 
   // Ferme le menu mobile à chaque changement de page
@@ -234,14 +241,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Sidebar desktop */}
       <aside
         className={`hidden md:flex flex-col bg-[#1A1A2E] h-dvh fixed left-0 top-0 z-40 transition-[width] duration-300 ease-in-out ${
-          sidebarOpen ? "w-60" : "w-16"
+          sidebarOpen ? "w-[255px]" : "w-16"
         }`}
       >
         <SidebarContent
           pathname={pathname}
           isSettingsActive={isSettingsActive}
           settingsOpen={settingsOpen}
-          pendingCount={pendingCount}
+          badgeCounts={badgeCounts}
           onToggleSettings={() => setSettingsOpen((open) => !open)}
           collapsed={!sidebarOpen}
         />
@@ -266,14 +273,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           pathname={pathname}
           isSettingsActive={isSettingsActive}
           settingsOpen={settingsOpen}
-          pendingCount={pendingCount}
+          badgeCounts={badgeCounts}
           onToggleSettings={() => setSettingsOpen((open) => !open)}
           onNavigate={() => setMobileMenuOpen(false)}
           onClose={() => setMobileMenuOpen(false)}
         />
       </aside>
 
-      <main className={`flex-1 min-w-0 min-h-dvh transition-[margin] duration-300 ease-in-out ${sidebarOpen ? "md:ml-60" : "md:ml-16"}`}>
+      <main className={`flex-1 min-w-0 min-h-dvh transition-[margin] duration-300 ease-in-out ${sidebarOpen ? "md:ml-[255px]" : "md:ml-16"}`}>
         {/* Top bar */}
         <div className="bg-white/70 backdrop-blur-md border-b border-white/80 px-4 sm:px-6 py-3 flex items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-3 min-w-0">

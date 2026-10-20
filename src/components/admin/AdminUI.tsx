@@ -78,8 +78,8 @@ export function KpiCard({ icon: Icon, value, label, caption, ratio, color }: {
         backgroundImage: `linear-gradient(135deg, ${color}24 0%, ${color}0D 55%, #ffffff 100%)`,
       }}
     >
-      <div className="relative w-14 h-14 shrink-0" title={caption}>
-        <svg viewBox="0 0 56 56" className="w-14 h-14 -rotate-90">
+      <div className="relative w-12 h-12 shrink-0" title={caption}>
+        <svg viewBox="0 0 56 56" className="w-12 h-12 -rotate-90">
           <circle cx="28" cy="28" r="19" fill="#ffffff" />
           <circle cx="28" cy="28" r={r} fill="none" stroke="#ffffff" strokeWidth={4} />
           <circle
@@ -89,11 +89,11 @@ export function KpiCard({ icon: Icon, value, label, caption, ratio, color }: {
           />
         </svg>
         <span className="absolute inset-0 flex items-center justify-center" style={{ color }}>
-          <Icon {...ICON} />
+          <Icon size={16} strokeWidth={ICON.strokeWidth} />
         </span>
       </div>
       <div className="relative min-w-0">
-        <p className="text-2xl font-semibold text-[#1A1A2E] leading-tight tabular-nums truncate">{value}</p>
+        <p className="text-lg font-semibold text-[#1A1A2E] leading-tight tabular-nums truncate">{value}</p>
         <p className="text-sm text-gray-700 leading-snug">{label}</p>
         {caption && <p className="text-xs text-gray-500 leading-snug">{caption}</p>}
       </div>

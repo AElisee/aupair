@@ -1,15 +1,38 @@
 /** Modèles HTML des emails transactionnels envoyés via Resend. */
 
+import { escapeHtml } from "./utils";
+
 const BRAND_COLOR = "#E87722";
 const DARK_COLOR = "#1A1A2E";
-const LOGO_URL = `${process.env.NEXT_PUBLIC_APP_URL ?? "https://www.aupairaeu.com"}/logo-email.png`;
+const PUBLIC_SITE_URL = "https://www.aupairaeu.com";
+
+/**
+ * Le logo est chargé par la messagerie du destinataire (Gmail, Outlook…), qui ne peut pas
+ * atteindre localhost ni une IP privée : dans ce cas on pointe vers le site en production.
+ */
+function publicAssetBaseUrl() {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/+$/, "");
+  if (!appUrl) return PUBLIC_SITE_URL;
+  try {
+    const { protocol, hostname } = new URL(appUrl);
+    const isPrivate =
+      hostname === "localhost" ||
+      hostname.endsWith(".local") ||
+      /^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|0\.0\.0\.0$)/.test(hostname);
+    return protocol === "https:" && !isPrivate ? appUrl : PUBLIC_SITE_URL;
+  } catch {
+    return PUBLIC_SITE_URL;
+  }
+}
+
+const LOGO_URL = `${publicAssetBaseUrl()}/logo-email.png`;
 
 function layout(content: string) {
   return `
     <div style="background-color:#F5F5F5;padding:32px 16px;font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
       <div style="max-width:480px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #eee;">
         <div style="background:${DARK_COLOR};padding:20px 24px;text-align:center;">
-          <img src="${LOGO_URL}" alt="AuPair A.EU" height="32" style="height:32px;display:inline-block;" />
+          <img src="${LOGO_URL}" alt="AuPair A.EU" width="38" height="32" style="width:38px;height:32px;display:inline-block;border:0;" />
         </div>
         <div style="padding:32px 24px;color:#333333;font-size:14px;line-height:1.6;">
           ${content}
@@ -77,5 +100,15 @@ export function accountValidatedEmailHtml(params: {
     <p style="color:#888888;font-size:12px;">
       Cet email est envoyé automatiquement, merci de ne pas y répondre.
     </p>
+  `);
+}
+
+/** Email libre rédigé par un administrateur depuis /admin/utilisateurs. */
+export function adminMessageEmailHtml(params: { message: string }) {
+  const body = escapeHtml(params.message.trim()).replace(/\r?\n/g, "<br />");
+
+  return layout(`
+    <p>${body}</p>
+    <p>— L'équipe AuPair A.EU</p>
   `);
 }
