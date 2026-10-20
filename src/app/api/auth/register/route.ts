@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { calculateAge } from "@/lib/utils";
+import { MAX_NUMBER_OF_KIDS } from "@/lib/constants";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 const REGISTER_MAX_PER_IP = 10;
@@ -27,10 +28,12 @@ type RegisterBody = {
 };
 
 /** Convertit "5+" / "3" en entier, 0 par défaut. */
-function parseKids(value?: string): number {
-  if (!value) return 0;
-  const n = parseInt(value.replace("+", ""), 10);
-  return Number.isFinite(n) ? n : 0;
+/** Nombre d'enfants : entier de 0 à MAX_NUMBER_OF_KIDS, sinon `null`. */
+function parseKids(value?: string): number | null {
+  const v = value?.trim() ?? "";
+  if (!/^\d+$/.test(v)) return null;
+  const n = Number(v);
+  return n <= MAX_NUMBER_OF_KIDS ? n : null;
 }
 
 export async function POST(request: Request) {
@@ -77,6 +80,14 @@ export async function POST(request: Request) {
   if (role === "famille" && !body.hostCountry) {
     return NextResponse.json(
       { error: "Le pays d'accueil est obligatoire." },
+      { status: 400 }
+    );
+  }
+
+  const numberOfKids = role === "famille" ? parseKids(body.numberOfKids) : 0;
+  if (numberOfKids === null) {
+    return NextResponse.json(
+      { error: "Nombre d'enfants invalide." },
       { status: 400 }
     );
   }
@@ -162,7 +173,7 @@ export async function POST(request: Request) {
                   country: body.hostCountry ?? "",
                   city: body.city ?? "",
                   maritalStatus: "MARRIED",
-                  numberOfKids: parseKids(body.numberOfKids),
+                  numberOfKids,
                   parentsAges: [],
                   kidsAges: [],
                   preferredLanguages: [],

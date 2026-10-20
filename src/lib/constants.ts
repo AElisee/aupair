@@ -32,6 +32,9 @@ export const EDUCATION_LEVELS = [
 
 export const DURATIONS = ["3 mois", "6 mois", "1 an", "2 ans"];
 
+/** Nombre d'enfants maximal accepté à l'inscription d'une famille (saisie libre comprise). */
+export const MAX_NUMBER_OF_KIDS = 20;
+
 export const REPORT_REASONS = [
   "Faux profil",
   "Comportement inapproprié",

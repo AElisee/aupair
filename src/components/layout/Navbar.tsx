@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { Menu, X, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,16 +12,23 @@ import { LanguageToggle } from "./LanguageToggle";
 import { getDefaultRedirectForRole } from "@/lib/safe-redirect";
 
 const navLinks = [
-  { href: "/trouver-au-pair", key: "findAuPair" },
-  { href: "/trouver-famille", key: "findFamily" },
+  { href: "/", key: "home" },
+  { href: "/trouver-au-pair", key: "auPair" },
+  { href: "/trouver-famille", key: "family" },
   { href: "/devenir-au-pair", key: "becomeAuPair" },
   { href: "/tarifs", key: "pricing" },
   { href: "/blog", key: "blog" },
 ] as const;
 
+// Lien actif : correspondance exacte pour l'accueil, par préfixe pour les autres rubriques.
+function isActive(pathname: string, href: string) {
+  return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useI18n();
+  const pathname = usePathname() ?? "/";
   const close = useCallback(() => setIsOpen(false), []);
 
   // Tiroir ouvert : bloque le défilement de la page et ferme avec Échap.
@@ -52,12 +60,36 @@ export default function Navbar() {
         : getDefaultRedirectForRole(session.user.role)
     : "/connexion";
 
+  // Au pair / famille : l'accès à l'espace n'est proposé qu'une fois le profil validé
+  // (masqué pendant le chargement pour éviter un affichage furtif).
+  const userId = session?.user.id;
+  const role = session?.user.role;
+  const hasProfile = role === "AU_PAIR" || role === "FAMILLE";
+  const [profileStatus, setProfileStatus] = useState<{ userId: string; status: string | null } | null>(null);
+  useEffect(() => {
+    if (!userId || !hasProfile) return;
+    let cancelled = false;
+    fetch(role === "AU_PAIR" ? "/api/profile/au-pair" : "/api/profile/famille")
+      .then((res) => (res.ok ? res.json() : null))
+      .catch(() => null)
+      .then((json) => {
+        if (!cancelled) setProfileStatus({ userId, status: json?.status ?? null });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, role, hasProfile]);
+  const showAccountLink =
+    !session ||
+    !hasProfile ||
+    (profileStatus !== null && profileStatus.userId === userId && profileStatus.status !== "PENDING");
+
   return (
     <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 font-bold text-sm sm:text-xl">
+          <Link href="/" className="flex items-center gap-2 font-semibold text-sm sm:text-base">
             <Image
               src="/Logo_au_pair.png"
               alt="AuPair A.EU"
@@ -72,27 +104,35 @@ export default function Navbar() {
 
           {/* Nav desktop */}
           <div className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="px-3 py-2 text-sm text-gray-600 hover:text-[#E87722] font-medium transition-colors rounded-xl hover:bg-[#FFF3E0]"
-              >
-                {t.navbar[link.key]}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              const active = isActive(pathname, link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  aria-current={active ? "page" : undefined}
+                  className={`px-3 py-2 text-sm font-medium transition-colors rounded-xl hover:text-[#E87722] hover:bg-[#FFF3E0] ${
+                    active ? "text-[#E87722] bg-[#FFF3E0]" : "text-gray-600"
+                  }`}
+                >
+                  {t.navbar[link.key]}
+                </Link>
+              );
+            })}
           </div>
 
           {/* Actions desktop */}
           <div className="hidden md:flex items-center gap-3">
             <LanguageToggle />
 
-            <Link href={profileUrl}>
-              <Button variant="ghost" size="sm">
-                <User className="w-4 h-4" />
-                {accountLabel}
-              </Button>
-            </Link>
+            {showAccountLink && (
+              <Link href={profileUrl}>
+                <Button variant="ghost" size="sm">
+                  <User className="w-4 h-4" />
+                  {accountLabel}
+                </Button>
+              </Link>
+            )}
 
             {session ? (
               <Button size="sm" onClick={() => signOut({ callbackUrl: "/" })}>
@@ -153,25 +193,33 @@ export default function Navbar() {
             </div>
 
             <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="block px-3 py-2.5 text-sm text-gray-700 hover:text-[#E87722] hover:bg-[#FFF3E0] rounded-xl transition-colors"
-                  onClick={close}
-                >
-                  {t.navbar[link.key]}
-                </Link>
-              ))}
+              {navLinks.map((link) => {
+                const active = isActive(pathname, link.href);
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    aria-current={active ? "page" : undefined}
+                    className={`block px-3 py-2.5 text-sm rounded-xl transition-colors hover:text-[#E87722] hover:bg-[#FFF3E0] ${
+                      active ? "text-[#E87722] bg-[#FFF3E0] font-medium" : "text-gray-700"
+                    }`}
+                    onClick={close}
+                  >
+                    {t.navbar[link.key]}
+                  </Link>
+                );
+              })}
             </div>
 
             <div className="flex flex-col gap-2 px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-gray-100">
-              <Link href={profileUrl} onClick={close}>
-                <Button variant="outline" size="sm" className="w-full">
-                  <User className="w-4 h-4" />
-                  {accountLabel}
-                </Button>
-              </Link>
+              {showAccountLink && (
+                <Link href={profileUrl} onClick={close}>
+                  <Button variant="outline" size="sm" className="w-full">
+                    <User className="w-4 h-4" />
+                    {accountLabel}
+                  </Button>
+                </Link>
+              )}
               {session ? (
                 <Button
                   size="sm"

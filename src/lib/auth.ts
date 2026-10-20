@@ -1,4 +1,4 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
@@ -10,6 +10,11 @@ import { ADMIN_SESSION_MAX_AGE_MS } from "./constants";
 
 const LOGIN_MAX_ATTEMPTS = 5;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+
+/** Identifiants valides mais profil pas encore validé par l'admin (code lu par /connexion). */
+class PendingValidationError extends CredentialsSignin {
+  code = "pending_validation";
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -41,6 +46,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const user = await prisma.user.findUnique({
           where: { email: normalizedEmail },
+          include: {
+            auPairProfile: { select: { status: true } },
+            familyProfile: { select: { status: true } },
+          },
         });
 
         if (!user || !user.password) return null;
@@ -54,6 +63,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!user.isActive) return null;
 
         await resetRateLimit(rateLimitKey);
+
+        // Pas de connexion tant que l'admin n'a pas validé le profil. Vérifié après le
+        // mot de passe pour ne pas révéler le statut d'un compte à un tiers.
+        const profileStatus =
+          user.auPairProfile?.status ?? user.familyProfile?.status;
+        if (profileStatus === "PENDING") throw new PendingValidationError();
 
         return {
           id: user.id,

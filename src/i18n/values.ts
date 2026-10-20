@@ -203,6 +203,7 @@ const SERVER_ERRORS: Record<string, string> = {
   "Date de naissance invalide.": "Invalid date of birth.",
   "La date de naissance est obligatoire.": "Date of birth is required.",
   "Le pays d'accueil est obligatoire.": "Host country is required.",
+  "Nombre d'enfants invalide.": "Invalid number of children.",
   "Rôle invalide.": "Invalid role.",
   "Un compte existe déjà avec cet email.": "An account already exists with this email.",
   "Vous devez avoir au moins 18 ans pour vous inscrire en tant qu'au pair.":

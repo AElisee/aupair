@@ -10,8 +10,9 @@ import type { Dictionary } from "./index";
 export const site = {
   // ─── Barre de navigation ───────────────────────────────────────────────────
   navbar: {
-    findAuPair: { fr: "Trouver un au pair", en: "Find an au pair" },
-    findFamily: { fr: "Trouver une famille", en: "Find a family" },
+    home: { fr: "Accueil", en: "Home" },
+    auPair: { fr: "Au pair", en: "Au pair" },
+    family: { fr: "Famille", en: "Family" },
     becomeAuPair: { fr: "Devenir au pair", en: "Become an au pair" },
     pricing: { fr: "Tarifs", en: "Pricing" },
     blog: { fr: "Blog", en: "Blog" },

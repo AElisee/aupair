@@ -18,6 +18,7 @@ import { DateField } from "@/components/ui/date-field";
 import { useCountries } from "@/hooks/useCountries";
 import { useConstants } from "@/hooks/useConstants";
 import { calculateAge } from "@/lib/utils";
+import { MAX_NUMBER_OF_KIDS } from "@/lib/constants";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { useI18n } from "@/i18n";
@@ -36,7 +37,7 @@ const EXPERIENCE_OPTIONS = [
 ];
 
 const PAGE_BACKGROUND =
-  "bg-[radial-gradient(ellipse_at_top_left,rgba(232,119,34,0.18),transparent_55%),radial-gradient(ellipse_at_top_right,rgba(58,91,168,0.14),transparent_50%),radial-gradient(ellipse_at_bottom,rgba(63,164,91,0.12),transparent_60%),linear-gradient(180deg,#FFF8F1_0%,#F7F4FA_55%,#F1F6F3_100%)] bg-fixed";
+  "bg-[radial-gradient(ellipse_at_top_left,rgba(232,119,34,0.06),transparent_50%),radial-gradient(ellipse_at_top_right,rgba(58,91,168,0.10),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(63,164,91,0.07),transparent_60%),linear-gradient(180deg,#F8F9FB_0%,#F5F6FA_55%,#F3F6F5_100%)] bg-fixed";
 
 function InscriptionContent() {
   const searchParams = useSearchParams();
@@ -101,8 +102,10 @@ function InscriptionContent() {
       if (!form.hostCountry)
         errs.hostCountry = e.hostCountry;
       if (!form.city) errs.city = e.city;
-      if (!form.numberOfKids)
-        errs.numberOfKids = e.numberOfKids;
+      const kids = form.numberOfKids.trim();
+      if (!kids) errs.numberOfKids = e.numberOfKids;
+      else if (!/^\d+$/.test(kids) || Number(kids) > MAX_NUMBER_OF_KIDS)
+        errs.numberOfKids = e.numberOfKidsInvalid(MAX_NUMBER_OF_KIDS);
     }
     return errs;
   })();
@@ -145,7 +148,7 @@ function InscriptionContent() {
           educationLevel: form.educationLevel.trim(),
           experience: form.experience.trim(),
           city: form.city,
-          numberOfKids: form.numberOfKids,
+          numberOfKids: form.numberOfKids.trim(),
           hostCountry: form.hostCountry,
         }),
       });
@@ -157,17 +160,7 @@ function InscriptionContent() {
         return;
       }
 
-      const { signIn } = await import("next-auth/react");
-      const signInResult = await signIn("credentials", {
-        email: form.email.trim(),
-        password: form.password,
-        redirect: false,
-      });
-
-      if (signInResult?.error) {
-        setSubmitError(s.autoLoginFailed);
-      }
-
+      // Pas de connexion automatique : le compte doit d'abord être validé.
       setDone(true);
     } catch {
       setSubmitError(s.networkError);
@@ -631,10 +624,13 @@ function InscriptionContent() {
                     invalid={!!fieldError("numberOfKids")}
                     aria-label={s.numberOfKids}
                     placeholder={s.select}
-                    options={["1", "2", "3", "4", "5+"].map((n) => ({
+                    options={["0", "1", "2", "3", "4"].map((n) => ({
                       value: n,
                       label: n,
                     }))}
+                    allowCustom
+                    otherLabel={s.otherOption}
+                    customPlaceholder={s.numberOfKidsCustomPlaceholder}
                   />
                   {fieldError("numberOfKids") && (
                     <p className="text-xs text-red-500 mt-1">

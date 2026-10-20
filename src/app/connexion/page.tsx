@@ -45,7 +45,11 @@ function ConnexionForm() {
       });
 
       if (result?.error) {
-        setError(l.invalidCredentials);
+        setError(
+          result.code === "pending_validation"
+            ? l.pendingValidation
+            : l.invalidCredentials
+        );
         return;
       }
 
