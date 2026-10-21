@@ -218,6 +218,12 @@ const SERVER_ERRORS: Record<string, string> = {
   "Sujet invalide.": "Invalid subject.",
   "Merci de préciser l'objet (100 caractères max).": "Please specify the subject (100 characters max).",
   "Trop de messages envoyés. Merci de réessayer plus tard.": "Too many messages sent. Please try again later.",
+  "Le nom est obligatoire.": "Name is required.",
+  "Profil invalide.": "Invalid profile.",
+  "Pays invalide.": "Invalid country.",
+  "La note doit être comprise entre 1 et 5.": "The rating must be between 1 and 5.",
+  "Trop d'avis envoyés. Merci de réessayer plus tard.": "Too many reviews sent. Please try again later.",
+  "Une pièce d'identité est obligatoire.": "An identity document is required.",
   // Back-office
   "Article introuvable": "Article not found.",
   "Ce pays existe déjà": "This country already exists.",
@@ -245,6 +251,10 @@ const SERVER_ERROR_PATTERNS: [RegExp, (m: RegExpMatchArray) => string][] = [
   [
     /^Le fichier dépasse la taille maximale autorisée \((\d+) Mo\)\.$/,
     (m) => `The file exceeds the maximum allowed size (${m[1]} MB).`,
+  ],
+  [
+    /^L'avis doit contenir entre (\d+) et (\d+) caractères\.$/,
+    (m) => `The review must be between ${m[1]} and ${m[2]} characters long.`,
   ],
   [
     /^Vous ne pouvez pas envoyer plus de (\d+) documents au total\.$/,

@@ -20,6 +20,7 @@ const legalLinks = [
   { href: "/confidentialite", key: "privacy" },
   { href: "/cookies", key: "cookies" },
   { href: "/securite", key: "security" },
+  { href: "/mentions-legales", key: "legalNotice" },
 ] as const;
 
 export default function Footer() {
@@ -90,7 +91,10 @@ export default function Footer() {
 
         <div className="border-t border-white/10 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-gray-500">
-            {t.footer.copyright}
+            {t.footer.copyright} ·{" "}
+            <Link href="/mentions-legales" className="hover:text-[#E87722] transition-colors">
+              {t.footer.legalLinks.legalNotice}
+            </Link>
           </p>
           <p className="text-xs text-gray-500">
             {t.footer.compliance}

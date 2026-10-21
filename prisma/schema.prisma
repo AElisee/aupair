@@ -264,6 +264,7 @@ model FamilyProfile {
 
   description        String?       @db.Text
   familyPhotoUrl     String?
+  idDocumentUrls     String[]      @default([])
 
   phoneWhatsapp      String?
 

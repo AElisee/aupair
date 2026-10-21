@@ -53,7 +53,7 @@ export async function GET() {
       waitingDays: waitingDays(p.createdAt),
       hasPhoto: !!p.familyPhotoUrl,
       photoUrl: p.familyPhotoUrl ?? "",
-      hasId: true,
+      hasId: p.idDocumentUrls.length > 0,
     })),
   ].sort((a, b) => b.waitingDays - a.waitingDays);
 

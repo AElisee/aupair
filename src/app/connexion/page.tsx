@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -13,6 +13,7 @@ import {
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
 import { useI18n } from "@/i18n";
+import { AU_PAIRS_BASE_COUNT, FAMILIES_BASE_COUNT } from "@/lib/constants";
 
 function ConnexionForm() {
   const searchParams = useSearchParams();
@@ -21,8 +22,18 @@ function ConnexionForm() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const l = t.login;
+  const [counts, setCounts] = useState({ auPairs: AU_PAIRS_BASE_COUNT, families: FAMILIES_BASE_COUNT });
+
+  useEffect(() => {
+    fetch("/api/stats")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (json) setCounts(json);
+      })
+      .catch(() => {});
+  }, []);
 
   // Validation côté client du callbackUrl dès le chargement de la page.
   // getSafeCallbackUrl rejette toute URL externe, schéma dangereux
@@ -103,7 +114,11 @@ function ConnexionForm() {
             {l.welcomeText}
           </p>
           <div className="mt-8 space-y-3 text-left">
-            {l.highlights.map((item) => (
+            {[
+              l.highlightAuPairs(counts.auPairs.toLocaleString(locale)),
+              l.highlightFamilies(counts.families.toLocaleString(locale)),
+              ...l.highlights,
+            ].map((item) => (
               <p key={item} className="text-gray-300">
                 {item}
               </p>

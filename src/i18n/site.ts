@@ -47,10 +47,11 @@ export const site = {
       privacy: { fr: "Confidentialité", en: "Privacy" },
       cookies: { fr: "Cookies", en: "Cookies" },
       security: { fr: "Sécurité", en: "Security" },
+      legalNotice: { fr: "Mentions légales", en: "Legal notice" },
     },
     copyright: {
-      fr: "© 2026 AuPair A.EU — Éditeur : BODOU SERVICE",
-      en: "© 2026 AuPair A.EU — Publisher: BODOU SERVICE",
+      fr: "© 2026 AuPair A.EU — Édité par BODOU SERVICES",
+      en: "© 2026 AuPair A.EU — Published by BODOU SERVICES",
     },
     compliance: { fr: "Conforme RGPD", en: "GDPR compliant" },
   },
@@ -146,30 +147,19 @@ export const site = {
     },
     testimonials: {
       title: { fr: "Voici ce qu'ils disent de nous", en: "Here's what they say about us" },
-      subtitle: { fr: "Des témoignages authentiques de notre communauté", en: "Genuine testimonials from our community" },
-      items: [
-        {
-          role: { fr: "Au pair camerounaise en France", en: "Cameroonian au pair in France" },
-          content: {
-            fr: "AuPair A.EU m'a permis de trouver une famille formidable à Lyon en seulement 2 semaines. Le processus était simple et l'équipe très réactive. Je recommande à toutes mes sœurs africaines !",
-            en: "AuPair A.EU helped me find a wonderful family in Lyon in just 2 weeks. The process was simple and the team very responsive. I recommend it to all my African sisters!",
-          },
-        },
-        {
-          role: { fr: "Famille d'accueil en Allemagne", en: "Host family in Germany" },
-          content: {
-            fr: "Nous avons trouvé notre au pair ivoirienne via cette plateforme. Elle est fantastique avec nos enfants, parle un français impeccable et s'est intégrée parfaitement à notre famille.",
-            en: "We found our Ivorian au pair through this platform. She is fantastic with our children, speaks flawless French and fitted perfectly into our family.",
-          },
-        },
-        {
-          role: { fr: "Au pair ghanéen en Belgique", en: "Ghanaian au pair in Belgium" },
-          content: {
-            fr: "Grâce à AuPair A.EU, j'ai réalisé mon rêve de vivre en Europe. La plateforme est sérieuse, les profils sont vérifiés, et la messagerie est très pratique pour communiquer avec les familles.",
-            en: "Thanks to AuPair A.EU, I made my dream of living in Europe come true. The platform is reliable, profiles are verified and the messaging makes it easy to talk with families.",
-          },
-        },
-      ],
+      subtitle: { fr: "Les avis laissés par notre communauté", en: "Reviews left by our community" },
+      empty: {
+        fr: "Aucun avis pour le moment. Soyez le premier à partager votre expérience !",
+        en: "No reviews yet. Be the first to share your experience!",
+      },
+      leaveReview: { fr: "Laisser un avis", en: "Leave a review" },
+      seeAll: { fr: "Voir tous les avis", en: "See all reviews" },
+      roles: {
+        AU_PAIR: { fr: "Au pair", en: "Au pair" },
+        FAMILLE: { fr: "Famille d'accueil", en: "Host family" },
+        AUTRE: { fr: "Visiteur", en: "Visitor" },
+      },
+      ratingLabel: { fr: (n: number) => `Note : ${n} sur 5`, en: (n: number) => `Rating: ${n} out of 5` },
     },
     blogPreview: {
       title: { fr: "Notre blog AuPair A.EU", en: "The AuPair A.EU blog" },
@@ -292,8 +282,8 @@ export const site = {
       {
         q: { fr: "Quels pays d'accueil sont disponibles ?", en: "Which host countries are available?" },
         a: {
-          fr: "France, Allemagne, Belgique, Luxembourg, Suisse et États-Unis. D'autres pays seront ajoutés prochainement.",
-          en: "France, Germany, Belgium, Luxembourg, Switzerland and the United States. More countries will be added soon.",
+          fr: "France, Allemagne, Belgique, Italie, Luxembourg et Suisse. D'autres pays seront ajoutés prochainement.",
+          en: "France, Germany, Belgium, Italy, Luxembourg and Switzerland. More countries will be added soon.",
         },
       },
     ],
@@ -393,11 +383,6 @@ export const site = {
         },
       },
     ],
-    testimonial: {
-      fr: "« Nous avons trouvé notre au pair camerounaise via AuPair A.EU. Elle est formidable avec nos enfants, ponctuelle, et s'est parfaitement intégrée. Une expérience magnifique pour toute la famille ! »",
-      en: "“We found our Cameroonian au pair through AuPair A.EU. She is wonderful with our children, punctual, and fitted in perfectly. A wonderful experience for the whole family!”",
-    },
-    testimonialAuthor: { fr: "Famille Martin — Lyon, France", en: "The Martin family — Lyon, France" },
     finalTitle: { fr: "Commencez votre recherche aujourd'hui", en: "Start your search today" },
     finalSubtitle: {
       fr: "Inscription gratuite. Accès immédiat aux profils d'au pairs africains vérifiés.",
@@ -645,8 +630,43 @@ export const site = {
   },
 
   // ─── Témoignages (/temoignages) ────────────────────────────────────────────
-  // Les témoignages eux-mêmes : `home.testimonials` (titre, sous-titre, items).
+  // Titre, sous-titre et cartes des avis : `home.testimonials`.
   testimonialsPage: {
+    formTitle: { fr: "Laissez votre avis", en: "Leave your review" },
+    formSubtitle: {
+      fr: "Au pair, famille d'accueil ou simple visiteur : racontez-nous votre expérience. Votre avis sera publié après vérification par notre équipe.",
+      en: "Au pair, host family or visitor: tell us about your experience. Your review will be published once our team has checked it.",
+    },
+    name: { fr: "Votre nom *", en: "Your name *" },
+    namePlaceholder: { fr: "Ex. : Aminata K. ou Famille Dupont", en: "E.g. Aminata K. or the Dupont family" },
+    youAre: { fr: "Vous êtes *", en: "You are *" },
+    country: { fr: "Pays", en: "Country" },
+    countryPlaceholder: { fr: "Choisir un pays", en: "Choose a country" },
+    otherCountry: { fr: "Autre pays", en: "Other country" },
+    otherCountryPlaceholder: { fr: "Votre pays", en: "Your country" },
+    rating: { fr: "Votre note *", en: "Your rating *" },
+    rateStars: { fr: (n: number) => `${n} étoile(s) sur 5`, en: (n: number) => `${n} star(s) out of 5` },
+    review: { fr: "Votre avis *", en: "Your review *" },
+    reviewPlaceholder: { fr: "Partagez votre expérience avec AuPair A.EU…", en: "Share your experience with AuPair A.EU…" },
+    charCount: { fr: (n: number, max: number) => `${n} / ${max}`, en: (n: number, max: number) => `${n} / ${max}` },
+    submit: { fr: "Envoyer mon avis", en: "Send my review" },
+    sending: { fr: "Envoi…", en: "Sending…" },
+    sentTitle: { fr: "Merci pour votre avis !", en: "Thank you for your review!" },
+    sentText: {
+      fr: "Il sera publié dès qu'il aura été vérifié par notre équipe.",
+      en: "It will be published as soon as our team has checked it.",
+    },
+    sendAnother: { fr: "Laisser un autre avis", en: "Leave another review" },
+    errors: {
+      name: { fr: "Indiquez votre nom.", en: "Enter your name." },
+      role: { fr: "Indiquez votre profil.", en: "Tell us who you are." },
+      rating: { fr: "Choisissez une note.", en: "Choose a rating." },
+      content: {
+        fr: (min: number) => `Votre avis doit contenir au moins ${min} caractères.`,
+        en: (min: number) => `Your review must be at least ${min} characters long.`,
+      },
+    },
+    genericError: { fr: "Impossible d'envoyer votre avis. Veuillez réessayer.", en: "Your review could not be sent. Please try again." },
     ctaTitle: { fr: "À vous d'écrire votre histoire", en: "Your turn to write your story" },
     ctaText: {
       fr: "Rejoignez la communauté AuPair A.EU et vivez, vous aussi, une expérience interculturelle inoubliable.",

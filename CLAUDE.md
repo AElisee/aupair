@@ -52,7 +52,7 @@ npm run db:seed      # Create/update the admin account from ADMIN_* env vars
 The session JWT is extended with `id` and `role` fields. Type augmentations are in `src/types/next-auth.d.ts`.
 
 Existing API routes:
-- `POST /api/auth/register` — creates User + AuPairProfile or FamilyProfile in a single nested Prisma write. Profile fields not collected at registration are filled later in the dashboard.
+- `POST /api/auth/register` — creates User + AuPairProfile or FamilyProfile in a single nested Prisma write. Profile fields not collected at registration are filled later in the dashboard. The signup form sends `multipart/form-data` (`languages` as JSON); a family **must** attach an identity document (`idDocument`, JPG/PNG/PDF, rules in `src/lib/id-documents.ts`), uploaded to the Supabase `id-documents` bucket after the user is created (`uploadIdDocuments()` in `src/lib/id-documents.server.ts`, shared with `/api/profile/id-document`) and stored on `FamilyProfile.idDocumentUrls` — if the upload fails the user is deleted. Shown in the admin profile page for both roles.
 - `/api/auth/[...nextauth]` — NextAuth handler
 
 Auth pages: `signIn` → `/connexion`, `error` → `/connexion`.
@@ -78,7 +78,7 @@ All of these call `auth()` first and return `401` if `!session?.user?.id`.
 
 ## Admin back-office
 
-`/admin/*` pages (`AdminLayout`, sidebar nav: Dashboard, Utilisateurs, Modération, Paiements, Pays, Blog, FAQ, Tickets) are backed by `/api/admin/*` routes, all gated by `requireAdminSession()` (`src/lib/admin.ts`) which returns `null` (→ `403`) unless `session.user.role === "ADMIN"`:
+`/admin/*` pages (`AdminLayout`, sidebar nav: Dashboard, Utilisateurs, Modération, Paiements, Pays, Blog, FAQ, Avis, Tickets) are backed by `/api/admin/*` routes, all gated by `requireAdminSession()` (`src/lib/admin.ts`) which returns `null` (→ `403`) unless `session.user.role === "ADMIN"`:
 
 - `/api/admin/dashboard` (GET) — KPIs (`totalUsers`, `signups30d`, `revenue30d`, `activeSubscriptions`, `pendingProfiles`), recent users, recent payments
 - `/api/admin/users` (GET/PATCH) — combined AuPair + Family list; PATCH applies `action: "validate" | "hide" | "unhide" | "suspend" | "delete"` via `setProfileStatus()`
@@ -86,8 +86,9 @@ All of these call `auth()` first and return `401` if `!session?.user?.id`.
 - `/api/admin/moderation` (GET/PATCH) — `PENDING` profiles sorted by waiting time; PATCH applies `action: "validate" | "reject"`
 - `/api/admin/profile/[userId]` (GET, `?role=AU_PAIR|FAMILLE`) — full profile detail, rendered by `src/app/admin/profil/[userId]/page.tsx` (full-page view, opened in a new tab via the "eye" icon in `/admin/utilisateurs` and `/admin/moderation`; header with status actions via `PATCH /api/admin/users`, KPI row — completion, views, latest subscription / kids, validation — and a two-column layout). Profile completion fields live in `src/lib/profile-completion.ts`, shared with `/api/dashboard/*`
 - `/api/admin/countries` (GET/POST/PATCH/DELETE) — CRUD for the `Country` table, used by `/admin/pays`
+- `/api/admin/testimonials` (GET/PATCH `isPublished`/DELETE) + `/count` (sidebar badge) — moderation of visitor reviews at `/admin/avis`. Reviews are submitted by anyone via `POST /api/testimonials` (rate-limited 3/day/IP, saved with `isPublished: false`) from the form on `/temoignages`; only published ones are shown (`getPublishedTestimonials()` in `src/lib/testimonials.ts`, client-safe constants/types in `testimonials-shared.ts`) on the home `TestimonialsSection` (3 latest) and `/temoignages` (all). There are no hardcoded testimonials anymore.
 
-- `/api/admin/documents` (GET/POST/PATCH/DELETE) — CRUD for `LegalDocument` (CGU, privacy policy, …; FR/EN content stored as **HTML**), used by `/admin/parametres/documents`, which edits it with a Tiptap WYSIWYG editor (`src/components/admin/RichTextEditor.tsx`). HTML is sanitized server-side with `sanitize-html` (`sanitizeDocumentHtml()` in `src/lib/legal-documents.server.ts`, strict allowlist matching the editor's output) both on save and on public render. Older docs saved as a Markdown subset are detected (`isLegacyMarkdown`) and converted on the fly by `toDocumentHtml()` (`src/lib/legal-documents.ts`). Published docs are rendered publicly at `/cgu`, `/cgv`, `/confidentialite`, `/securite`, `/cookies` (dedicated slugs in `DEDICATED_DOCUMENT_PATHS`; `/documents/<dedicated slug>` redirects there) or `/documents/[slug]`, via `LegalDocumentView` (`src/components/legal/`), styled by the `.legal-content` CSS class in `globals.css` (shared with the editor). Missing/unpublished → 404.
+- `/api/admin/documents` (GET/POST/PATCH/DELETE) — CRUD for `LegalDocument` (CGU, privacy policy, …; FR/EN content stored as **HTML**), used by `/admin/parametres/documents`, which edits it with a Tiptap WYSIWYG editor (`src/components/admin/RichTextEditor.tsx`). HTML is sanitized server-side with `sanitize-html` (`sanitizeDocumentHtml()` in `src/lib/legal-documents.server.ts`, strict allowlist matching the editor's output) both on save and on public render. Older docs saved as a Markdown subset are detected (`isLegacyMarkdown`) and converted on the fly by `toDocumentHtml()` (`src/lib/legal-documents.ts`). Published docs are rendered publicly at `/cgu`, `/cgv`, `/confidentialite`, `/securite`, `/cookies`, `/mentions-legales` (dedicated slugs in `DEDICATED_DOCUMENT_PATHS`; `/documents/<dedicated slug>` redirects there) or `/documents/[slug]`, via `LegalDocumentView` (`src/components/legal/`), styled by the `.legal-content` CSS class in `globals.css` (shared with the editor). Missing/unpublished → 404, except `/mentions-legales` which falls back to `DEFAULT_LEGAL_NOTICE` (`src/content/mentions-legales.ts`, publisher BODOU SERVICES).
 
 `setProfileStatus()` (`src/lib/admin.ts`) sets `validatedAt`/`validatedBy` when transitioning a profile to `ACTIVE`.
 
@@ -143,6 +144,8 @@ Origin/host countries, flags, and WhatsApp dial codes live in the `Country` mode
 - `src/hooks/useCountries.ts` — client hook fetching `/api/countries`, used by registration/profile forms and the admin profile page for country selects and flag lookups
 
 ## Key constants
+
+Public sign-up counters (home `StatsSection`, login page via `GET /api/stats`) are `AU_PAIRS_BASE_COUNT` (2000) / `FAMILIES_BASE_COUNT` (1500) + the number of non-`DELETED` profiles (`getPublicStats()` in `src/lib/public-stats.ts`); the home page is `force-dynamic` for this.
 
 `src/lib/constants.ts` — `LANGUAGES`, subscription price (`SUBSCRIPTION_PRICE_EUR = 32`, `SUBSCRIPTION_PRICE_XOF = 20800`, `SUBSCRIPTION_DAYS = 30`), `EDUCATION_LEVELS`, `DURATIONS`.
 

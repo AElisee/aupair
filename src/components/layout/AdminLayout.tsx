@@ -7,13 +7,13 @@ import { signOut } from "next-auth/react";
 import { useI18n } from "@/i18n";
 import type { admin } from "@/i18n/admin";
 import { LanguageToggle } from "./LanguageToggle";
-import { Globe, LayoutDashboard, Users, Shield, DollarSign, FileText, HelpCircle, Mail, LogOut, Bell, Settings, ChevronDown, SlidersHorizontal, Menu, X, Send, Wallet, KeyRound, FileCheck, ChevronRight } from "lucide-react";
+import { Globe, LayoutDashboard, Users, Shield, DollarSign, FileText, HelpCircle, Mail, MessageSquareQuote, LogOut, Bell, Settings, ChevronDown, SlidersHorizontal, Menu, X, Send, Wallet, KeyRound, FileCheck, ChevronRight } from "lucide-react";
 
 // Libellés : section `adminNav` de src/i18n/admin.ts
 type NavKey = keyof typeof admin.adminNav;
 
 /** Compteurs affichés en badge dans le menu */
-type BadgeCounts = { moderation: number; tickets: number };
+type BadgeCounts = { moderation: number; tickets: number; testimonials: number };
 
 const navItems: { href: string; icon: React.ElementType; labelKey: NavKey; badge?: keyof BadgeCounts }[] = [
   { href: "/admin", icon: LayoutDashboard, labelKey: "dashboard" },
@@ -23,6 +23,7 @@ const navItems: { href: string; icon: React.ElementType; labelKey: NavKey; badge
   { href: "/admin/pays", icon: Globe, labelKey: "countries" },
   { href: "/admin/blog", icon: FileText, labelKey: "blog" },
   { href: "/admin/faq", icon: HelpCircle, labelKey: "faq" },
+  { href: "/admin/avis", icon: MessageSquareQuote, labelKey: "testimonials", badge: "testimonials" },
   { href: "/admin/tickets", icon: Mail, labelKey: "tickets", badge: "tickets" },
 ];
 
@@ -210,7 +211,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [prevPathname, setPrevPathname] = useState(pathname);
-  const [badgeCounts, setBadgeCounts] = useState<BadgeCounts>({ moderation: 0, tickets: 0 });
+  const [badgeCounts, setBadgeCounts] = useState<BadgeCounts>({ moderation: 0, tickets: 0, testimonials: 0 });
 
   useEffect(() => {
     const load = (key: keyof BadgeCounts, url: string) =>
@@ -220,6 +221,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         .catch(() => {});
     load("moderation", "/api/admin/moderation/count");
     load("tickets", "/api/admin/tickets/count");
+    load("testimonials", "/api/admin/testimonials/count");
   }, [pathname]);
 
   // Ferme le menu mobile à chaque changement de page

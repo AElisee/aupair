@@ -11,6 +11,10 @@ export const SUBSCRIPTION_PRICE_EUR = 32;
 export const SUBSCRIPTION_PRICE_XOF = 20800;
 export const SUBSCRIPTION_DAYS = 30;
 
+/** Base ajoutée au nombre réel d'inscrits pour les compteurs publics (accueil, connexion) — voir `public-stats.ts`. */
+export const AU_PAIRS_BASE_COUNT = 2000;
+export const FAMILIES_BASE_COUNT = 1500;
+
 export const SUBSCRIPTION_FEATURES = [
   "Profil visible par toutes les familles d'accueil",
   "Messagerie illimitée avec les familles",

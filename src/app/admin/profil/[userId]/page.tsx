@@ -67,6 +67,7 @@ type CommonDetail = {
   updatedAt: string;
   completion: number;
   missingFields: string[];
+  idDocumentUrls: string[];
 };
 
 type AuPairDetail = CommonDetail & {
@@ -97,7 +98,6 @@ type AuPairDetail = CommonDetail & {
   phoneWhatsapp1: string | null;
   phoneWhatsapp2: string | null;
   profilePhotoUrl: string | null;
-  idDocumentUrls: string[];
   isAvailable: boolean;
   subscription: { status: SubscriptionStatus; expiresAt: string; amount: number; currency: string } | null;
 };
@@ -634,26 +634,24 @@ export default function AdminProfilePage() {
                     </div>
                   )}
                 </div>
-                {isAuPair && (
-                  <div>
-                    <p className={`${LABEL} mb-1.5`}>{tp.idDocument}</p>
-                    {data.idDocumentUrls.length > 0 ? (
-                      <div className="space-y-2">
-                        {data.idDocumentUrls.map((url, i) => (
-                          <DocumentLink
-                            key={url}
-                            href={url}
-                            label={tp.viewDocument(data.idDocumentUrls.length > 1 ? String(i + 1) : "").trim()}
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 text-sm text-gray-400 border border-dashed border-gray-200 rounded-xl p-3">
-                        <FileText size={16} strokeWidth={ICON.strokeWidth} /> {tp.noDocument}
-                      </div>
-                    )}
-                  </div>
-                )}
+                <div>
+                  <p className={`${LABEL} mb-1.5`}>{tp.idDocument}</p>
+                  {data.idDocumentUrls.length > 0 ? (
+                    <div className="space-y-2">
+                      {data.idDocumentUrls.map((url, i) => (
+                        <DocumentLink
+                          key={url}
+                          href={url}
+                          label={tp.viewDocument(data.idDocumentUrls.length > 1 ? String(i + 1) : "").trim()}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-sm text-gray-400 border border-dashed border-gray-200 rounded-xl p-3">
+                      <FileText size={16} strokeWidth={ICON.strokeWidth} /> {tp.noDocument}
+                    </div>
+                  )}
+                </div>
               </div>
             </Section>
 

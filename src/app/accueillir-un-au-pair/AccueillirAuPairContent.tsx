@@ -1,8 +1,7 @@
 "use client";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Star, CheckCircle, Users, Globe, Heart, Zap } from "lucide-react";
-import { CountryFlag } from "@/components/ui/CountryFlag";
+import { ArrowRight, CheckCircle, Users, Globe, Heart, Zap } from "lucide-react";
 import { useI18n } from "@/i18n";
 
 // Icônes des arguments, dans le même ordre que `hostAuPair.reasons` (src/i18n/site.ts)
@@ -94,19 +93,6 @@ export default function AccueillirAuPairContent() {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Témoignage */}
-      <section className="py-16 bg-[#FFF3E0]">
-        <div className="max-w-2xl mx-auto px-4 text-center">
-          <div className="flex justify-center gap-1 mb-4">
-            {[1, 2, 3, 4, 5].map((i) => <Star key={i} className="w-5 h-5 fill-[#E87722] text-[#E87722]" />)}
-          </div>
-          <p className="text-[#1A1A2E] text-lg italic mb-6">{p.testimonial}</p>
-          <p className="font-bold text-[#E87722] inline-flex items-center gap-2">
-            {p.testimonialAuthor} <CountryFlag flag="🇫🇷" className="h-4 w-auto rounded-sm" />
-          </p>
         </div>
       </section>
 

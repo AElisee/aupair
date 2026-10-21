@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { calculateAge } from "@/lib/utils";
 import { MAX_NUMBER_OF_KIDS } from "@/lib/constants";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { validateIdDocument } from "@/lib/id-documents";
+import { uploadIdDocuments } from "@/lib/id-documents.server";
 
 const REGISTER_MAX_PER_IP = 10;
 const REGISTER_WINDOW_MS = 60 * 60 * 1000;
@@ -36,10 +38,32 @@ function parseKids(value?: string): number | null {
   return n <= MAX_NUMBER_OF_KIDS ? n : null;
 }
 
+/**
+ * Le formulaire envoie un multipart/form-data (champs texte, `languages` en JSON, et la pièce
+ * d'identité `idDocument` obligatoire pour une famille). Le JSON reste accepté pour les au pairs.
+ */
+async function readBody(request: Request): Promise<{ body: RegisterBody; idDocument: File | null }> {
+  if (!request.headers.get("content-type")?.includes("multipart/form-data")) {
+    return { body: await request.json(), idDocument: null };
+  }
+  const formData = await request.formData();
+  const body: Record<string, unknown> = {};
+  for (const [key, value] of formData.entries()) {
+    if (typeof value === "string") body[key] = value;
+  }
+  if (typeof body.languages === "string") {
+    const languages = JSON.parse(body.languages);
+    body.languages = Array.isArray(languages) ? languages.filter((l) => typeof l === "string") : [];
+  }
+  const file = formData.get("idDocument");
+  return { body: body as RegisterBody, idDocument: file instanceof File && file.size > 0 ? file : null };
+}
+
 export async function POST(request: Request) {
   let body: RegisterBody;
+  let idDocument: File | null;
   try {
-    body = await request.json();
+    ({ body, idDocument } = await readBody(request));
   } catch {
     return NextResponse.json({ error: "Requête invalide." }, { status: 400 });
   }
@@ -82,6 +106,19 @@ export async function POST(request: Request) {
       { error: "Le pays d'accueil est obligatoire." },
       { status: 400 }
     );
+  }
+
+  if (role === "famille") {
+    if (!idDocument) {
+      return NextResponse.json(
+        { error: "Une pièce d'identité est obligatoire." },
+        { status: 400 }
+      );
+    }
+    const fileError = validateIdDocument(idDocument);
+    if (fileError) {
+      return NextResponse.json({ error: fileError }, { status: 400 });
+    }
   }
 
   const numberOfKids = role === "famille" ? parseKids(body.numberOfKids) : 0;
@@ -141,8 +178,9 @@ export async function POST(request: Request) {
   const userRole = role === "au-pair" ? "AU_PAIR" : "FAMILLE";
 
   // ── Création User + profil associé (transaction) ────────────────────────────
+  let userId: string;
   try {
-    await prisma.user.create({
+    ({ id: userId } = await prisma.user.create({
       data: {
         email: normalizedEmail,
         password: hashedPassword,
@@ -181,13 +219,36 @@ export async function POST(request: Request) {
               },
             }),
       },
-    });
+      select: { id: true },
+    }));
   } catch (err) {
     console.error("[register] Prisma error:", err);
     return NextResponse.json(
       { error: "Erreur lors de la création du compte." },
       { status: 500 }
     );
+  }
+
+  // Pièce d'identité de la famille : envoyée une fois le compte créé (dossier = id utilisateur).
+  // En cas d'échec, le compte est supprimé pour que la famille puisse recommencer l'inscription.
+  if (role === "famille" && idDocument) {
+    const urls = await uploadIdDocuments(userId, [idDocument]).catch((err) => {
+      console.error("[register] ID document upload error:", err);
+      return null;
+    });
+    const saved =
+      urls &&
+      (await prisma.familyProfile
+        .update({ where: { userId }, data: { idDocumentUrls: urls } })
+        .then(() => true)
+        .catch((err) => {
+          console.error("[register] Prisma error:", err);
+          return false;
+        }));
+    if (!saved) {
+      await prisma.user.delete({ where: { id: userId } }).catch(() => {});
+      return NextResponse.json({ error: "Échec de l'envoi du document." }, { status: 500 });
+    }
   }
 
   return NextResponse.json({ ok: true }, { status: 201 });

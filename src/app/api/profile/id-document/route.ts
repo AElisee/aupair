@@ -1,24 +1,11 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { supabaseAdmin } from "@/lib/supabase";
+import { validateIdDocument } from "@/lib/id-documents";
+import { ID_DOCUMENT_BUCKET as BUCKET, uploadIdDocuments } from "@/lib/id-documents.server";
 
-const BUCKET = "id-documents";
 const MAX_DOCUMENTS = 4;
-
-const ALLOWED_TYPES: Record<string, { ext: string; maxSize: number }> = {
-  "image/jpeg": { ext: "jpg", maxSize: 5 * 1024 * 1024 },
-  "image/png": { ext: "png", maxSize: 5 * 1024 * 1024 },
-  "application/pdf": { ext: "pdf", maxSize: 10 * 1024 * 1024 },
-};
-
-async function ensureBucket() {
-  const { data } = await supabaseAdmin.storage.getBucket(BUCKET);
-  if (!data) {
-    await supabaseAdmin.storage.createBucket(BUCKET, { public: true });
-  }
-}
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -55,36 +42,15 @@ export async function POST(request: Request) {
   }
 
   for (const file of files) {
-    const typeInfo = ALLOWED_TYPES[file.type];
-    if (!typeInfo) {
-      return NextResponse.json({ error: "Format invalide. Utilisez un JPG, PNG ou PDF." }, { status: 400 });
-    }
-    if (file.size > typeInfo.maxSize) {
-      return NextResponse.json({ error: `Le fichier dépasse la taille maximale autorisée (${Math.round(typeInfo.maxSize / 1024 / 1024)} Mo).` }, { status: 400 });
+    const fileError = validateIdDocument(file);
+    if (fileError) {
+      return NextResponse.json({ error: fileError }, { status: 400 });
     }
   }
 
-  await ensureBucket();
-
-  const newUrls: string[] = [];
-  for (const file of files) {
-    const typeInfo = ALLOWED_TYPES[file.type];
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const path = `${session.user.id}/${randomUUID()}.${typeInfo.ext}`;
-
-    const { error: uploadError } = await supabaseAdmin.storage
-      .from(BUCKET)
-      .upload(path, buffer, { contentType: file.type, upsert: true });
-
-    if (uploadError) {
-      console.error("[profile/id-document] Supabase upload error:", uploadError);
-      return NextResponse.json({ error: "Échec de l'envoi du document." }, { status: 500 });
-    }
-
-    const {
-      data: { publicUrl },
-    } = supabaseAdmin.storage.from(BUCKET).getPublicUrl(path);
-    newUrls.push(publicUrl);
+  const newUrls = await uploadIdDocuments(session.user.id, files);
+  if (!newUrls) {
+    return NextResponse.json({ error: "Échec de l'envoi du document." }, { status: 500 });
   }
 
   const idDocumentUrls = [...profile.idDocumentUrls, ...newUrls];

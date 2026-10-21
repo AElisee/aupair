@@ -7,9 +7,9 @@ export const metadata: Metadata = {
     default: "AuPair A.EU — Trouvez un au pair africain ou une famille d'accueil",
     template: "%s | AuPair A.EU",
   },
-  description: "La première plateforme mondiale dédiée aux au pairs africains. Connectez-vous avec des familles en France, Allemagne, Belgique, Luxembourg, Suisse et aux États-Unis.",
+  description: "La première plateforme mondiale dédiée aux au pairs africains. Connectez-vous avec des familles en France, Allemagne, Belgique, Italie, Luxembourg et Suisse.",
   keywords: ["au pair africain", "famille accueil", "au pair Cameroun", "au pair France", "jeune au pair"],
-  authors: [{ name: "BODOU SERVICE" }],
+  authors: [{ name: "BODOU SERVICES" }],
   icons: {
     icon: "/icons/icon.png",
     apple: "/icons/apple-icon.png",

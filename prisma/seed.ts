@@ -27,8 +27,8 @@ const DEFAULT_COUNTRIES: {
   { name: "Tunisie", flag: "🇹🇳", dialCode: "+216", type: "ORIGIN" },
   { name: "Allemagne", flag: "🇩🇪", dialCode: "+49", type: "HOST" },
   { name: "Belgique", flag: "🇧🇪", dialCode: "+32", type: "HOST" },
-  { name: "États-Unis", flag: "🇺🇸", dialCode: "+1", type: "HOST" },
   { name: "France", flag: "🇫🇷", dialCode: "+33", type: "HOST" },
+  { name: "Italie", flag: "🇮🇹", dialCode: "+39", type: "HOST" },
   { name: "Luxembourg", flag: "🇱🇺", dialCode: "+352", type: "HOST" },
   { name: "Suisse", flag: "🇨🇭", dialCode: "+41", type: "HOST" },
 ];
@@ -66,6 +66,20 @@ async function main() {
     });
 
     console.log(`[seed] Compte admin prêt : ${normalizedEmail}`);
+  }
+
+  // L'Italie remplace les États-Unis comme pays d'accueil : on renomme l'ancienne ligne
+  // (une seule fois — ensuite "Italie" existe et l'admin reste libre de rajouter les États-Unis).
+  const [unitedStates, italy] = await Promise.all([
+    prisma.country.findUnique({ where: { name: "États-Unis" } }),
+    prisma.country.findUnique({ where: { name: "Italie" } }),
+  ]);
+  if (unitedStates?.type === "HOST" && !italy) {
+    await prisma.country.update({
+      where: { id: unitedStates.id },
+      data: { name: "Italie", flag: "🇮🇹", dialCode: "+39" },
+    });
+    console.log("[seed] Pays d'accueil États-Unis remplacé par Italie.");
   }
 
   for (const country of DEFAULT_COUNTRIES) {

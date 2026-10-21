@@ -11,6 +11,9 @@ import {
   Home,
   Eye,
   EyeOff,
+  FileText,
+  Upload,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SelectField } from "@/components/ui/select-field";
@@ -19,6 +22,7 @@ import { useCountries } from "@/hooks/useCountries";
 import { useConstants } from "@/hooks/useConstants";
 import { calculateAge } from "@/lib/utils";
 import { MAX_NUMBER_OF_KIDS } from "@/lib/constants";
+import { ID_DOCUMENT_ACCEPT, validateIdDocument } from "@/lib/id-documents";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { useI18n } from "@/i18n";
@@ -59,6 +63,8 @@ function InscriptionContent() {
     numberOfKids: "",
     hostCountry: "",
   });
+  // Pièce d'identité, obligatoire pour une famille
+  const [idDocument, setIdDocument] = useState<File | null>(null);
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { origin: originCountries, host: hostCountries } = useCountries();
@@ -106,6 +112,11 @@ function InscriptionContent() {
       if (!kids) errs.numberOfKids = e.numberOfKids;
       else if (!/^\d+$/.test(kids) || Number(kids) > MAX_NUMBER_OF_KIDS)
         errs.numberOfKids = e.numberOfKidsInvalid(MAX_NUMBER_OF_KIDS);
+      if (!idDocument) errs.idDocument = e.idDocument;
+      else {
+        const fileError = validateIdDocument(idDocument);
+        if (fileError) errs.idDocument = tError(fileError, fileError);
+      }
     }
     return errs;
   })();
@@ -114,6 +125,7 @@ function InscriptionContent() {
     const err = requiredErrors[field];
     if (!err) return null;
     if (field === "dateOfBirth" && form.dateOfBirth) return err;
+    if (field === "idDocument" && idDocument) return err;
     return touched || blurred[field] ? err : null;
   };
 
@@ -132,26 +144,28 @@ function InscriptionContent() {
     setSubmitError(null);
 
     try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          role,
-          firstName: form.firstName.trim(),
-          lastName: form.lastName.trim(),
-          email: form.email.trim(),
-          password: form.password,
-          country: form.country,
-          gender: form.gender,
-          dateOfBirth: form.dateOfBirth,
-          languages: form.languages,
-          educationLevel: form.educationLevel.trim(),
-          experience: form.experience.trim(),
-          city: form.city,
-          numberOfKids: form.numberOfKids.trim(),
-          hostCountry: form.hostCountry,
-        }),
-      });
+      // multipart/form-data pour pouvoir joindre la pièce d'identité de la famille
+      const fields: Record<string, string> = {
+        role: role ?? "",
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        email: form.email.trim(),
+        password: form.password,
+        country: form.country,
+        gender: form.gender,
+        dateOfBirth: form.dateOfBirth,
+        languages: JSON.stringify(form.languages),
+        educationLevel: form.educationLevel.trim(),
+        experience: form.experience.trim(),
+        city: form.city,
+        numberOfKids: form.numberOfKids.trim(),
+        hostCountry: form.hostCountry,
+      };
+      const body = new FormData();
+      for (const [key, value] of Object.entries(fields)) body.append(key, value);
+      if (role === "famille" && idDocument) body.append("idDocument", idDocument);
+
+      const res = await fetch("/api/auth/register", { method: "POST", body });
 
       const data = await res.json();
 
@@ -638,6 +652,59 @@ function InscriptionContent() {
                     </p>
                   )}
                 </div>
+                <div>
+                  <p className="block text-sm font-semibold text-gray-700 mb-1">
+                    {s.idDocument}
+                  </p>
+                  {idDocument ? (
+                    <div
+                      className={`flex items-center gap-3 border rounded-xl px-4 py-3 ${
+                        fieldError("idDocument") ? "border-red-300" : "border-gray-200"
+                      }`}
+                    >
+                      <FileText className="w-5 h-5 text-[#E87722] shrink-0" />
+                      <span className="text-sm text-gray-700 truncate flex-1">
+                        {idDocument.name}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setIdDocument(null)}
+                        className="p-1 text-gray-400 hover:text-red-500 rounded-lg"
+                        aria-label={s.idDocumentRemove}
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label
+                      className={`flex items-center justify-center gap-2 border-2 border-dashed rounded-xl px-4 py-5 cursor-pointer text-sm transition-colors focus-within:ring-2 focus-within:ring-[#E87722] ${
+                        fieldError("idDocument")
+                          ? "border-red-300 text-red-500"
+                          : "border-gray-200 text-gray-500 hover:border-[#E87722] hover:text-[#E87722]"
+                      }`}
+                    >
+                      <Upload className="w-4 h-4" />
+                      {s.idDocumentChoose}
+                      <input
+                        type="file"
+                        accept={ID_DOCUMENT_ACCEPT}
+                        className="sr-only"
+                        onChange={(ev) => {
+                          setIdDocument(ev.target.files?.[0] ?? null);
+                          markBlurred("idDocument");
+                          ev.target.value = "";
+                        }}
+                      />
+                    </label>
+                  )}
+                  {fieldError("idDocument") ? (
+                    <p className="text-xs text-red-500 mt-1">
+                      {fieldError("idDocument")}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-gray-400 mt-1">{s.idDocumentHint}</p>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -667,6 +734,22 @@ function InscriptionContent() {
                   <span className="font-semibold text-gray-600">{s.summaryRole}</span>{" "}
                   {role === "au-pair" ? s.auPair : s.family}
                 </p>
+                {role === "famille" && (
+                  <>
+                    <p>
+                      <span className="font-semibold text-gray-600">{s.summaryHostCountry}</span>{" "}
+                      {tValue(form.hostCountry)}
+                    </p>
+                    <p>
+                      <span className="font-semibold text-gray-600">{s.summaryCity}</span>{" "}
+                      {form.city}
+                    </p>
+                    <p>
+                      <span className="font-semibold text-gray-600">{s.summaryNumberOfKids}</span>{" "}
+                      {form.numberOfKids}
+                    </p>
+                  </>
+                )}
               </div>
               {submitError && (
                 <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">

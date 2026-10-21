@@ -9,6 +9,7 @@ export const DEDICATED_DOCUMENT_PATHS: Record<string, string> = {
   confidentialite: "/confidentialite",
   securite: "/securite",
   cookies: "/cookies",
+  "mentions-legales": "/mentions-legales",
 };
 
 /** Identifiants suggérés dans le back-office lors de la création d'un document. */
@@ -18,6 +19,7 @@ export const SUGGESTED_DOCUMENTS = [
   { slug: "cgv", title: "Conditions générales de vente", titleEn: "Terms of sale" },
   { slug: "securite", title: "Sécurité", titleEn: "Security" },
   { slug: "cookies", title: "Politique de cookies", titleEn: "Cookie policy" },
+  { slug: "mentions-legales", title: "Mentions légales", titleEn: "Legal notice" },
 ];
 
 /** Transforme un texte libre en identifiant d'URL : minuscules, sans accents, tirets. */

@@ -116,6 +116,7 @@ export async function GET(
       mealsProvided: profile.mealsProvided,
       description: profile.description,
       familyPhotoUrl: profile.familyPhotoUrl,
+      idDocumentUrls: profile.idDocumentUrls,
       phoneWhatsapp: profile.phoneWhatsapp,
       preferredGender: profile.preferredGender,
       preferredAgeMin: profile.preferredAgeMin,

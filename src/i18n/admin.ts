@@ -78,6 +78,7 @@ export const admin = {
     analytics: { fr: "Analytics", en: "Analytics" },
     blog: { fr: "Blog", en: "Blog" },
     faq: { fr: "FAQ", en: "FAQ" },
+    testimonials: { fr: "Avis", en: "Reviews" },
     tickets: { fr: "Tickets support", en: "Support tickets" },
     settings: { fr: "Paramètres", en: "Settings" },
     constants: { fr: "Constantes", en: "Constants" },
@@ -389,6 +390,25 @@ export const admin = {
     none: { fr: "Aucune question.", en: "No questions." },
     deleteTitle: { fr: "Supprimer cette question ?", en: "Delete this question?" },
     willBeDeleted: { fr: "sera définitivement supprimée.", en: "will be permanently deleted." },
+  },
+
+  // ─── Avis des visiteurs ────────────────────────────────────────────────────
+  adminTestimonials: {
+    title: { fr: "Avis", en: "Reviews" },
+    subtitle: {
+      fr: "Avis laissés par les visiteurs sur /temoignages : seuls les avis publiés s'affichent sur le site.",
+      en: "Reviews left by visitors on /temoignages: only published reviews are shown on the site.",
+    },
+    count: { fr: (n: number) => `${n} avis`, en: (n: number) => `${n} review(s)` },
+    filterAll: { fr: "Tous", en: "All" },
+    filterPending: { fr: "En attente", en: "Pending" },
+    filterPublished: { fr: "Publiés", en: "Published" },
+    pending: { fr: "En attente", en: "Pending" },
+    published: { fr: "Publié", en: "Published" },
+    none: { fr: "Aucun avis.", en: "No reviews." },
+    deleteTitle: { fr: "Supprimer cet avis ?", en: "Delete this review?" },
+    willBeDeleted: { fr: "sera définitivement supprimé.", en: "will be permanently deleted." },
+    reviewBy: { fr: (name: string) => `L'avis de ${name}`, en: (name: string) => `The review by ${name}` },
   },
 
   // ─── Tickets support ───────────────────────────────────────────────────────

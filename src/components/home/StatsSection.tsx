@@ -1,17 +1,17 @@
 "use client";
 import { Users, Home, Globe2, Plane } from "lucide-react";
 import { useI18n } from "@/i18n";
+import type { PublicStats } from "@/lib/public-stats";
 
-// Même ordre que `home.stats` (src/i18n/site.ts)
-const stats = [
-  { value: "5 000+", icon: Users },
-  { value: "1 200+", icon: Home },
-  { value: "14", icon: Globe2 },
-  { value: "6", icon: Plane },
-];
-
-export default function StatsSection() {
-  const { t } = useI18n();
+export default function StatsSection({ counts }: { counts: PublicStats }) {
+  const { t, locale } = useI18n();
+  // Même ordre que `home.stats` (src/i18n/site.ts)
+  const stats = [
+    { value: `${counts.auPairs.toLocaleString(locale)}+`, icon: Users },
+    { value: `${counts.families.toLocaleString(locale)}+`, icon: Home },
+    { value: "14", icon: Globe2 },
+    { value: "6", icon: Plane },
+  ];
   return (
     <section className="bg-white py-16 border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
