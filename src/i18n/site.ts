@@ -644,6 +644,18 @@ export const site = {
     ],
   },
 
+  // ─── Témoignages (/temoignages) ────────────────────────────────────────────
+  // Les témoignages eux-mêmes : `home.testimonials` (titre, sous-titre, items).
+  testimonialsPage: {
+    ctaTitle: { fr: "À vous d'écrire votre histoire", en: "Your turn to write your story" },
+    ctaText: {
+      fr: "Rejoignez la communauté AuPair A.EU et vivez, vous aussi, une expérience interculturelle inoubliable.",
+      en: "Join the AuPair A.EU community and live an unforgettable cross-cultural experience too.",
+    },
+    becomeAuPair: { fr: "Devenir au pair", en: "Become an au pair" },
+    hostAuPair: { fr: "Accueillir un au pair", en: "Host an au pair" },
+  },
+
   // ─── Contact ───────────────────────────────────────────────────────────────
   contact: {
     title: { fr: "Contactez-nous", en: "Contact us" },
