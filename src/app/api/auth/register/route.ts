@@ -1,4 +1,4 @@
-import { NextResponse, after } from "next/server";
+import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { calculateAge } from "@/lib/utils";
@@ -252,19 +252,18 @@ export async function POST(request: Request) {
     }
   }
 
-  // Emails envoyés après la réponse : un échec d'envoi ne doit pas faire échouer l'inscription.
+  // Attendu avant la réponse : avec after(), la fonction Vercel s'arrêtait avant l'envoi.
+  // sendSignupEmails ne lève jamais, un échec d'envoi ne fait donc pas échouer l'inscription.
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(request.url).origin;
-  after(() =>
-    sendSignupEmails({
-      userId,
-      email: normalizedEmail,
-      firstName,
-      fullName: `${firstName} ${lastName}`.trim(),
-      role: userRole,
-      country: role === "au-pair" ? body.country : body.hostCountry,
-      baseUrl,
-    })
-  );
+  await sendSignupEmails({
+    userId,
+    email: normalizedEmail,
+    firstName,
+    fullName: `${firstName} ${lastName}`.trim(),
+    role: userRole,
+    country: role === "au-pair" ? body.country : body.hostCountry,
+    baseUrl,
+  });
 
   return NextResponse.json({ ok: true }, { status: 201 });
 }

@@ -38,7 +38,13 @@ export async function sendMail(params: {
 }): Promise<SendMailResult> {
   const { to, subject, html, noReply, replyTo } = params;
 
-  const settings = await getAppSettings();
+  let settings: Awaited<ReturnType<typeof getAppSettings>>;
+  try {
+    settings = await getAppSettings();
+  } catch (err) {
+    console.error(`[mail] Impossible de lire la configuration email pour "${to}":`, err);
+    return { ok: false, reason: "EXCEPTION", error: err };
+  }
   const apiKey = settings.resendApiKey?.trim();
   const configuredFrom = settings.emailFrom?.trim();
   const from = configuredFrom && noReply ? toNoReplyAddress(configuredFrom) : configuredFrom;
