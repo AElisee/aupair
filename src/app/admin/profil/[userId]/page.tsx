@@ -5,6 +5,7 @@ import AdminLayout from "@/components/layout/AdminLayout";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { Badge } from "@/components/ui/badge";
 import PhotoViewerModal from "@/components/ui/photo-viewer-modal";
+import { CountryFlag } from "@/components/ui/CountryFlag";
 import {
   ArrowLeft,
   CheckCircle,
@@ -151,6 +152,17 @@ function Field({ label, value, wide }: { label: string; value: React.ReactNode; 
       <p className={`${LABEL} mb-1`}>{label}</p>
       <div className={`${VALUE} break-words`}>{value || <span className="text-gray-300 font-normal">—</span>}</div>
     </div>
+  );
+}
+
+/** Nom de pays précédé de son drapeau (image : les emojis drapeau ne s'affichent pas sous Windows) */
+function CountryLabel({ flag, name }: { flag?: string; name: string }) {
+  if (!name) return null;
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      {flag && <CountryFlag flag={flag} className="h-3.5 w-auto rounded-[2px] shrink-0" />}
+      {name}
+    </span>
   );
 }
 
@@ -427,7 +439,7 @@ export default function AdminProfilePage() {
                 <div className="min-w-0">
                   <h1 className={`${PAGE_TITLE} flex items-center gap-2`}>
                     <span className="truncate">{displayName}</span>
-                    {flagMap[country] && <span className="text-2xl leading-none">{flagMap[country]}</span>}
+                    {flagMap[country] && <CountryFlag flag={flagMap[country]} className="h-5 w-auto rounded-[3px] shrink-0" />}
                   </h1>
                   <div className="flex flex-wrap items-center gap-2 mt-2">
                     <Badge variant={isAuPair ? "default" : "secondary"}>{isAuPair ? c.roleAuPair : c.roleFamily}</Badge>
@@ -500,7 +512,7 @@ export default function AdminProfilePage() {
                     <Field label={tp.dateOfBirth} value={`${formatDate(data.dateOfBirth)} (${tp.ageValue(data.age)})`} />
                     <Field label={tp.gender} value={tValue(data.gender)} />
                     <Field label={tp.nationality} value={data.nationality} />
-                    <Field label={tp.countryOfOrigin} value={`${flagMap[data.countryOfOrigin] ?? ""} ${tValue(data.countryOfOrigin)}`.trim()} />
+                    <Field label={tp.countryOfOrigin} value={<CountryLabel flag={flagMap[data.countryOfOrigin]} name={tValue(data.countryOfOrigin)} />} />
                     <Field label={tp.cityOfOrigin} value={data.cityOfOrigin} />
                     <Field label={tp.educationLevel} value={tValue(data.educationLevel)} />
                     <Field label={tp.languages} value={data.languages.length > 0 && <Chips items={data.languages.map(tValue)} />} wide />
@@ -521,7 +533,7 @@ export default function AdminProfilePage() {
                     <Field
                       label={tp.targetCountries}
                       value={data.targetCountries.length > 0 && (
-                        <Chips items={data.targetCountries.map((country) => `${flagMap[country] ?? ""} ${tValue(country)}`.trim())} />
+                        <Chips items={data.targetCountries.map((country) => <CountryLabel key={country} flag={flagMap[country]} name={tValue(country)} />)} />
                       )}
                       wide
                     />
@@ -544,7 +556,7 @@ export default function AdminProfilePage() {
               <>
                 <Section title={tp.general} icon={House} color={BLUE}>
                   <FieldGrid>
-                    <Field label={tp.country} value={`${flagMap[data.country] ?? ""} ${tValue(data.country)}`.trim()} />
+                    <Field label={tp.country} value={<CountryLabel flag={flagMap[data.country]} name={tValue(data.country)} />} />
                     <Field label={tp.city} value={data.city} />
                     <Field label={tp.address} value={data.address} wide />
                     <Field label={tp.maritalStatus} value={t.maritalStatus[data.maritalStatus as keyof typeof t.maritalStatus] ?? data.maritalStatus} />
@@ -733,12 +745,12 @@ export default function AdminProfilePage() {
   );
 }
 
-function Chips({ items, tone = "neutral" }: { items: string[]; tone?: "neutral" | "warning" }) {
+function Chips({ items, tone = "neutral" }: { items: React.ReactNode[]; tone?: "neutral" | "warning" }) {
   return (
     <div className="flex flex-wrap gap-1.5">
-      {items.map((item) => (
+      {items.map((item, i) => (
         <span
-          key={item}
+          key={i}
           className={`text-xs px-2.5 py-1 rounded-full ${
             tone === "warning" ? "bg-[#FFF3E0] text-[#B85A12]" : "bg-white border border-gray-200 text-gray-700"
           }`}
