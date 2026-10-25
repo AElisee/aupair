@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { calculateAge } from "@/lib/utils";
 import { MAX_NUMBER_OF_KIDS } from "@/lib/constants";
+import { sendSignupEmails } from "@/lib/signup-emails";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { validateIdDocument } from "@/lib/id-documents";
 import { uploadIdDocuments } from "@/lib/id-documents.server";
@@ -250,6 +251,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Échec de l'envoi du document." }, { status: 500 });
     }
   }
+
+  // Emails envoyés après la réponse : un échec d'envoi ne doit pas faire échouer l'inscription.
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(request.url).origin;
+  after(() =>
+    sendSignupEmails({
+      userId,
+      email: normalizedEmail,
+      firstName,
+      fullName: `${firstName} ${lastName}`.trim(),
+      role: userRole,
+      country: role === "au-pair" ? body.country : body.hostCountry,
+      baseUrl,
+    })
+  );
 
   return NextResponse.json({ ok: true }, { status: 201 });
 }

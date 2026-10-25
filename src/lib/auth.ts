@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
 import { checkRateLimit, resetRateLimit } from "./rate-limit";
 import { ADMIN_SESSION_MAX_AGE_MS } from "./constants";
+import { sendSignupEmails } from "./signup-emails";
 
 const LOGIN_MAX_ATTEMPTS = 5;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
@@ -179,6 +180,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           targetCountries: [],
         },
       });
+
+      if (user.email) {
+        await sendSignupEmails({
+          userId: user.id,
+          email: user.email,
+          firstName,
+          fullName: user.name?.trim() || firstName,
+          role: "AU_PAIR",
+          baseUrl: process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXTAUTH_URL ?? "",
+        });
+      }
     },
   },
 });

@@ -79,6 +79,59 @@ export function passwordResetEmailHtml(params: {
   `);
 }
 
+/** Email envoyé à l'utilisateur juste après son inscription (compte en attente de validation). */
+export function accountCreatedEmailHtml(params: {
+  name?: string | null;
+  role: "AU_PAIR" | "FAMILLE";
+}) {
+  const { name, role } = params;
+  const roleLabel = role === "AU_PAIR" ? "au pair" : "famille d'accueil";
+
+  return layout(`
+    <p>Bonjour ${escapeHtml(name?.trim() || "")},</p>
+    <p>Bienvenue sur AuPair A.EU ! Votre compte ${roleLabel} a bien été créé.</p>
+    <p>Notre équipe va maintenant vérifier votre profil. Cette validation intervient généralement <strong>sous 24h à 48h</strong>, et vous recevrez un email dès que votre compte sera actif.</p>
+    <p>— L'équipe AuPair A.EU</p>
+    <p style="color:#888888;font-size:12px;">
+      Cet email est envoyé automatiquement, merci de ne pas y répondre.
+    </p>
+  `);
+}
+
+/** Notification interne envoyée à l'équipe à chaque nouvelle inscription. */
+export function newSignupAdminEmailHtml(params: {
+  name: string;
+  email: string;
+  role: "AU_PAIR" | "FAMILLE";
+  country?: string | null;
+  profileUrl: string;
+}) {
+  const { name, email, role, country, profileUrl } = params;
+  const roleLabel = role === "AU_PAIR" ? "Au pair" : "Famille d'accueil";
+  const row = (label: string, value: string) => `
+    <tr>
+      <td style="padding:6px 12px 6px 0;color:#888888;white-space:nowrap;">${label}</td>
+      <td style="padding:6px 0;">${escapeHtml(value)}</td>
+    </tr>`;
+
+  return layout(`
+    <p>Une nouvelle inscription vient d'être enregistrée sur la plateforme.</p>
+    <table style="border-collapse:collapse;font-size:14px;margin:16px 0;">
+      ${row("Type", roleLabel)}
+      ${row("Nom", name)}
+      ${row("Email", email)}
+      ${country ? row(role === "AU_PAIR" ? "Pays d'origine" : "Pays d'accueil", country) : ""}
+      ${row("Date", new Date().toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short", timeZone: "Europe/Paris" }))}
+    </table>
+    <p>Le profil est en attente de validation.</p>
+    <div style="text-align:center;margin:28px 0;">
+      <a href="${profileUrl}" style="background:${BRAND_COLOR};color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;padding:14px 28px;border-radius:10px;display:inline-block;">
+        Voir le profil
+      </a>
+    </div>
+  `);
+}
+
 /** Email envoyé lorsqu'un administrateur valide le profil d'un utilisateur. */
 export function accountValidatedEmailHtml(params: {
   name?: string | null;
