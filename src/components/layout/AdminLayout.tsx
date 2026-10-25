@@ -7,7 +7,7 @@ import { signOut } from "next-auth/react";
 import { useI18n } from "@/i18n";
 import type { admin } from "@/i18n/admin";
 import { LanguageToggle } from "./LanguageToggle";
-import { Globe, LayoutDashboard, Users, Shield, DollarSign, FileText, HelpCircle, Mail, MessageSquareQuote, LogOut, Bell, Settings, ChevronDown, SlidersHorizontal, Menu, X, Send, Wallet, KeyRound, FileCheck, ChevronRight } from "lucide-react";
+import { Globe, LayoutDashboard, Users, Shield, DollarSign, FileText, HelpCircle, Mail, MessageSquareQuote, LogOut, Bell, Settings, ChevronDown, SlidersHorizontal, Menu, X, Send, Wallet, KeyRound, FileCheck, ChevronRight, Share2 } from "lucide-react";
 
 // Libellés : section `adminNav` de src/i18n/admin.ts
 type NavKey = keyof typeof admin.adminNav;
@@ -36,6 +36,7 @@ const settingsNav: { icon: React.ElementType; labelKey: NavKey; children: { href
     { href: "/admin/parametres/email", icon: Send, labelKey: "email" },
     { href: "/admin/parametres/paiements", icon: Wallet, labelKey: "paymentMethods" },
     { href: "/admin/parametres/documents", icon: FileCheck, labelKey: "documents" },
+    { href: "/admin/parametres/reseaux-sociaux", icon: Share2, labelKey: "socialNetworks" },
     { href: "/admin/parametres/compte", icon: KeyRound, labelKey: "account" },
   ],
 };

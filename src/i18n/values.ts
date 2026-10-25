@@ -190,6 +190,8 @@ const SERVER_ERRORS: Record<string, string> = {
   "Le paiement n'est pas encore configuré.": "Payment is not configured yet.",
   "Renseignez la clé publique et la clé secrète de cet agrégateur avant de l'activer.":
     "Enter this provider's public key and secret key before enabling it.",
+  "Les liens des réseaux sociaux doivent être des URL complètes commençant par https://.":
+    "Social network links must be full URLs starting with https://.",
   "Impossible d'initier le paiement.": "Unable to start the payment.",
   "Impossible de générer le lien de paiement.": "Unable to generate the payment link.",
   "Impossible de vérifier le paiement.": "Unable to verify the payment.",

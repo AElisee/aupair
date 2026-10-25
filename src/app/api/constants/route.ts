@@ -10,6 +10,12 @@ export async function GET() {
     durations: settings.durations,
     reportReasons: settings.reportReasons,
     heroImageUrl: settings.heroImageUrl,
+    // Un réseau désactivé depuis l'admin est renvoyé à null : son icône disparaît du footer
+    socialLinks: {
+      instagram: settings.instagramEnabled ? settings.instagramUrl : null,
+      tiktok: settings.tiktokEnabled ? settings.tiktokUrl : null,
+      facebook: settings.facebookEnabled ? settings.facebookUrl : null,
+    },
     subscription: {
       priceEur: settings.subscriptionPriceEur,
       priceXof: settings.subscriptionPriceXof,

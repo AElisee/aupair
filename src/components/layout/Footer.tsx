@@ -1,9 +1,20 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Instagram, Facebook, Linkedin, Youtube } from "lucide-react";
+import { Instagram, Facebook } from "lucide-react";
+import { TiktokIcon } from "@/components/icons/TiktokIcon";
 import { useI18n } from "@/i18n";
+
+type SocialKey = "instagram" | "tiktok" | "facebook";
+type SocialLinks = Partial<Record<SocialKey, string | null>>;
+
+// Liens configurés dans /admin/parametres/reseaux-sociaux ; une icône sans lien n'est pas affichée
+const socialNetworks: { key: SocialKey; label: string; icon: React.ElementType }[] = [
+  { key: "instagram", label: "Instagram", icon: Instagram },
+  { key: "tiktok", label: "TikTok", icon: TiktokIcon },
+  { key: "facebook", label: "Facebook", icon: Facebook },
+];
 
 const aboutLinks = [
   { href: "/devenir-au-pair", key: "becomeAuPair" },
@@ -25,6 +36,17 @@ const legalLinks = [
 
 export default function Footer() {
   const { t } = useI18n();
+  const [socialLinks, setSocialLinks] = useState<SocialLinks>({});
+
+  useEffect(() => {
+    fetch("/api/constants")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setSocialLinks(data?.socialLinks ?? {}))
+      .catch(() => {});
+  }, []);
+
+  const visibleNetworks = socialNetworks.filter((n) => socialLinks[n.key]);
+
   return (
     <footer className="bg-[#1A1A2E] text-gray-300 mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
@@ -44,20 +66,23 @@ export default function Footer() {
             <p className="text-sm text-gray-400 leading-relaxed">
               {t.footer.tagline}
             </p>
-            <div className="flex items-center gap-3 pt-2">
-              <a href="#" className="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center hover:bg-[#E87722] transition-colors">
-                <Instagram className="w-4 h-4" />
-              </a>
-              <a href="#" className="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center hover:bg-[#E87722] transition-colors">
-                <Facebook className="w-4 h-4" />
-              </a>
-              <a href="#" className="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center hover:bg-[#E87722] transition-colors">
-                <Linkedin className="w-4 h-4" />
-              </a>
-              <a href="#" className="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center hover:bg-[#E87722] transition-colors">
-                <Youtube className="w-4 h-4" />
-              </a>
-            </div>
+            {visibleNetworks.length > 0 && (
+              <div className="flex items-center gap-3 pt-2">
+                {visibleNetworks.map(({ key, label, icon: Icon }) => (
+                  <a
+                    key={key}
+                    href={socialLinks[key]!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={t.footer.followUs(label)}
+                    title={t.footer.followUs(label)}
+                    className="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center hover:bg-[#E87722] transition-colors"
+                  >
+                    <Icon className="w-4 h-4" />
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* À propos */}

@@ -86,6 +86,7 @@ export const admin = {
     email: { fr: "Email", en: "Email" },
     paymentMethods: { fr: "Moyens de paiement", en: "Payment methods" },
     documents: { fr: "Documents", en: "Documents" },
+    socialNetworks: { fr: "Réseaux sociaux", en: "Social networks" },
     account: { fr: "Mon compte", en: "My account" },
     signOut: { fr: "Déconnexion", en: "Sign out" },
     openMenu: { fr: "Ouvrir le menu", en: "Open menu" },
@@ -579,6 +580,20 @@ export const admin = {
     emailFromHint: {
       fr: "Le domaine de cette adresse doit être vérifié dans Resend, sinon l'envoi échouera.",
       en: "This address's domain must be verified in Resend, otherwise sending will fail.",
+    },
+
+    socialTitle: { fr: "Réseaux sociaux", en: "Social networks" },
+    socialSubtitle: {
+      fr: "Liens ouverts par les icônes du pied de page du site. Une icône n'apparaît que si elle est activée et que son lien est renseigné.",
+      en: "Links opened by the icons in the site footer. An icon only appears when it is enabled and its link is filled in.",
+    },
+    socialShowInFooter: { fr: (network: string) => `Afficher ${network} dans le footer`, en: (network: string) => `Show ${network} in the footer` },
+    socialVisible: { fr: "Visible", en: "Visible" },
+    socialHidden: { fr: "Masquée", en: "Hidden" },
+    socialMissingUrl: { fr: "Lien manquant", en: "Missing link" },
+    socialUrlHint: {
+      fr: "URL complète du profil, ex : https://www.instagram.com/votre-compte",
+      en: "Full profile URL, e.g. https://www.instagram.com/your-account",
     },
 
     paymentMethodsTitle: { fr: "Moyens de paiement", en: "Payment methods" },

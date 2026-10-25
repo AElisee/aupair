@@ -54,6 +54,7 @@ export const site = {
       en: "© 2026 AuPair A.EU — Published by BODOU SERVICES",
     },
     compliance: { fr: "Conforme RGPD", en: "GDPR compliant" },
+    followUs: { fr: (network: string) => `Suivez-nous sur ${network}`, en: (network: string) => `Follow us on ${network}` },
   },
 
   // ─── Page d'accueil ────────────────────────────────────────────────────────

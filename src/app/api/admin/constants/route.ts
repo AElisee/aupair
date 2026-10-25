@@ -46,6 +46,15 @@ function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((v) => typeof v === "string");
 }
 
+function isHttpUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
 export async function PUT(req: Request) {
   const session = await requireAdminSession();
   if (!session) {
@@ -101,7 +110,13 @@ export async function PUT(req: Request) {
     data.heroImageUrl = value.trim();
   }
 
-  for (const key of ["notifyProfileViewEnabled", "notifyWeeklyViewsDigestEnabled"] as const) {
+  for (const key of [
+    "notifyProfileViewEnabled",
+    "notifyWeeklyViewsDigestEnabled",
+    "instagramEnabled",
+    "tiktokEnabled",
+    "facebookEnabled",
+  ] as const) {
     if (key in body) {
       const value = body[key];
       if (typeof value !== "boolean") {
@@ -187,6 +202,23 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: `Le champ "paymentProvider" doit être "fedapay" ou "geniuspay".` }, { status: 400 });
     }
     data.paymentProvider = value;
+  }
+
+  for (const key of ["instagramUrl", "tiktokUrl", "facebookUrl"] as const) {
+    if (key in body) {
+      const value = body[key];
+      if (typeof value !== "string") {
+        return NextResponse.json({ error: `Le champ "${key}" doit être une chaîne.` }, { status: 400 });
+      }
+      const trimmed = value.trim();
+      if (trimmed && !isHttpUrl(trimmed)) {
+        return NextResponse.json(
+          { error: "Les liens des réseaux sociaux doivent être des URL complètes commençant par https://." },
+          { status: 400 }
+        );
+      }
+      data[key] = trimmed === "" ? null : trimmed;
+    }
   }
 
   // Refuse d'activer un agrégateur sans clés : les au pairs verraient un bouton "Payer" qui échoue systématiquement.

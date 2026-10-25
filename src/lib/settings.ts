@@ -34,6 +34,12 @@ const DEFAULT_SETTINGS = {
   geniuspaySecretKey: null as string | null,
   geniuspayWebhookSecret: null as string | null,
   paymentProvider: "fedapay" as string,
+  instagramUrl: null as string | null,
+  tiktokUrl: null as string | null,
+  facebookUrl: null as string | null,
+  instagramEnabled: true,
+  tiktokEnabled: true,
+  facebookEnabled: true,
 };
 
 /** Récupère les constantes éditables (crée la ligne avec les valeurs par défaut si elle n'existe pas encore). */
@@ -67,6 +73,12 @@ export interface AppSettingsInput {
   geniuspaySecretKey?: string | null;
   geniuspayWebhookSecret?: string | null;
   paymentProvider?: string;
+  instagramUrl?: string | null;
+  tiktokUrl?: string | null;
+  facebookUrl?: string | null;
+  instagramEnabled?: boolean;
+  tiktokEnabled?: boolean;
+  facebookEnabled?: boolean;
 }
 
 export async function updateAppSettings(data: AppSettingsInput) {

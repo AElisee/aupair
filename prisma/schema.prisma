@@ -600,6 +600,14 @@ model AppSettings {
   // (vérification et webhooks des paiements déjà initiés continuent de fonctionner) et peut être réactivé.
   paymentProvider String @default("fedapay")
 
+  // Réseaux sociaux du footer : une icône n'apparaît que si elle est activée ET a un lien
+  instagramUrl     String?
+  tiktokUrl        String?
+  facebookUrl      String?
+  instagramEnabled Boolean @default(true)
+  tiktokEnabled    Boolean @default(true)
+  facebookEnabled  Boolean @default(true)
+
   updatedAt            DateTime @updatedAt
 
   @@map("app_settings")
