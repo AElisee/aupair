@@ -38,6 +38,7 @@ export async function GET() {
       age: calculateAge(p.dateOfBirth),
       description: p.description ?? "",
       waitingDays: waitingDays(p.createdAt),
+      createdAt: p.createdAt.getTime(),
       hasPhoto: !!p.profilePhotoUrl,
       photoUrl: p.profilePhotoUrl ?? "",
       hasId: p.idDocumentUrls.length > 0,
@@ -51,11 +52,14 @@ export async function GET() {
       age: 0,
       description: p.description ?? "",
       waitingDays: waitingDays(p.createdAt),
+      createdAt: p.createdAt.getTime(),
       hasPhoto: !!p.familyPhotoUrl,
       photoUrl: p.familyPhotoUrl ?? "",
       hasId: p.idDocumentUrls.length > 0,
     })),
-  ].sort((a, b) => b.waitingDays - a.waitingDays);
+  ]
+    // Derniers inscrits en tête de liste
+    .sort((a, b) => b.createdAt - a.createdAt);
 
   return NextResponse.json({ profiles });
 }

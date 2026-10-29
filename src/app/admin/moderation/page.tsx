@@ -6,6 +6,7 @@ import { CheckCircle, X, Eye, EyeOff, Ban, Trash2, Clock, Loader2, Flag, Hourgla
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import { CountryFlag } from "@/components/ui/CountryFlag";
 import { useI18n } from "@/i18n";
 import { Separator } from "@/components/ui/separator";
 import { BLUE, GREEN, INDIGO, ORANGE, PAGE_TITLE, KpiGrid, pct } from "@/components/admin/AdminUI";
@@ -155,7 +156,7 @@ export default function ModerationPage() {
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-medium text-[#1A1A2E]">{p.name}</h3>
-                        <span className="text-lg">{p.flag}</span>
+                        {p.flag && <CountryFlag flag={p.flag} className="h-4 w-auto rounded-[2px] shrink-0" />}
                         <Badge variant={p.role === "AU_PAIR" ? "default" : "secondary"}>
                           {p.role === "AU_PAIR" ? c.roleAuPair : c.roleFamily}
                         </Badge>

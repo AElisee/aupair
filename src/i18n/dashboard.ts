@@ -142,8 +142,8 @@ export const dashboard = {
   // ─── Accueil au pair (/dashboard/au-pair) ──────────────────────────────────
   auPairHome: {
     subscribeBanner: {
-      fr: "Abonnez-vous pour profiter de tous les avantages : profil visible par les familles, messagerie, coordonnées des familles, favoris...",
-      en: "Subscribe to enjoy all the benefits: profile visible to families, messaging, families' contact details, favourites...",
+      fr: "Abonnez-vous pour profiter de tous les avantages : profil visible par les familles, messagerie, coordonnées des familles, favoris, voir toutes les familles...",
+      en: "Subscribe to enjoy all the benefits: profile visible to families, messaging, families' contact details, favourites, see all families...",
     },
     visibilityTitle: { fr: "Visibilité auprès des familles", en: "Visibility to families" },
     hiddenByAdmin: {
@@ -368,6 +368,12 @@ export const dashboard = {
     minPocketMoney: { fr: "Argent de poche min.", en: "Min. pocket money" },
     foundCount: { fr: (n: number) => `${n} familles trouvées`, en: (n: number) => `${n} families found` },
     noneFound: { fr: "Aucune famille trouvée avec ces critères.", en: "No family matches these criteria." },
+    limitedBanner: {
+      fr: (shown: number, total: number) =>
+        `Sans abonnement, vous voyez ${shown} familles sur ${total}. Abonnez-vous pour voir toutes les familles, les contacter et les ajouter en favoris.`,
+      en: (shown: number, total: number) =>
+        `Without a subscription you see ${shown} of ${total} families. Subscribe to see all families, contact them and add them to your favourites.`,
+    },
   },
 
   // ─── Recherche d'au pairs (/dashboard/famille/recherche) ───────────────────

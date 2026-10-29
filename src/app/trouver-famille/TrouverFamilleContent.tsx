@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { MessageCircle, RotateCcw, SearchX } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SubscriptionBanner as LimitedBanner } from "@/components/dashboard/SubscriptionLock";
 import { FamilyCard, FamilyCardSkeleton, type Family, type FamilyViewer } from "@/components/families/FamilyCard";
 import { FamilyFilterFields, useFamilySearch, useFamilySortOptions } from "@/components/families/FamilyFilters";
 import {
@@ -27,6 +28,9 @@ export default function TrouverFamilleContent() {
   const viewer: FamilyViewer = !session?.user ? "guest" : session.user.role === "AU_PAIR" ? "auPair" : "other";
 
   const [families, setFamilies] = useState<Family[]>([]);
+  const [total, setTotal] = useState(0);
+  // Au pair sans abonnement : l'API ne renvoie qu'un échantillon aléatoire de familles
+  const [limited, setLimited] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -42,7 +46,11 @@ export default function TrouverFamilleContent() {
   const load = useCallback(() => {
     fetch("/api/families")
       .then((res) => (res.ok ? res.json() : Promise.reject()))
-      .then((data) => setFamilies(data.families ?? []))
+      .then((data) => {
+        setFamilies(data.families ?? []);
+        setTotal(data.total ?? data.families?.length ?? 0);
+        setLimited(!!data.limited);
+      })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
@@ -57,6 +65,8 @@ export default function TrouverFamilleContent() {
 
   const closeSheet = useCallback(() => setSheetOpen(false), []);
 
+  const guestLimitNote = limited && total > families.length ? f.guestLimited(families.length, total) : undefined;
+
   const filterFields = (
     <FamilyFilterFields filters={s.filters} onChange={s.updateFilters} hostCountries={hostCountries} languages={languages} />
   );
@@ -65,7 +75,7 @@ export default function TrouverFamilleContent() {
     <div className="bg-[#F5F5F5] min-h-screen">
       <DirectoryHero
         title={f.title}
-        subtitle={loading || error ? f.subtitleLoading : f.subtitle(families.length)}
+        subtitle={loading || error ? f.subtitleLoading : f.subtitle(total)}
         search={s.search}
         onSearchChange={s.setSearch}
         searchPlaceholder={t.searchFamilies.searchPlaceholder}
@@ -88,14 +98,20 @@ export default function TrouverFamilleContent() {
             <FilterPanel activeCount={s.activeCount} onClear={s.clearFilters}>
               {filterFields}
             </FilterPanel>
-            {viewer === "guest" && <SubscriptionBanner price={subscription.priceEur} days={subscription.days} compact />}
+            {viewer === "guest" && (
+              <SubscriptionBanner price={subscription.priceEur} days={subscription.days} limitNote={guestLimitNote} compact />
+            )}
           </div>
         </aside>
 
         <main>
+          {viewer === "auPair" && limited && total > families.length && (
+            <LimitedBanner className="mb-6" message={t.searchFamilies.limitedBanner(families.length, total)} />
+          )}
+
           {viewer === "guest" && (
             <div className="lg:hidden mb-6">
-              <SubscriptionBanner price={subscription.priceEur} days={subscription.days} />
+              <SubscriptionBanner price={subscription.priceEur} days={subscription.days} limitNote={guestLimitNote} />
             </div>
           )}
 
@@ -160,7 +176,12 @@ export default function TrouverFamilleContent() {
 
 // ─── Blocs secondaires ──────────────────────────────────────────────────────
 
-function SubscriptionBanner({ price, days, compact = false }: { price: number; days: number; compact?: boolean }) {
+function SubscriptionBanner({
+  price,
+  days,
+  compact = false,
+  limitNote,
+}: { price: number; days: number; compact?: boolean; limitNote?: string }) {
   const { t } = useI18n();
   const f = t.findFamily;
   return (
@@ -175,6 +196,7 @@ function SubscriptionBanner({ price, days, compact = false }: { price: number; d
         <MessageCircle className="w-6 h-6 mb-2 opacity-90" strokeWidth={1.75} />
         <p className="font-semibold">{f.bannerTitle}</p>
         <p className="text-sm text-white/85 mt-1">{f.bannerText(price, days)}</p>
+        {limitNote && <p className="text-sm font-medium mt-2">{limitNote}</p>}
       </div>
       <div className={cn("relative flex flex-col gap-2", compact ? "mt-4" : "sm:items-end")}>
         <Link href="/inscription?role=au-pair">

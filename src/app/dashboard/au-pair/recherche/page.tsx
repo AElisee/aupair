@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { RotateCcw, Search, SearchX, SlidersHorizontal } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/dashboard/PageHeader";
+import { SubscriptionBanner } from "@/components/dashboard/SubscriptionLock";
 import { Button } from "@/components/ui/button";
 import { FamilyCard, FamilyCardSkeleton, type Family } from "@/components/families/FamilyCard";
 import { FamilyFilterFields, useFamilySearch, useFamilySortOptions } from "@/components/families/FamilyFilters";
@@ -24,6 +25,8 @@ export default function RechercheFamillePage() {
   const { data: session } = useSession();
 
   const [families, setFamilies] = useState<Family[]>([]);
+  // Au pair sans abonnement : l'API ne renvoie qu'un échantillon aléatoire de familles
+  const [limited, setLimited] = useState<{ total: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -39,7 +42,10 @@ export default function RechercheFamillePage() {
   const load = useCallback(() => {
     fetch("/api/families")
       .then((res) => (res.ok ? res.json() : Promise.reject()))
-      .then((data) => setFamilies(data.families ?? []))
+      .then((data) => {
+        setFamilies(data.families ?? []);
+        setLimited(data.limited ? { total: data.total ?? 0 } : null);
+      })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
@@ -69,8 +75,14 @@ export default function RechercheFamillePage() {
       <div className="space-y-5">
         <PageHeader
           title={t.searchFamilies.title}
-          subtitle={loading || error ? f.subtitleLoading : t.searchFamilies.availableCount(families.length)}
+          subtitle={
+            loading || error ? f.subtitleLoading : t.searchFamilies.availableCount(limited ? limited.total : families.length)
+          }
         />
+
+        {limited && limited.total > families.length && (
+          <SubscriptionBanner message={t.searchFamilies.limitedBanner(families.length, limited.total)} />
+        )}
 
         {/* ─── Recherche + filtres ─────────────────────────────────────── */}
         <div className="bg-white rounded-2xl border border-gray-100 p-3 sm:p-4 space-y-3">

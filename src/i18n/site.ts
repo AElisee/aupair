@@ -803,6 +803,10 @@ export const site = {
       fr: (price: number, days: number) => `Abonnement au pair de ${price} € pour ${days} jours : profils complets et messagerie illimitée.`,
       en: (price: number, days: number) => `Au pair subscription: €${price} for ${days} days — full profiles and unlimited messaging.`,
     },
+    guestLimited: {
+      fr: (shown: number, total: number) => `Vous voyez ${shown} familles sur ${total}. Inscrivez-vous et abonnez-vous pour voir toutes les familles.`,
+      en: (shown: number, total: number) => `You are seeing ${shown} of ${total} families. Sign up and subscribe to see all families.`,
+    },
     bannerCta: { fr: "Créer mon profil au pair", en: "Create my au pair profile" },
     loadError: { fr: "Impossible de charger les familles pour le moment.", en: "Unable to load families right now." },
     shownCount: {
