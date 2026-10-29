@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { FilterFields, buildCountryChips, type FilterFieldDef } from "@/components/search/DirectoryUI";
+import { FilterFields, buildCountryChips, type CountryChip, type FilterFieldDef } from "@/components/search/DirectoryUI";
 import { useI18n } from "@/i18n";
 import type { Family } from "./FamilyCard";
 
@@ -14,7 +14,7 @@ const KIDS_OPTIONS = [1, 2, 3, 4, 5];
 const POCKET_MONEY_OPTIONS = [100, 200, 300, 400, 500];
 
 /** Recherche, filtres, tri et pagination « voir plus » partagés par /trouver-famille et /dashboard/au-pair/recherche */
-export function useFamilySearch(families: Family[]) {
+export function useFamilySearch(families: Family[], countryTotals?: CountryChip[]) {
   const { t, tValue } = useI18n();
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<FamilyFilters>(EMPTY_FAMILY_FILTERS);
@@ -51,7 +51,19 @@ export function useFamilySearch(families: Family[]) {
     return list;
   }, [families, search, filters, sort, tValue]);
 
-  const countryChips = useMemo(() => buildCountryChips(families, (fam) => fam.country, (fam) => fam.flag), [families]);
+  // Pays sélectionné dont une partie des familles n'est pas dans l'échantillon reçu (liste limitée)
+  const countryLimit = useMemo(() => {
+    if (!filters.country || !countryTotals) return null;
+    const total = countryTotals.find((c) => c.name === filters.country)?.count ?? 0;
+    const shown = families.filter((fam) => fam.country === filters.country).length;
+    return total > shown ? { country: filters.country, total, shown } : null;
+  }, [filters.country, countryTotals, families]);
+
+  // Les totaux par pays renvoyés par l'API priment : la liste peut n'être qu'un échantillon
+  const countryChips = useMemo(
+    () => countryTotals ?? buildCountryChips(families, (fam) => fam.country, (fam) => fam.flag),
+    [countryTotals, families]
+  );
 
   // Le nombre de cartes affichées repart à PAGE_SIZE dès que la recherche change
   const filterKey = JSON.stringify([search, filters, sort]);
@@ -86,6 +98,7 @@ export function useFamilySearch(families: Family[]) {
     paginated: filtered.length > PAGE_SIZE,
     showMore: () => setLimit({ key: filterKey, n: visibleCount + PAGE_SIZE }),
     countryChips,
+    countryLimit,
     activeChips,
     activeCount,
     hasCriteria: activeCount > 0 || search.trim() !== "",

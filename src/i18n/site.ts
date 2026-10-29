@@ -807,6 +807,13 @@ export const site = {
       fr: (shown: number, total: number) => `Vous voyez ${shown} familles sur ${total}. Inscrivez-vous et abonnez-vous pour voir toutes les familles.`,
       en: (shown: number, total: number) => `You are seeing ${shown} of ${total} families. Sign up and subscribe to see all families.`,
     },
+    guestCountryLimited: {
+      fr: (country: string, total: number, shown: number) =>
+        `${country} : ${total} ${total > 1 ? "familles" : "famille"}, vous en voyez ${shown}. Inscrivez-vous et abonnez-vous pour toutes les voir.`,
+      en: (country: string, total: number, shown: number) =>
+        `${country}: ${total} ${total > 1 ? "families" : "family"}, you can see ${shown}. Sign up and subscribe to see them all.`,
+    },
+    signUpCta: { fr: "S'inscrire", en: "Sign up" },
     bannerCta: { fr: "Créer mon profil au pair", en: "Create my au pair profile" },
     loadError: { fr: "Impossible de charger les familles pour le moment.", en: "Unable to load families right now." },
     shownCount: {

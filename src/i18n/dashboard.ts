@@ -374,6 +374,12 @@ export const dashboard = {
       en: (shown: number, total: number) =>
         `Without a subscription you see ${shown} of ${total} families. Subscribe to see all families, contact them and add them to your favourites.`,
     },
+    countryLimited: {
+      fr: (country: string, total: number, shown: number) =>
+        `${country} : ${total} ${total > 1 ? "familles" : "famille"}, vous en voyez ${shown}. Abonnez-vous pour toutes les voir et les contacter.`,
+      en: (country: string, total: number, shown: number) =>
+        `${country}: ${total} ${total > 1 ? "families" : "family"}, you can see ${shown}. Subscribe to see and contact them all.`,
+    },
   },
 
   // ─── Recherche d'au pairs (/dashboard/famille/recherche) ───────────────────

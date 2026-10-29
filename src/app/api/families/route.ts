@@ -52,5 +52,14 @@ export async function GET() {
     familyPhotoUrl: p.familyPhotoUrl ?? "",
   }));
 
-  return NextResponse.json({ families, limited, total: allProfiles.length });
+  // Compteurs par pays calculés sur toutes les familles, même quand la liste est limitée
+  const countryCounts = new Map<string, number>();
+  allProfiles.forEach((p) => {
+    if (p.country) countryCounts.set(p.country, (countryCounts.get(p.country) ?? 0) + 1);
+  });
+  const countries = [...countryCounts]
+    .map(([name, count]) => ({ name, count, flag: flagMap[name] ?? "" }))
+    .sort((a, b) => b.count - a.count);
+
+  return NextResponse.json({ families, limited, total: allProfiles.length, countries });
 }

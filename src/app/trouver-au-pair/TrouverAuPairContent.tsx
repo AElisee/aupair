@@ -100,7 +100,7 @@ export default function TrouverAuPairContent() {
           </div>
         </aside>
 
-        <main>
+        <main className="min-w-0">
           {viewer === "guest" && (
             <div className="lg:hidden mb-6">
               <FamilySignupBanner />
@@ -125,7 +125,7 @@ export default function TrouverAuPairContent() {
           {error ? (
             <DirectoryEmptyState icon={RotateCcw} title={f.loadError} action={<Button onClick={retry}>{d.retry}</Button>} />
           ) : loading ? (
-            <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
               {Array.from({ length: 6 }, (_, i) => <AuPairCardSkeleton key={i} />)}
             </div>
           ) : s.filtered.length === 0 ? (
@@ -143,7 +143,7 @@ export default function TrouverAuPairContent() {
             />
           ) : (
             <>
-              <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                 {s.visible.map((ap) => <AuPairCard key={ap.id} ap={ap} viewer={viewer} />)}
               </div>
               {s.paginated && (

@@ -17,6 +17,7 @@ import {
   FilterSheet,
   ShowMore,
   SortSelect,
+  type CountryChip,
 } from "@/components/search/DirectoryUI";
 import { useCountries } from "@/hooks/useCountries";
 import { useConstants } from "@/hooks/useConstants";
@@ -28,6 +29,7 @@ export default function TrouverFamilleContent() {
   const viewer: FamilyViewer = !session?.user ? "guest" : session.user.role === "AU_PAIR" ? "auPair" : "other";
 
   const [families, setFamilies] = useState<Family[]>([]);
+  const [countryTotals, setCountryTotals] = useState<CountryChip[]>();
   const [total, setTotal] = useState(0);
   // Au pair sans abonnement : l'API ne renvoie qu'un échantillon aléatoire de familles
   const [limited, setLimited] = useState(false);
@@ -37,10 +39,10 @@ export default function TrouverFamilleContent() {
 
   const { host: hostCountries } = useCountries();
   const { languages, subscription } = useConstants();
-  const { t } = useI18n();
+  const { t, tValue } = useI18n();
   const f = t.findFamily;
   const d = t.directory;
-  const s = useFamilySearch(families);
+  const s = useFamilySearch(families, countryTotals);
   const sortOptions = useFamilySortOptions();
 
   const load = useCallback(() => {
@@ -48,6 +50,7 @@ export default function TrouverFamilleContent() {
       .then((res) => (res.ok ? res.json() : Promise.reject()))
       .then((data) => {
         setFamilies(data.families ?? []);
+        setCountryTotals(data.countries);
         setTotal(data.total ?? data.families?.length ?? 0);
         setLimited(!!data.limited);
       })
@@ -104,9 +107,26 @@ export default function TrouverFamilleContent() {
           </div>
         </aside>
 
-        <main>
-          {viewer === "auPair" && limited && total > families.length && (
-            <LimitedBanner className="mb-6" message={t.searchFamilies.limitedBanner(families.length, total)} />
+        <main className="min-w-0">
+          {s.countryLimit && viewer !== "other" ? (
+            <LimitedBanner
+              className="mb-6"
+              {...(viewer === "guest"
+                ? {
+                    message: f.guestCountryLimited(tValue(s.countryLimit.country), s.countryLimit.total, s.countryLimit.shown),
+                    href: "/inscription?role=au-pair",
+                    cta: f.signUpCta,
+                  }
+                : {
+                    message: t.searchFamilies.countryLimited(tValue(s.countryLimit.country), s.countryLimit.total, s.countryLimit.shown),
+                  })}
+            />
+          ) : (
+            viewer === "auPair" &&
+            limited &&
+            total > families.length && (
+              <LimitedBanner className="mb-6" message={t.searchFamilies.limitedBanner(families.length, total)} />
+            )
           )}
 
           {viewer === "guest" && (
@@ -133,7 +153,7 @@ export default function TrouverFamilleContent() {
           {error ? (
             <DirectoryEmptyState icon={RotateCcw} title={f.loadError} action={<Button onClick={retry}>{d.retry}</Button>} />
           ) : loading ? (
-            <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
               {Array.from({ length: 6 }, (_, i) => <FamilyCardSkeleton key={i} />)}
             </div>
           ) : s.filtered.length === 0 ? (
@@ -151,7 +171,7 @@ export default function TrouverFamilleContent() {
             />
           ) : (
             <>
-              <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                 {s.visible.map((fam) => <FamilyCard key={fam.id} fam={fam} viewer={viewer} />)}
               </div>
               {s.paginated && (

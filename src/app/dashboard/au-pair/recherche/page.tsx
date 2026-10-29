@@ -16,6 +16,7 @@ import {
   FilterSheet,
   ShowMore,
   SortSelect,
+  type CountryChip,
 } from "@/components/search/DirectoryUI";
 import { useCountries } from "@/hooks/useCountries";
 import { useConstants } from "@/hooks/useConstants";
@@ -25,6 +26,7 @@ export default function RechercheFamillePage() {
   const { data: session } = useSession();
 
   const [families, setFamilies] = useState<Family[]>([]);
+  const [countryTotals, setCountryTotals] = useState<CountryChip[]>();
   // Au pair sans abonnement : l'API ne renvoie qu'un échantillon aléatoire de familles
   const [limited, setLimited] = useState<{ total: number } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -33,10 +35,10 @@ export default function RechercheFamillePage() {
 
   const { host: hostCountries } = useCountries();
   const { languages } = useConstants();
-  const { t } = useI18n();
+  const { t, tValue } = useI18n();
   const f = t.findFamily;
   const d = t.directory;
-  const s = useFamilySearch(families);
+  const s = useFamilySearch(families, countryTotals);
   const sortOptions = useFamilySortOptions();
 
   const load = useCallback(() => {
@@ -44,6 +46,7 @@ export default function RechercheFamillePage() {
       .then((res) => (res.ok ? res.json() : Promise.reject()))
       .then((data) => {
         setFamilies(data.families ?? []);
+        setCountryTotals(data.countries);
         setLimited(data.limited ? { total: data.total ?? 0 } : null);
       })
       .catch(() => setError(true))
@@ -80,8 +83,15 @@ export default function RechercheFamillePage() {
           }
         />
 
-        {limited && limited.total > families.length && (
-          <SubscriptionBanner message={t.searchFamilies.limitedBanner(families.length, limited.total)} />
+        {s.countryLimit ? (
+          <SubscriptionBanner
+            message={t.searchFamilies.countryLimited(tValue(s.countryLimit.country), s.countryLimit.total, s.countryLimit.shown)}
+          />
+        ) : (
+          limited &&
+          limited.total > families.length && (
+            <SubscriptionBanner message={t.searchFamilies.limitedBanner(families.length, limited.total)} />
+          )
         )}
 
         {/* ─── Recherche + filtres ─────────────────────────────────────── */}
@@ -148,7 +158,7 @@ export default function RechercheFamillePage() {
         {error ? (
           <DirectoryEmptyState icon={RotateCcw} title={f.loadError} action={<Button onClick={retry}>{d.retry}</Button>} />
         ) : loading ? (
-          <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
             {Array.from({ length: 6 }, (_, i) => <FamilyCardSkeleton key={i} />)}
           </div>
         ) : s.filtered.length === 0 ? (
@@ -166,7 +176,7 @@ export default function RechercheFamillePage() {
           />
         ) : (
           <>
-            <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
               {s.visible.map((fam) => <FamilyCard key={fam.id} fam={fam} viewer="auPair" />)}
             </div>
 

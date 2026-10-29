@@ -7,7 +7,9 @@ import { useI18n } from "@/i18n";
 export function SubscriptionBanner({
   message,
   className = "",
-}: { message?: string; className?: string }) {
+  href = "/dashboard/au-pair/abonnement",
+  cta,
+}: { message?: string; className?: string; href?: string; cta?: string }) {
   const { t } = useI18n();
   return (
     <div className={`flex items-center justify-between gap-4 flex-wrap bg-gradient-to-br from-[#E87722] to-[#ff9a3c] rounded-2xl p-4 text-white ${className}`}>
@@ -15,8 +17,8 @@ export function SubscriptionBanner({
         <Lock className="w-5 h-5 flex-shrink-0" />
         <p className="text-sm font-medium">{message ?? t.subscriptionLock.defaultMessage}</p>
       </div>
-      <Link href="/dashboard/au-pair/abonnement">
-        <Button size="sm" className="bg-white text-[#E87722] hover:bg-white/90">{t.subscriptionLock.subscribe}</Button>
+      <Link href={href}>
+        <Button size="sm" className="bg-white text-[#E87722] hover:bg-white/90">{cta ?? t.subscriptionLock.subscribe}</Button>
       </Link>
     </div>
   );
