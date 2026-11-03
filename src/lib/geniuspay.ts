@@ -70,7 +70,10 @@ export async function fetchGeniuspayPayment(reference: string, publicKey: string
     cache: "no-store",
   });
   const json = await res.json().catch(() => null);
-  if (!res.ok) return null;
+  if (!res.ok) {
+    console.error(`[geniuspay] GET /payments/${reference} refusé (${res.status}) : ${geniuspayErrorMessage(json)}`);
+    return null;
+  }
   return unwrapGeniuspayPayment(json);
 }
 
@@ -140,10 +143,35 @@ export interface GeniuspayWebhookEvent {
   id?: string | number;
   event: string;
   environment?: string;
+  reference?: string;
   data?: {
-    object?: string;
+    object?: string | Record<string, unknown>;
     reference?: string;
     status?: string;
     metadata?: Record<string, unknown> | null;
+    payment?: Record<string, unknown>;
   };
+}
+
+const REFERENCE_PATTERN = /^MTX-[A-Z0-9]+$/i;
+
+/**
+ * Référence du paiement concerné par un webhook. La doc publique n'étant pas accessible, on tolère
+ * plusieurs formes de payload (`data.reference`, `data.payment.reference`, `data.object.reference`,
+ * `reference` à la racine) — le statut est de toute façon relu auprès de l'API ensuite.
+ */
+export function extractReferenceFromGeniuspayEvent(event: GeniuspayWebhookEvent): string | null {
+  const data = event.data;
+  const candidates: unknown[] = [
+    data?.reference,
+    data?.payment?.reference,
+    data?.object && typeof data.object === "object" ? data.object.reference : undefined,
+    event.reference,
+    data?.payment?.payment_reference,
+    (data as Record<string, unknown> | undefined)?.payment_reference,
+  ];
+  for (const c of candidates) {
+    if (typeof c === "string" && REFERENCE_PATTERN.test(c.trim())) return c.trim();
+  }
+  return null;
 }

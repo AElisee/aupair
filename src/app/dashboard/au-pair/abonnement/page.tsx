@@ -188,7 +188,10 @@ function AbonnementContent() {
           if (!poll) return;
           pollAttempts.current += 1;
           if (pollAttempts.current >= MAX_POLL_ATTEMPTS) {
+            // On garde le paiement en attente en mémoire : il sera revérifié au prochain chargement de la page
+            const stillPending = readPendingPayment();
             finishPayment();
+            writePendingPayment(stillPending);
             setToastMessage(t.subscription.stillPending);
             return;
           }
@@ -243,6 +246,30 @@ function AbonnementContent() {
 
   // Arrête le polling quand l'utilisateur quitte la page
   useEffect(() => stopPolling, [stopPolling]);
+
+  // Paiement resté en attente lors d'une visite précédente (onglet fermé, mobile en veille…) : revérifié
+  // silencieusement à l'ouverture de la page, pour activer un abonnement déjà payé sans attendre le webhook.
+  useEffect(() => {
+    if (paymentStatus === "return") return;
+    const pending = readPendingPayment();
+    if (!pending) return;
+    fetch(`/api/payments/${pending.provider}/verify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ transactionId: pending.transactionId }),
+    })
+      .then((res) => res.json().catch(() => null))
+      .then((json) => {
+        if (json?.status === "approved") {
+          writePendingPayment(null);
+          load();
+        } else if (json?.status === "rejected") {
+          writePendingPayment(null);
+        }
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Onglet ouvert par l'URL de retour de l'agrégateur (paiement validé, refusé ou annulé)
   useEffect(() => {
