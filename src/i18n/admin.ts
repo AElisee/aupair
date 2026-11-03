@@ -50,6 +50,9 @@ export const admin = {
     willBeDeleted: { fr: "sera définitivement supprimé.", en: "will be permanently deleted." },
     previous: { fr: "Précédent", en: "Previous" },
     next: { fr: "Suivant", en: "Next" },
+    firstPage: { fr: "Première page", en: "First page" },
+    lastPage: { fr: "Dernière page", en: "Last page" },
+    page: { fr: (n: number) => `Page ${n}`, en: (n: number) => `Page ${n}` },
     range: {
       fr: (from: number, to: number, total: number) => `${from}–${to} sur ${total}`,
       en: (from: number, to: number, total: number) => `${from}–${to} of ${total}`,
