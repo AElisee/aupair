@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin";
 import { getCountryFlagMap } from "@/lib/countries";
+import { getVisitorStats } from "@/lib/site-visits";
 
 const MONTHS_RANGE = 6;
 
@@ -31,7 +32,7 @@ export async function GET() {
 
   const [
     users,
-    subscriptions,
+    visitors,
     auPairStatusGroups,
     familyStatusGroups,
     topOriginCountries,
@@ -39,10 +40,7 @@ export async function GET() {
     flagMap,
   ] = await Promise.all([
     prisma.user.findMany({ where: { createdAt: { gte: since } }, select: { createdAt: true, role: true } }),
-    prisma.subscription.findMany({
-      where: { createdAt: { gte: since }, currency: "XOF", status: { in: ["ACTIVE", "EXPIRED"] } },
-      select: { createdAt: true, amount: true, paymentMethod: true },
-    }),
+    getVisitorStats(),
     prisma.auPairProfile.groupBy({ by: ["status"], _count: { _all: true } }),
     prisma.familyProfile.groupBy({ by: ["status"], _count: { _all: true } }),
     prisma.auPairProfile.groupBy({
@@ -68,18 +66,6 @@ export async function GET() {
     famille: users.filter((u) => monthKey(u.createdAt) === key && u.role === "FAMILLE").length,
   }));
 
-  // Total du mois + détail Mobile Money / carte (les méthodes génériques FEDAPAY/GENIUSPAY ne comptent que dans le total)
-  const revenueByMonth = months.map(({ key, label }) => {
-    const ofMonth = subscriptions.filter((s) => monthKey(s.createdAt) === key);
-    const sumOf = (list: typeof ofMonth) => list.reduce((sum, s) => sum + s.amount, 0);
-    return {
-      month: label,
-      amount: sumOf(ofMonth),
-      mobileMoney: sumOf(ofMonth.filter((s) => s.paymentMethod === "MOBILE_MONEY")),
-      card: sumOf(ofMonth.filter((s) => s.paymentMethod === "CARD")),
-    };
-  });
-
   const profileStatusCounts = (groups: { status: string; _count: { _all: number } }[]) => {
     const result: Record<string, number> = { PENDING: 0, ACTIVE: 0, HIDDEN: 0, SUSPENDED: 0, DELETED: 0 };
     for (const g of groups) result[g.status] = g._count._all;
@@ -100,7 +86,7 @@ export async function GET() {
 
   return NextResponse.json({
     signupsByMonth,
-    revenueByMonth,
+    visitors,
     auPairStatus: profileStatusCounts(auPairStatusGroups),
     familyStatus: profileStatusCounts(familyStatusGroups),
     topCountries,

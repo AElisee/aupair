@@ -484,6 +484,21 @@ model Notification {
   @@map("notifications")
 }
 
+// ─── VISITEURS DU SITE ───────────────────────────────────────────────────────
+
+// Un visiteur unique par jour : `visitorId` est un identifiant aléatoire gardé dans le
+// navigateur (aucune donnée personnelle), `day` = date UTC au format AAAA-MM-JJ.
+model SiteVisit {
+  id        String   @id @default(cuid())
+  visitorId String
+  day       String
+  createdAt DateTime @default(now())
+
+  @@unique([visitorId, day])
+  @@index([day])
+  @@map("site_visits")
+}
+
 // ─── VUES DE PROFIL ──────────────────────────────────────────────────────────
 
 model ProfileView {

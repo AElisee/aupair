@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin";
 import { ProfileStatus } from "@/generated/prisma/client";
 import { getCountryFlagMap } from "@/lib/countries";
-import { formatCurrency, formatRevenueByCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import { effectiveSubscriptionStatus } from "@/lib/payments";
 
 export async function GET() {
@@ -22,8 +22,6 @@ export async function GET() {
     totalFamilies,
     signups30d,
     signupsPrev30d,
-    revenueByCurrency30d,
-    totalRevenueByCurrency,
     activeSubscriptions,
     pendingAuPairs,
     pendingFamilies,
@@ -38,16 +36,6 @@ export async function GET() {
     prisma.familyProfile.count(),
     prisma.user.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
     prisma.user.count({ where: { createdAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo } } }),
-    prisma.subscription.groupBy({
-      by: ["currency"],
-      _sum: { amount: true },
-      where: { createdAt: { gte: thirtyDaysAgo } },
-    }),
-    prisma.subscription.groupBy({
-      by: ["currency"],
-      _sum: { amount: true },
-      where: { status: { in: ["ACTIVE", "EXPIRED"] } },
-    }),
     prisma.subscription.count({ where: { status: "ACTIVE", expiresAt: { gt: new Date() } } }),
     prisma.auPairProfile.count({ where: { status: ProfileStatus.PENDING } }),
     prisma.familyProfile.count({ where: { status: ProfileStatus.PENDING } }),
@@ -123,8 +111,6 @@ export async function GET() {
       totalFamilies,
       signups30d,
       signupsChangePct,
-      revenue30d: formatRevenueByCurrency(revenueByCurrency30d),
-      totalRevenue: formatRevenueByCurrency(totalRevenueByCurrency),
       activeSubscriptions,
       pendingProfiles,
       openReports,

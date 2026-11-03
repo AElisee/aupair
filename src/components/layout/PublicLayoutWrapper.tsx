@@ -6,6 +6,7 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import PullToRefresh from "./PullToRefresh";
 import SessionGuard from "./SessionGuard";
+import VisitTracker from "./VisitTracker";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 
 const PRIVATE_PATHS = ["/dashboard", "/admin"];
@@ -17,6 +18,7 @@ export default function PublicLayoutWrapper({ children }: { children: React.Reac
   return (
     <SessionProvider>
       <SessionGuard />
+      <VisitTracker />
       <LanguageProvider>
         <PullToRefresh />
         {!isPrivate && <Navbar />}

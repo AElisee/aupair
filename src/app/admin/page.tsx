@@ -4,12 +4,10 @@ import Link from "next/link";
 import {
   Area,
   AreaChart,
-  Bar,
   CartesianGrid,
-  Cell,
-  ComposedChart,
-  Line,
+  Label,
   PolarAngleAxis,
+  PolarRadiusAxis,
   RadialBar,
   RadialBarChart,
   XAxis,
@@ -27,8 +25,10 @@ import {
   UserPlus,
   BadgeCheck,
   Globe2,
-  Wallet,
+  Eye,
   Receipt,
+  TrendingUp,
+  TrendingDown,
 } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import {
@@ -39,7 +39,6 @@ import {
 } from "@/components/ui/chart";
 import { Badge } from "@/components/ui/badge";
 import { CountryFlag } from "@/components/ui/CountryFlag";
-import { formatCurrency } from "@/lib/utils";
 import { useI18n } from "@/i18n";
 import { Separator } from "@/components/ui/separator";
 import { BLUE, GREEN, ICON, INDIGO, NAVY, ORANGE, PAGE_TITLE, TEAL, IconChip, KpiGrid, Panel, PanelHeader, pct } from "@/components/admin/AdminUI";
@@ -51,8 +50,6 @@ type DashboardData = {
     totalFamilies: number;
     signups30d: number;
     signupsChangePct: number;
-    revenue30d: string;
-    totalRevenue: string;
     activeSubscriptions: number;
     pendingProfiles: number;
     openReports: number;
@@ -78,7 +75,7 @@ type DashboardData = {
 
 type AnalyticsData = {
   signupsByMonth: { month: string; auPair: number; famille: number }[];
-  revenueByMonth: { month: string; amount: number; mobileMoney: number; card: number }[];
+  visitors: { today: number; last7d: number; last30d: number; prev30d: number; total: number };
   auPairStatus: Record<string, number>;
   familyStatus: Record<string, number>;
   topCountries: { country: string; flag: string; count: number }[];
@@ -148,7 +145,7 @@ export default function AdminPage() {
     const [year, month] = value.split("-").map(Number);
     return new Intl.DateTimeFormat(locale, { month: "short" }).format(new Date(year, month - 1, 1));
   };
-  const compact = new Intl.NumberFormat(locale, { notation: "compact", maximumFractionDigits: 1 });
+  const formatNumber = (n: number) => n.toLocaleString(locale);
 
   const kpiCards = [
     { icon: Users, value: kpis.totalUsers, label: d.users, caption: d.newThisMonth(kpis.signups30d), ratio: pct(kpis.signups30d, kpis.totalUsers), color: NAVY },
@@ -172,13 +169,17 @@ export default function AdminPage() {
     auPair: { label: ta.auPairs, color: ORANGE },
     famille: { label: ta.families, color: BLUE },
   };
-  const revenueConfig = {
-    amount: { label: ta.revenueTotal, color: ORANGE },
-    mobileMoney: { label: ta.revenueMobileMoney, color: GREEN },
-    card: { label: ta.revenueCard, color: BLUE },
-  } satisfies ChartConfig;
   const gaugeConfig: ChartConfig = { value: { label: d.validationTitle, color: GREEN } };
-  const lastMonthIndex = analytics.revenueByMonth.length - 1;
+
+  // Visiteurs uniques 30 j : l'arc compare à la période précédente (cercle complet = au moins autant)
+  const { visitors } = analytics;
+  const visitorsConfig: ChartConfig = { visitors: { label: ta.visitorsLabel, color: ORANGE } };
+  const visitorsRatio = visitors.last30d === 0 ? 0 : visitors.last30d / Math.max(visitors.last30d, visitors.prev30d);
+  const visitorsChange =
+    visitors.prev30d === 0
+      ? visitors.last30d > 0 ? 100 : 0
+      : Math.round(((visitors.last30d - visitors.prev30d) / visitors.prev30d) * 100);
+  const TrendIcon = visitorsChange < 0 ? TrendingDown : TrendingUp;
 
   return (
     <AdminLayout>
@@ -297,8 +298,8 @@ export default function AdminPage() {
           </Panel>
         </div>
 
-        {/* Pays + revenus */}
-        <div className="grid lg:grid-cols-3 gap-4">
+        {/* Pays + visiteurs (50/50 sur grand écran) */}
+        <div className="grid lg:grid-cols-2 gap-4">
           <Panel className="p-5" tint={TEAL}>
             <PanelHeader
               icon={Globe2}
@@ -343,63 +344,64 @@ export default function AdminPage() {
             )}
           </Panel>
 
-          <Panel className="p-5 lg:col-span-2" tint={INDIGO}>
-            <PanelHeader
-              icon={Wallet}
-              color={INDIGO}
-              title={ta.revenueTitle}
-              subtitle={ta.revenueSubtitle}
-              action={
-                <div className="text-right">
-                  <p className="text-base font-medium text-[#1A1A2E] tabular-nums">{kpis.revenue30d}</p>
-                  <p className="text-xs text-gray-400">{d.revenue30d} · {d.totalRevenue} {kpis.totalRevenue}</p>
-                </div>
-              }
-            />
-            <div className="flex flex-wrap items-center gap-3 mb-2 text-xs text-gray-500">
-              {Object.values(revenueConfig).map((s) => (
-                <span key={s.label} className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full" style={{ background: s.color }} />
-                  {s.label}
-                </span>
-              ))}
-            </div>
-            <ChartContainer config={revenueConfig} className="aspect-auto h-[220px] w-full">
-              <ComposedChart data={analytics.revenueByMonth} margin={{ left: 0, right: 8, top: 8 }} barCategoryGap="30%">
-                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={10} interval={0} tickFormatter={formatMonth} />
-                <YAxis tickLine={false} axisLine={false} width={40} tickFormatter={(v) => compact.format(Number(v))} />
-                <ChartTooltip
-                  cursor={{ fill: "#f9fafb" }}
-                  content={
-                    <ChartTooltipContent
-                      labelFormatter={(value) => formatMonth(String(value))}
-                      formatter={(value, name) => (
-                        <div className="flex w-full items-center justify-between gap-4">
-                          <span className="flex items-center gap-1.5 text-muted-foreground">
-                            <span
-                              className="w-2 h-2 rounded-full"
-                              style={{ background: revenueConfig[name as keyof typeof revenueConfig]?.color }}
-                            />
-                            {revenueConfig[name as keyof typeof revenueConfig]?.label ?? name}
-                          </span>
-                          <span className="text-foreground font-medium tabular-nums">
-                            {formatCurrency(Number(value), "XOF", locale)}
-                          </span>
-                        </div>
-                      )}
+          <Panel className="p-5" tint={ORANGE}>
+            <PanelHeader icon={Eye} color={ORANGE} title={ta.visitorsTitle} subtitle={ta.visitorsSubtitle} />
+            <div className="grid sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4 items-center">
+              <ChartContainer config={visitorsConfig} className="mx-auto aspect-square w-full max-w-[220px]">
+                {/* Rayons en % pour rester dans le cadre ; piste de fond complète, arc = part vs période précédente */}
+                <RadialBarChart
+                  data={[{ name: "visitors", value: Math.round(visitorsRatio * 100), fill: "var(--color-visitors)" }]}
+                  startAngle={90}
+                  endAngle={-270}
+                  innerRadius="78%"
+                  outerRadius="100%"
+                  barSize={16}
+                  margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
+                >
+                  <PolarAngleAxis type="number" domain={[0, 100]} tick={false} axisLine={false} />
+                  <RadialBar dataKey="value" background={{ fill: "#FDEBDD" }} cornerRadius={10} />
+                  <PolarRadiusAxis tick={false} tickLine={false} axisLine={false}>
+                    <Label
+                      content={({ viewBox }) => {
+                        if (!viewBox || !("cx" in viewBox) || !("cy" in viewBox)) return null;
+                        return (
+                          <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
+                            <tspan x={viewBox.cx} y={viewBox.cy} className="fill-[#1A1A2E] text-3xl font-semibold tabular-nums">
+                              {formatNumber(visitors.last30d)}
+                            </tspan>
+                            <tspan x={viewBox.cx} y={(viewBox.cy ?? 0) + 24} className="fill-gray-500 text-xs">
+                              {ta.visitorsLabel}
+                            </tspan>
+                          </text>
+                        );
+                      }}
                     />
-                  }
-                />
-                <Bar dataKey="amount" radius={[6, 6, 2, 2]} maxBarSize={36}>
-                  {analytics.revenueByMonth.map((entry, i) => (
-                    <Cell key={entry.month} fill={ORANGE} fillOpacity={i === lastMonthIndex ? 1 : 0.35} />
+                  </PolarRadiusAxis>
+                </RadialBarChart>
+              </ChartContainer>
+
+              <div className="space-y-4">
+                <ul className="divide-y divide-gray-200/60 rounded-xl border border-gray-200/60 bg-white/60">
+                  {[
+                    { label: ta.visitorsToday, value: visitors.today },
+                    { label: ta.visitors7d, value: visitors.last7d },
+                    { label: ta.visitorsPrev30d, value: visitors.prev30d },
+                    { label: ta.visitorsTotal, value: visitors.total },
+                  ].map((row) => (
+                    <li key={row.label} className="flex items-center justify-between px-4 py-2.5 text-sm">
+                      <span className="text-gray-500">{row.label}</span>
+                      <span className="font-medium text-[#1A1A2E] tabular-nums">{formatNumber(row.value)}</span>
+                    </li>
                   ))}
-                </Bar>
-                <Line dataKey="mobileMoney" type="monotone" stroke="var(--color-mobileMoney)" strokeWidth={2} dot={{ r: 3, strokeWidth: 0, fill: "var(--color-mobileMoney)" }} activeDot={{ r: 5, strokeWidth: 2, stroke: "#fff" }} />
-                <Line dataKey="card" type="monotone" stroke="var(--color-card)" strokeWidth={2} dot={{ r: 3, strokeWidth: 0, fill: "var(--color-card)" }} activeDot={{ r: 5, strokeWidth: 2, stroke: "#fff" }} />
-              </ComposedChart>
-            </ChartContainer>
+                </ul>
+                <div>
+                  <p className={`flex items-center gap-1.5 text-sm ${visitorsChange < 0 ? "text-red-600" : "text-[#3FA45B]"}`}>
+                    <TrendIcon {...ICON} size={16} />
+                    {ta.visitorsTrend(`${visitorsChange > 0 ? "+" : ""}${visitorsChange}%`)}
+                  </p>
+                </div>
+              </div>
+            </div>
           </Panel>
         </div>
 

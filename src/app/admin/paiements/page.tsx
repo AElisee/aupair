@@ -2,6 +2,8 @@
 import { useEffect, useMemo, useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import Pagination from "@/components/admin/Pagination";
+import RevenueChart from "@/components/admin/RevenueChart";
+import type { RevenueMonth } from "@/lib/admin-revenue";
 import { Badge } from "@/components/ui/badge";
 import { Wallet, CreditCard, Smartphone, Globe, Download, Loader2, FileText, CalendarClock, Search, Printer } from "lucide-react";
 import { useI18n } from "@/i18n";
@@ -35,6 +37,7 @@ type PaymentsData = {
     expiringSoon: number;
     totalPayments: number;
   };
+  revenue: { last30d: string; total: string; byMonth: RevenueMonth[] };
   payments: Payment[];
 };
 
@@ -242,6 +245,8 @@ export default function PaiementsPage() {
                 },
               ]}
             />
+
+            <RevenueChart data={data.revenue.byMonth} last30d={data.revenue.last30d} total={data.revenue.total} />
 
             {/* Tableau paiements */}
             <Panel className="overflow-hidden" tint={TEAL}>

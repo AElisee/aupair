@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatRevenueByCurrency } from "@/lib/utils";
+import { buildRevenueByMonth } from "@/lib/admin-revenue";
 import { effectiveSubscriptionStatus } from "@/lib/payments";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -33,6 +34,18 @@ export async function GET() {
     (s) => s.expiresAt.getTime() > now && s.expiresAt.getTime() - now <= EXPIRING_SOON_DAYS * DAY_MS,
   ).length;
 
+  // Revenus encaissés : 30 derniers jours (tous statuts, comme avant sur le dashboard) et total (ACTIVE/EXPIRED)
+  const sumByCurrency = (list: typeof subscriptions) => {
+    const sums = new Map<(typeof subscriptions)[number]["currency"], number>();
+    for (const s of list) sums.set(s.currency, (sums.get(s.currency) ?? 0) + s.amount);
+    return [...sums].map(([currency, amount]) => ({ currency, _sum: { amount } }));
+  };
+  const thirtyDaysAgo = now - 30 * DAY_MS;
+  const revenue30d = formatRevenueByCurrency(sumByCurrency(subscriptions.filter((s) => s.createdAt.getTime() >= thirtyDaysAgo)));
+  const totalRevenue = formatRevenueByCurrency(
+    sumByCurrency(subscriptions.filter((s) => s.status === "ACTIVE" || s.status === "EXPIRED")),
+  );
+
   const payments = subscriptions.map((s) => ({
     id: s.id,
     user: s.user.name ?? "",
@@ -55,6 +68,11 @@ export async function GET() {
       cardCount,
       expiringSoon,
       totalPayments: subscriptions.length,
+    },
+    revenue: {
+      last30d: revenue30d,
+      total: totalRevenue,
+      byMonth: buildRevenueByMonth(subscriptions),
     },
     payments,
   });
