@@ -304,6 +304,13 @@ export const dashboard = {
     openPaymentPage: { fr: "Ouvrir la page de paiement", en: "Open the payment page" },
     cancelPayment: { fr: "Annuler le paiement", en: "Cancel the payment" },
     payNow: { fr: "Payer maintenant", en: "Pay now" },
+    // Avertissement temporaire : échecs possibles des paiements Mobile Money
+    paymentNoticeTitle: { fr: "Information importante", en: "Important information" },
+    paymentNoticeText: {
+      fr: "Les paiements par Mobile Money peuvent actuellement échouer. Pour finaliser votre abonnement sans difficulté, nous vous recommandons de privilégier le paiement par carte bancaire ou carte virtuelle.",
+      en: "Mobile Money payments may currently fail. To complete your subscription smoothly, we recommend paying by bank card or virtual card.",
+    },
+    paymentNoticeConfirm: { fr: "J'ai compris", en: "I understand" },
     includedTitle: { fr: "Inclus dans votre abonnement", en: "Included in your subscription" },
     subtitle: {
       fr: "Suivez votre abonnement, souscrivez et retrouvez vos paiements",

@@ -136,6 +136,11 @@ function AbonnementContent() {
   const [pendingTransactionId, setPendingTransactionId] = useState<number | string | null>(null);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  // Avertissement bloquant à valider ("J'ai compris") avant de pouvoir payer
+  const [noticeOpen, setNoticeOpen] = useState(false);
+  const [noticeAcknowledged, setNoticeAcknowledged] = useState(false);
+  // Le pop-up a été ouvert depuis le bouton de paiement : on enchaîne sur le paiement après validation
+  const payAfterNotice = useRef(false);
   const [tab, setTab] = useState<Tab>("current");
   const pollAttempts = useRef(0);
   const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -324,6 +329,31 @@ function AbonnementContent() {
   const fmtDate = (date: string | null) => (date ? formatDate(date, locale) : "—");
 
   const active = data?.active ?? false;
+
+  // Pop-up affiché dès l'arrivée sur la page tant que l'abonnement n'est pas actif
+  useEffect(() => {
+    if (data && !data.active && !noticeAcknowledged) setNoticeOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
+
+  const handlePayClick = () => {
+    if (noticeAcknowledged) {
+      handlePay();
+      return;
+    }
+    payAfterNotice.current = true;
+    setNoticeOpen(true);
+  };
+
+  const acknowledgeNotice = () => {
+    setNoticeAcknowledged(true);
+    setNoticeOpen(false);
+    if (payAfterNotice.current) {
+      payAfterNotice.current = false;
+      handlePay();
+    }
+  };
+
   const daysLeft = data?.daysLeft ?? 0;
   const expiringSoon = active && daysLeft <= 7;
   const statusColor = !active ? "#D64545" : expiringSoon ? ORANGE : TEAL;
@@ -368,7 +398,7 @@ function AbonnementContent() {
       </button>
     </div>
   ) : (
-    <button type="button" onClick={handlePay} disabled={submitting} className={PRIMARY_BUTTON}>
+    <button type="button" onClick={handlePayClick} disabled={submitting} className={PRIMARY_BUTTON}>
       {submitting ? <Loader2 {...ICON} size={16} className="animate-spin" /> : <Wallet {...ICON} size={16} />}
       {ts.payNow}
     </button>
@@ -613,6 +643,31 @@ function AbonnementContent() {
                 className="mt-3 w-full rounded-xl border border-gray-200 px-6 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
               >
                 {t.subscription.cancelPayment}
+              </button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+      {/* Pop-up bloquant : ni croix, ni Échap, ni clic à l'extérieur — seul "J'ai compris" le ferme */}
+      <Dialog.Root open={noticeOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
+          <Dialog.Content
+            onEscapeKeyDown={(e) => e.preventDefault()}
+            onPointerDownOutside={(e) => e.preventDefault()}
+            onInteractOutside={(e) => e.preventDefault()}
+            className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl focus:outline-none"
+          >
+            <div className="flex flex-col items-center text-center">
+              <Dialog.Title className="text-lg font-medium text-[#1A1A2E]">{ts.paymentNoticeTitle}</Dialog.Title>
+              <Dialog.Description className="mt-2 text-sm text-gray-600">{ts.paymentNoticeText}</Dialog.Description>
+              <button
+                type="button"
+                onClick={acknowledgeNotice}
+                className={`mt-6 ${PRIMARY_BUTTON}`}
+              >
+                <CreditCard {...ICON} size={16} />
+                {ts.paymentNoticeConfirm}
               </button>
             </div>
           </Dialog.Content>
