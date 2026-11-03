@@ -192,7 +192,7 @@ export default function AuPairDashboard() {
         <KpiGrid items={kpis} />
 
         {/* Complétion du profil + visibilité */}
-        <div className="grid lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <Panel className="p-5 lg:col-span-2" tint={completionColor}>
             <PanelHeader
               title={h.completionTitle}
@@ -267,7 +267,7 @@ export default function AuPairDashboard() {
         </div>
 
         {/* Suggestions + abonnement */}
-        <div className="grid lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <Panel className="p-5 lg:col-span-2" tint={BLUE}>
             <PanelHeader
               title={h.suggestedTitle}
