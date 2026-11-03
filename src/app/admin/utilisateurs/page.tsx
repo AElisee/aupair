@@ -15,15 +15,15 @@ import {
   Loader2,
   Users,
   BadgeCheck,
-  Hourglass,
   CreditCard,
 } from "lucide-react";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import SendEmailDialog from "@/components/admin/SendEmailDialog";
 import { useI18n } from "@/i18n";
 import { Separator } from "@/components/ui/separator";
-import { GREEN, INDIGO, NAVY, ORANGE, PAGE_TITLE, TEAL, KpiGrid, pct } from "@/components/admin/AdminUI";
+import { GREEN, INDIGO, NAVY, PAGE_TITLE, TEAL, KpiGrid, pct } from "@/components/admin/AdminUI";
 import { SelectField } from "@/components/ui/select-field";
+import { CountryFlag } from "@/components/ui/CountryFlag";
 
 type AdminUser = {
   id: string;
@@ -31,6 +31,8 @@ type AdminUser = {
   email: string;
   role: "AU_PAIR" | "FAMILLE";
   country: string;
+  flag: string;
+  completion: number;
   status: string;
   subscribed: boolean;
   createdAt: string;
@@ -48,13 +50,14 @@ export default function UtilisateursPage() {
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [filterCountry, setFilterCountry] = useState("");
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null);
   const [purgeTarget, setPurgeTarget] = useState<AdminUser | null>(null);
   const [emailTarget, setEmailTarget] = useState<AdminUser | null>(null);
   const [notice, setNotice] = useState("");
   const [page, setPage] = useState(1);
-  const { t, locale } = useI18n();
+  const { t, tValue, locale } = useI18n();
   const c = t.adminCommon;
   const tu = t.adminUsers;
 
@@ -80,8 +83,11 @@ export default function UtilisateursPage() {
         }
         if (action === "restore") {
           const data = await res.json();
+          // Un compte jamais validé repasse en attente : il quitte la liste (→ /admin/moderation)
           setUsers((prev) =>
-            prev.map((item) => (item.id === u.id ? { ...item, status: data.status } : item)),
+            data.status === "PENDING"
+              ? prev.filter((item) => item.id !== u.id)
+              : prev.map((item) => (item.id === u.id ? { ...item, status: data.status } : item)),
           );
           return;
         }
@@ -136,15 +142,21 @@ export default function UtilisateursPage() {
       u.name.toLowerCase().includes(search.toLowerCase()) ||
       u.email.toLowerCase().includes(search.toLowerCase());
     const matchRole = !filterRole || u.role === filterRole;
+    const matchCountry = !filterCountry || u.country === filterCountry;
 
     if (view === "trash") {
-      return u.status === "DELETED" && matchSearch && matchRole;
+      return u.status === "DELETED" && matchSearch && matchRole && matchCountry;
     }
     if (u.status === "DELETED") return false;
 
     const matchStatus = !filterStatus || u.status === filterStatus;
-    return matchSearch && matchRole && matchStatus;
+    return matchSearch && matchRole && matchCountry && matchStatus;
   });
+
+  // Pays présents parmi les comptes, triés selon la langue d'affichage
+  const countryOptions = [...new Set(users.map((u) => u.country).filter(Boolean))]
+    .map((country) => ({ value: country, label: tValue(country) }))
+    .sort((a, b) => a.label.localeCompare(b.label, locale));
 
   const trashCount = users.filter((u) => u.status === "DELETED").length;
 
@@ -157,12 +169,10 @@ export default function UtilisateursPage() {
   const subscribedCount = accounts.filter((u) => u.role === "AU_PAIR" && u.subscribed).length;
   const newCount = accounts.filter((u) => new Date(u.createdAt) >= monthAgo).length;
   const activeCount = countStatus("ACTIVE");
-  const pendingCount = countStatus("PENDING");
   const restrictedCount = countStatus("HIDDEN", "SUSPENDED");
   const kpis = [
     { icon: Users, value: accounts.length, label: tu.kpiTotal, caption: t.adminDashboard.newThisMonth(newCount), ratio: pct(newCount, accounts.length), color: NAVY },
     { icon: BadgeCheck, value: activeCount, label: tu.kpiActive, caption: tu.shareOfAccounts(pct(activeCount, accounts.length)), ratio: pct(activeCount, accounts.length), color: GREEN },
-    { icon: Hourglass, value: pendingCount, label: tu.kpiPending, caption: tu.shareOfAccounts(pct(pendingCount, accounts.length)), ratio: pct(pendingCount, accounts.length), color: ORANGE },
     { icon: EyeOff, value: restrictedCount, label: tu.kpiRestricted, caption: tu.shareOfAccounts(pct(restrictedCount, accounts.length)), ratio: pct(restrictedCount, accounts.length), color: INDIGO },
     { icon: CreditCard, value: subscribedCount, label: tu.kpiSubscribed, caption: t.adminDashboard.shareOfAuPairs(pct(subscribedCount, auPairCount)), ratio: pct(subscribedCount, auPairCount), color: TEAL },
   ];
@@ -176,7 +186,6 @@ export default function UtilisateursPage() {
 
   const statusBadge = (s: string) => {
     if (s === "ACTIVE") return <Badge variant="success">{c.profileStatus.ACTIVE}</Badge>;
-    if (s === "PENDING") return <Badge variant="warning">{c.profileStatus.PENDING}</Badge>;
     if (s === "SUSPENDED") return <Badge variant="destructive">{c.profileStatus.SUSPENDED}</Badge>;
     if (s === "HIDDEN") return <Badge variant="secondary">{c.profileStatus.HIDDEN}</Badge>;
     if (s === "DELETED") return <Badge variant="destructive">{c.profileStatus.DELETED}</Badge>;
@@ -255,6 +264,16 @@ export default function UtilisateursPage() {
             size="sm"
             className="w-full sm:w-44"
           />
+          <SelectField
+            value={filterCountry}
+            onChange={(v) => {
+              setFilterCountry(v);
+              setPage(1);
+            }}
+            options={[{ value: "", label: tu.allCountries }, ...countryOptions]}
+            size="sm"
+            className="w-full sm:w-44"
+          />
           {view === "active" && (
             <SelectField
               value={filterStatus}
@@ -265,7 +284,6 @@ export default function UtilisateursPage() {
               options={[
                 { value: "", label: tu.allStatuses },
                 { value: "ACTIVE", label: c.profileStatus.ACTIVE },
-                { value: "PENDING", label: c.profileStatus.PENDING },
                 { value: "HIDDEN", label: c.profileStatus.HIDDEN },
                 { value: "SUSPENDED", label: c.profileStatus.SUSPENDED },
               ]}
@@ -290,6 +308,9 @@ export default function UtilisateursPage() {
                     <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider w-12">#</th>
                     <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
                       {tu.colUser}
+                    </th>
+                    <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {tu.colCompletion}
                     </th>
                     <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
                       {tu.colRole}
@@ -330,12 +351,20 @@ export default function UtilisateursPage() {
                             )}
                           </div>
                           <div>
-                            <p className="font-medium text-[#1A1A2E]">
+                            <p className="font-medium text-[#1A1A2E] flex items-center gap-1.5">
                               {u.name}
+                              {u.flag && (
+                                <span title={tValue(u.country)} className="inline-flex shrink-0">
+                                  <CountryFlag flag={u.flag} className="h-3 w-[18px] object-cover rounded-[2px]" />
+                                </span>
+                              )}
                             </p>
                             <p className="text-xs text-gray-400">{u.email}</p>
                           </div>
                         </div>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <span className="text-xs text-gray-600 tabular-nums">{u.completion} %</span>
                       </td>
                       <td className="px-5 py-3.5">
                         <Badge
@@ -392,16 +421,6 @@ export default function UtilisateursPage() {
                             </>
                           ) : (
                             <>
-                              {u.status === "PENDING" && (
-                                <button
-                                  disabled={processingId === u.id}
-                                  onClick={() => handleAction(u, "validate")}
-                                  className="p-1.5 text-green-600 hover:bg-green-50 rounded-xl transition-colors disabled:opacity-50"
-                                  title={c.validate}
-                                >
-                                  <CheckCircle className="w-4 h-4" />
-                                </button>
-                              )}
                               {u.status === "HIDDEN" ? (
                                 <button
                                   disabled={processingId === u.id}
