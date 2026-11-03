@@ -35,6 +35,16 @@ const DEFAULT_COUNTRIES: {
 
 async function main() {
   const { prisma } = await import("../src/lib/prisma");
+  const { SUPER_ADMIN_ROLE } = await import("../src/lib/admin-permissions");
+
+  // Seul rôle prédéfini : Superadmin (toutes les permissions). Les autres rôles sont créés
+  // et nommés par le superadmin depuis /admin/equipe.
+  const { slug: superAdminSlug, ...superAdminData } = SUPER_ADMIN_ROLE;
+  const superAdminRole = await prisma.adminRole.upsert({
+    where: { slug: superAdminSlug },
+    update: { name: superAdminData.name, permissions: superAdminData.permissions, isSystem: true },
+    create: { slug: superAdminSlug, ...superAdminData },
+  });
 
   const email = process.env.ADMIN_EMAIL;
   const password = process.env.ADMIN_PASSWORD;
@@ -55,6 +65,9 @@ async function main() {
         name,
         role: "ADMIN",
         isVerified: true,
+        // Compte propriétaire : super administrateur, protégé contre rétrogradation/suppression
+        isAdminOwner: true,
+        adminRoleId: superAdminRole.id,
       },
       create: {
         email: normalizedEmail,
@@ -62,6 +75,8 @@ async function main() {
         name,
         role: "ADMIN",
         isVerified: true,
+        isAdminOwner: true,
+        adminRoleId: superAdminRole.id,
       },
     });
 

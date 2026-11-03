@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin";
+import { logAdminActivity } from "@/lib/admin-activity";
 import { formatDate } from "@/lib/utils";
 import { PAYMENT_METHOD_LABELS } from "@/lib/constants";
 import { effectiveSubscriptionStatus } from "@/lib/payments";
@@ -63,7 +64,7 @@ function buildWhere(params: URLSearchParams, now: Date): Prisma.SubscriptionWher
 }
 
 export async function GET(req: NextRequest) {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("payments.export");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -74,6 +75,11 @@ export async function GET(req: NextRequest) {
     orderBy: { createdAt: "desc" },
     include: { user: { select: { name: true, email: true } } },
   });
+
+  await logAdminActivity(session, {
+    action: "payments.export", targetType: "PAYMENTS",
+    details: { rows: subscriptions.length, filters: Object.fromEntries(req.nextUrl.searchParams) },
+  }, req);
 
   const header = ["Utilisateur", "Email", "Montant", "Devise", "Méthode", "Statut", "Date de création", "Date d'expiration"];
   const rows = subscriptions.map((s) => [

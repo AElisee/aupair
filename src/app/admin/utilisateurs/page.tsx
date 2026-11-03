@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import SendEmailDialog from "@/components/admin/SendEmailDialog";
+import { useAdminCan } from "@/components/admin/AdminPermissionsContext";
 import { useI18n } from "@/i18n";
 import { Separator } from "@/components/ui/separator";
 import { GREEN, INDIGO, NAVY, PAGE_TITLE, TEAL, KpiGrid, pct } from "@/components/admin/AdminUI";
@@ -44,6 +45,7 @@ type Action = "validate" | "hide" | "unhide" | "suspend" | "delete" | "restore" 
 const PAGE_SIZE = 10;
 
 export default function UtilisateursPage() {
+  const can = useAdminCan();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"active" | "trash">("active");
@@ -401,7 +403,7 @@ export default function UtilisateursPage() {
                             <Eye className="w-4 h-4" />
                           </Link>
                           {view === "trash" ? (
-                            <>
+                            can("users.delete") && <>
                               <button
                                 disabled={processingId === u.id}
                                 onClick={() => handleAction(u, "restore")}
@@ -421,7 +423,7 @@ export default function UtilisateursPage() {
                             </>
                           ) : (
                             <>
-                              {u.status === "HIDDEN" ? (
+                              {!can("users.suspend") ? null : u.status === "HIDDEN" ? (
                                 <button
                                   disabled={processingId === u.id}
                                   onClick={() => handleAction(u, "unhide")}
@@ -440,21 +442,21 @@ export default function UtilisateursPage() {
                                   <EyeOff className="w-4 h-4" />
                                 </button>
                               )}
-                              <button
+                              {can("users.email") && <button
                                 onClick={() => setEmailTarget(u)}
                                 className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-xl transition-colors"
                                 title={tu.sendEmail}
                               >
                                 <Mail className="w-4 h-4" />
-                              </button>
-                              <button
+                              </button>}
+                              {can("users.delete") && <button
                                 disabled={processingId === u.id}
                                 onClick={() => handleAction(u, "delete")}
                                 className="p-1.5 text-red-500 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-50"
                                 title={tu.moveToTrash}
                               >
                                 <Trash2 className="w-4 h-4" />
-                              </button>
+                              </button>}
                             </>
                           )}
                         </div>

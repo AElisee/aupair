@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin";
+import { logAdminActivity } from "@/lib/admin-activity";
 
 type FaqBody = {
   question?: string;
@@ -13,7 +14,7 @@ type FaqBody = {
 };
 
 export async function GET() {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("faq.view");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -25,7 +26,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("faq.create");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -49,11 +50,12 @@ export async function POST(req: Request) {
     },
   });
 
+  await logAdminActivity(session, { action: "faq.create", targetType: "FAQ", targetId: item.id, targetLabel: item.question }, req);
   return NextResponse.json({ item }, { status: 201 });
 }
 
 export async function PATCH(req: Request) {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("faq.update");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -77,11 +79,12 @@ export async function PATCH(req: Request) {
     },
   });
 
+  await logAdminActivity(session, { action: "faq.update", targetType: "FAQ", targetId: item.id, targetLabel: item.question }, req);
   return NextResponse.json({ item });
 }
 
 export async function DELETE(req: Request) {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("faq.delete");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -92,6 +95,7 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 });
   }
 
-  await prisma.faqItem.delete({ where: { id } });
+  const deleted = await prisma.faqItem.delete({ where: { id } });
+  await logAdminActivity(session, { action: "faq.delete", targetType: "FAQ", targetId: id, targetLabel: deleted.question }, req);
   return NextResponse.json({ success: true });
 }

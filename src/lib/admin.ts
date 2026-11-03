@@ -3,11 +3,17 @@ import { prisma } from "./prisma";
 import { sendMail } from "./mail";
 import { accountValidatedEmailHtml } from "./email-templates";
 import { ProfileStatus } from "@/generated/prisma/client";
+import type { AdminPermission } from "./admin-permissions";
 
-/** Retourne la session si l'utilisateur connecté est ADMIN, sinon `null`. */
-export async function requireAdminSession() {
+/**
+ * Retourne la session si l'utilisateur connecté est ADMIN et détient au moins une des
+ * permissions demandées (aucune = tout admin), sinon `null` (→ 403).
+ */
+export async function requireAdminSession(anyOf?: AdminPermission | AdminPermission[]) {
   const session = await auth();
   if (!session?.user?.id || session.user.role !== "ADMIN") return null;
+  const required = anyOf === undefined ? [] : Array.isArray(anyOf) ? anyOf : [anyOf];
+  if (required.length > 0 && !required.some((p) => session.user.permissions?.includes(p))) return null;
   return session;
 }
 

@@ -65,7 +65,7 @@ export function isEmptyDocumentHtml(html: string): boolean {
 export const getPublishedDocument = cache(async (slug: string): Promise<LegalDocumentDTO | null> => {
   const doc = await prisma.legalDocument.findUnique({ where: { slug } });
   if (!doc) return null;
-  if (!doc.isPublished && !(await requireAdminSession())) return null;
+  if (!doc.isPublished && !(await requireAdminSession("settings.view"))) return null;
   return {
     title: doc.title,
     titleEn: doc.titleEn,

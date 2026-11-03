@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin";
+import { logAdminActivity } from "@/lib/admin-activity";
 import { CountryType, Prisma } from "@/generated/prisma/client";
 
 export async function GET() {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("countries.view");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -17,7 +18,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("countries.create");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -42,6 +43,7 @@ export async function POST(req: Request) {
     const country = await prisma.country.create({
       data: { name, flag, dialCode, type },
     });
+    await logAdminActivity(session, { action: "countries.create", targetType: "COUNTRY", targetId: country.id, targetLabel: country.name }, req);
     return NextResponse.json({ country });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
@@ -52,7 +54,7 @@ export async function POST(req: Request) {
 }
 
 export async function PATCH(req: Request) {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("countries.update");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -82,6 +84,10 @@ export async function PATCH(req: Request) {
         ...(isActive !== undefined && { isActive }),
       },
     });
+    await logAdminActivity(session, {
+      action: "countries.update", targetType: "COUNTRY", targetId: country.id, targetLabel: country.name,
+      details: isActive !== undefined ? { isActive } : undefined,
+    }, req);
     return NextResponse.json({ country });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
@@ -92,7 +98,7 @@ export async function PATCH(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("countries.delete");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -104,7 +110,8 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 });
   }
 
-  await prisma.country.delete({ where: { id } });
+  const deleted = await prisma.country.delete({ where: { id } });
+  await logAdminActivity(session, { action: "countries.delete", targetType: "COUNTRY", targetId: id, targetLabel: deleted.name }, req);
 
   return NextResponse.json({ success: true });
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin";
+import { logAdminActivity } from "@/lib/admin-activity";
 import { sendMail } from "@/lib/mail";
 import { adminMessageEmailHtml } from "@/lib/email-templates";
 
@@ -9,7 +10,7 @@ const MAX_MESSAGE = 5000;
 
 /** Historique des emails envoyés à un utilisateur (?userId=). */
 export async function GET(req: Request) {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("users.email");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -40,7 +41,7 @@ export async function GET(req: Request) {
 
 /** Envoie un email libre à un utilisateur depuis /admin/utilisateurs et en garde une trace. */
 export async function POST(req: Request) {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("users.email");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -89,6 +90,10 @@ export async function POST(req: Request) {
       sentByName: session.user.name ?? session.user.email ?? null,
     },
   });
+  await logAdminActivity(session, {
+    action: "users.email", targetType: "USER", targetId: userId, targetLabel: user.name ?? user.email,
+    details: { subject: subject.trim(), status: result.ok ? "SENT" : "FAILED" },
+  }, req);
 
   if (!result.ok) {
     return NextResponse.json(

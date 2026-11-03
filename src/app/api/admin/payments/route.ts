@@ -9,7 +9,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const EXPIRING_SOON_DAYS = 7;
 
 export async function GET() {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("payments.view");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }

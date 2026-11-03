@@ -7,7 +7,7 @@ import { formatCurrency } from "@/lib/utils";
 import { effectiveSubscriptionStatus } from "@/lib/payments";
 
 export async function GET() {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("dashboard.view");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -95,7 +95,9 @@ export async function GET() {
     .slice(0, 5)
     .map(({ id, name, role, country, status, date, photoUrl }) => ({ id, name, role, country, status, date, photoUrl }));
 
-  const recentPayments = recentSubscriptions.map((s) => ({
+  // Les paiements ne sont renvoyés qu'aux admins autorisés à les voir
+  const canSeePayments = session.user.permissions.includes("payments.view");
+  const recentPayments = !canSeePayments ? null : recentSubscriptions.map((s) => ({
     id: s.id,
     user: s.user.name ?? "",
     amount: formatCurrency(s.amount, s.currency),

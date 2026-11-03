@@ -20,7 +20,7 @@ function lastMonths(count: number) {
 }
 
 export async function GET() {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("dashboard.view");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }

@@ -8,7 +8,7 @@ export async function GET(
   req: Request,
   { params }: { params: Promise<{ userId: string }> }
 ) {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession(["users.view", "moderation.view"]);
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }

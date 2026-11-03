@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin";
+import { logAdminActivity } from "@/lib/admin-activity";
 import { sendMail } from "@/lib/mail";
 import { TicketPriority, TicketStatus } from "@/generated/prisma/client";
 
 export async function GET(req: Request) {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("tickets.view");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -39,7 +40,7 @@ export async function GET(req: Request) {
 }
 
 export async function PATCH(req: Request) {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("tickets.reply");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -109,5 +110,13 @@ export async function PATCH(req: Request) {
     },
   });
 
+  await logAdminActivity(session, {
+    action: reply?.trim() ? "tickets.reply" : "tickets.update",
+    targetType: "TICKET", targetId: id, targetLabel: ticket.subject,
+    details: {
+      ...(status !== undefined && { status }),
+      ...(priority !== undefined && { priority }),
+    },
+  }, req);
   return NextResponse.json({ ticket: updated });
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdminSession } from "@/lib/admin";
+import { logAdminActivity } from "@/lib/admin-activity";
 import { getAppSettings, updateAppSettings, type AppSettingsInput } from "@/lib/settings";
 import { isPaymentProvider, isProviderConfigured, resolveActiveProvider } from "@/lib/payments";
 import { geniuspayEnvironmentFromKey } from "@/lib/geniuspay";
@@ -33,7 +34,7 @@ function toPublicSettings(settings: Settings) {
 }
 
 export async function GET() {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("settings.view");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -56,7 +57,7 @@ function isHttpUrl(value: string) {
 }
 
 export async function PUT(req: Request) {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("settings.update");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -233,5 +234,7 @@ export async function PUT(req: Request) {
   }
 
   const settings = await updateAppSettings(data);
+  // Seuls les noms des champs sont journalisés, jamais leurs valeurs (clés API, secrets)
+  await logAdminActivity(session, { action: "settings.update", targetType: "SETTINGS", details: { fields: Object.keys(data) } }, req);
   return NextResponse.json({ settings: toPublicSettings(settings) });
 }

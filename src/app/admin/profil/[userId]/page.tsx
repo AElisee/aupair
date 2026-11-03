@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import AdminLayout from "@/components/layout/AdminLayout";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import { useAdminCan } from "@/components/admin/AdminPermissionsContext";
 import { Badge } from "@/components/ui/badge";
 import PhotoViewerModal from "@/components/ui/photo-viewer-modal";
 import { CountryFlag } from "@/components/ui/CountryFlag";
@@ -267,6 +268,7 @@ function DocumentLink({ href, label }: { href: string; label: string }) {
 const whatsappLink = (phone: string) => `https://wa.me/${phone.replace(/\D/g, "")}`;
 
 export default function AdminProfilePage() {
+  const can = useAdminCan();
   const { userId } = useParams<{ userId: string }>();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -407,6 +409,8 @@ export default function AdminProfilePage() {
     if (status === "HIDDEN") actions.push({ action: "unhide", icon: Eye, label: c.unhide, color: INDIGO });
     if (status === "SUSPENDED") actions.push({ action: "unhide", icon: RotateCcw, label: tp.reactivate, color: GREEN });
     else if (status !== "DELETED") actions.push({ action: "suspend", icon: Ban, label: c.suspend, color: "#DC2626" });
+    // Seules les actions autorisées par le rôle de l'admin sont proposées
+    const allowedActions = actions.filter((a) => can(a.action === "validate" ? "moderation.validate" : "users.suspend"));
 
     return (
       <>
@@ -451,9 +455,9 @@ export default function AdminProfilePage() {
                     )}
                   </div>
                 </div>
-                {actions.length > 0 && (
+                {allowedActions.length > 0 && (
                   <div className="flex flex-wrap gap-2">
-                    {actions.map((a) => (
+                    {allowedActions.map((a) => (
                       <ActionButton
                         key={a.action + a.label}
                         icon={a.icon}

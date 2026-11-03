@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin";
+import { logAdminActivity } from "@/lib/admin-activity";
 import { slugify } from "@/lib/utils";
 
 type BlogBody = {
@@ -34,7 +35,7 @@ async function generateUniqueSlug(title: string, excludeId?: string): Promise<st
 }
 
 export async function GET() {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("blog.view");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -44,7 +45,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("blog.create");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -77,11 +78,12 @@ export async function POST(req: Request) {
     },
   });
 
+  await logAdminActivity(session, { action: "blog.create", targetType: "BLOG_POST", targetId: post.id, targetLabel: post.title }, req);
   return NextResponse.json({ post }, { status: 201 });
 }
 
 export async function PATCH(req: Request) {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("blog.update");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -125,11 +127,15 @@ export async function PATCH(req: Request) {
     },
   });
 
+  await logAdminActivity(session, {
+    action: "blog.update", targetType: "BLOG_POST", targetId: post.id, targetLabel: post.title,
+    details: isPublishedChanged ? { isPublished: post.isPublished } : undefined,
+  }, req);
   return NextResponse.json({ post });
 }
 
 export async function DELETE(req: Request) {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("blog.delete");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -140,6 +146,7 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 });
   }
 
-  await prisma.blogPost.delete({ where: { id } });
+  const deleted = await prisma.blogPost.delete({ where: { id } });
+  await logAdminActivity(session, { action: "blog.delete", targetType: "BLOG_POST", targetId: id, targetLabel: deleted.title }, req);
   return NextResponse.json({ success: true });
 }

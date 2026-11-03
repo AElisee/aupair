@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin";
+import { logAdminActivity } from "@/lib/admin-activity";
 import { normalizeDocumentSlug } from "@/lib/legal-documents";
 import { isEmptyDocumentHtml, sanitizeDocumentHtml } from "@/lib/legal-documents.server";
 
@@ -14,7 +15,7 @@ type DocumentBody = {
 };
 
 export async function GET() {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("settings.view");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -24,7 +25,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("settings.update");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -55,11 +56,12 @@ export async function POST(req: Request) {
     },
   });
 
+  await logAdminActivity(session, { action: "settings.documentCreate", targetType: "DOCUMENT", targetId: item.id, targetLabel: item.title }, req);
   return NextResponse.json({ item }, { status: 201 });
 }
 
 export async function PATCH(req: Request) {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("settings.update");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -103,11 +105,12 @@ export async function PATCH(req: Request) {
     },
   });
 
+  await logAdminActivity(session, { action: "settings.documentUpdate", targetType: "DOCUMENT", targetId: item.id, targetLabel: item.title }, req);
   return NextResponse.json({ item });
 }
 
 export async function DELETE(req: Request) {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("settings.update");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -118,6 +121,7 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 });
   }
 
-  await prisma.legalDocument.delete({ where: { id } });
+  const deleted = await prisma.legalDocument.delete({ where: { id } });
+  await logAdminActivity(session, { action: "settings.documentDelete", targetType: "DOCUMENT", targetId: id, targetLabel: deleted.title }, req);
   return NextResponse.json({ success: true });
 }

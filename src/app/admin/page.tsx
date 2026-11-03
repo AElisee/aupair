@@ -70,7 +70,7 @@ type DashboardData = {
     method: string;
     status: string;
     date: string;
-  }[];
+  }[] | null; // null : l'admin n'a pas la permission payments.view
 };
 
 type AnalyticsData = {
@@ -452,6 +452,7 @@ export default function AdminPage() {
             </div>
           </Panel>
 
+          {recentPayments && (
           <Panel tint={TEAL}>
             <div className="flex items-center justify-between px-5 pt-5 pb-3">
               <h2 className="flex items-center gap-3 text-[15px] font-medium text-[#1A1A2E]">
@@ -481,6 +482,7 @@ export default function AdminPage() {
               ))}
             </div>
           </Panel>
+          )}
         </div>
       </div>
     </AdminLayout>

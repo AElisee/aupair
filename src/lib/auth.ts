@@ -8,6 +8,8 @@ import { prisma } from "./prisma";
 import { checkRateLimit, resetRateLimit } from "./rate-limit";
 import { ADMIN_SESSION_MAX_AGE_MS } from "./constants";
 import { sendSignupEmails } from "./signup-emails";
+import { resolveAdminPermissions } from "./admin-permissions";
+import { logAdminActivity } from "./admin-activity";
 
 const LOGIN_MAX_ATTEMPTS = 5;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
@@ -36,7 +38,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Mot de passe", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         if (!credentials?.email || !credentials?.password) return null;
 
         const normalizedEmail = (credentials.email as string).trim().toLowerCase();
@@ -65,6 +67,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         await resetRateLimit(rateLimitKey);
 
+        if (user.role === "ADMIN") {
+          await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
+          await logAdminActivity({ user }, { action: "auth.login", targetType: "ADMIN", targetId: user.id, targetLabel: user.name ?? user.email }, request);
+        }
+
         // Pas de connexion tant que l'admin n'a pas validé le profil. Vérifié après le
         // mot de passe pour ne pas révéler le statut d'un compte à un tiers.
         const profileStatus =
@@ -87,6 +94,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.role = (user as { role?: string }).role;
         token.id = user.id;
+        if (token.role === "ADMIN" && user.id) {
+          const admin = await prisma.user.findUnique({
+            where: { id: user.id },
+            select: { role: true, adminRole: { select: { permissions: true, isSystem: true } } },
+          });
+          token.perms = admin ? resolveAdminPermissions(admin) : [];
+        }
         token.loginAt = Date.now();
         const passwordChangedAt = (
           user as { passwordChangedAt?: Date | string | null }
@@ -127,10 +141,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // (déconnexion des autres sessions) ou si le compte a été désactivé.
       const dbUser = await prisma.user.findUnique({
         where: { id: token.id },
-        select: { passwordChangedAt: true, isActive: true },
+        select: {
+          passwordChangedAt: true,
+          isActive: true,
+          role: true,
+          adminRole: { select: { permissions: true, isSystem: true } },
+        },
       });
 
       if (!dbUser || !dbUser.isActive) return null;
+
+      // Rôle et permissions relus à chaque requête : un changement de rôle ou de
+      // permissions par un autre admin s'applique immédiatement côté API.
+      token.role = dbUser.role;
+      token.perms = resolveAdminPermissions(dbUser);
 
       const dbPwdAt = dbUser.passwordChangedAt?.getTime() ?? 0;
       if (dbPwdAt > (token.pwdAt ?? 0)) return null;
@@ -141,6 +165,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        session.user.permissions = token.perms ?? [];
       }
       return session;
     },

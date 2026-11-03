@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdminSession } from "@/lib/admin";
+import { logAdminActivity } from "@/lib/admin-activity";
 import { supabaseAdmin } from "@/lib/supabase";
 import { updateAppSettings } from "@/lib/settings";
 
@@ -19,7 +20,7 @@ async function ensureBucket() {
 }
 
 export async function POST(req: Request) {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("settings.update");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -60,6 +61,7 @@ export async function POST(req: Request) {
   const url = `${publicUrl}?v=${Date.now()}`;
 
   await updateAppSettings({ heroImageUrl: url });
+  await logAdminActivity(session, { action: "settings.heroImage", targetType: "SETTINGS" }, req);
 
   return NextResponse.json({ url });
 }

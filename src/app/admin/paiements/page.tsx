@@ -9,6 +9,7 @@ import { Wallet, CreditCard, Smartphone, Globe, Download, Loader2, FileText, Cal
 import { useI18n } from "@/i18n";
 import { Separator } from "@/components/ui/separator";
 import { BLUE, GREEN, ICON, INDIGO, ORANGE, PAGE_TITLE, TEAL, KpiGrid, Panel, PanelHeader, pct } from "@/components/admin/AdminUI";
+import { useAdminCan } from "@/components/admin/AdminPermissionsContext";
 import { SelectField } from "@/components/ui/select-field";
 import { DateField } from "@/components/ui/date-field";
 
@@ -88,6 +89,7 @@ const TOOL_BUTTON = "inline-flex items-center gap-2 h-9 px-3.5 rounded-xl text-s
 const TH ="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider";
 
 export default function PaiementsPage() {
+  const can = useAdminCan();
   const [data, setData] = useState<PaymentsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -265,13 +267,13 @@ export default function PaiementsPage() {
                         <Printer {...ICON} size={16} />
                         {tp.print}
                       </button>
-                      <a
+                      {can("payments.export") && <a
                         href={exportUrl}
                         className={`${TOOL_BUTTON} bg-gradient-to-r from-[#F08A3C] to-[#E87722] text-white shadow-[0_6px_16px_-6px_rgba(232,119,34,0.7)] hover:brightness-105`}
                       >
                         <Download {...ICON} size={16} />
                         {tp.exportCsv}
-                      </a>
+                      </a>}
                     </div>
                   }
                 />

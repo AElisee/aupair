@@ -4,7 +4,7 @@ import { requireAdminSession } from "@/lib/admin";
 
 /** Avis en attente de publication (badge du menu admin). */
 export async function GET() {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("testimonials.view");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }

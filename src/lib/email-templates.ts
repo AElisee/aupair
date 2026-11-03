@@ -165,3 +165,4 @@ export function adminMessageEmailHtml(params: { message: string }) {
     <p>— L'équipe AuPair A.EU</p>
   `);
 }
+

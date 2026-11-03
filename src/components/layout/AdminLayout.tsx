@@ -2,12 +2,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useI18n } from "@/i18n";
 import type { admin } from "@/i18n/admin";
 import { LanguageToggle } from "./LanguageToggle";
-import { Globe, LayoutDashboard, Users, Shield, DollarSign, FileText, HelpCircle, Mail, MessageSquareQuote, LogOut, Bell, Settings, ChevronDown, SlidersHorizontal, Menu, X, Send, Wallet, KeyRound, FileCheck, ChevronRight, Share2 } from "lucide-react";
+import { Globe, LayoutDashboard, Users, Shield, DollarSign, FileText, HelpCircle, Mail, MessageSquareQuote, LogOut, Bell, Settings, ChevronDown, SlidersHorizontal, Menu, X, Send, Wallet, KeyRound, FileCheck, ChevronRight, Share2, UserCog, Loader2, Lock, History } from "lucide-react";
+import { canAccessAdminPath, firstAccessibleAdminPath, type AdminPermission } from "@/lib/admin-permissions";
+import { useLoadAdminMe } from "@/components/admin/AdminPermissionsContext";
 
 // Libellés : section `adminNav` de src/i18n/admin.ts
 type NavKey = keyof typeof admin.adminNav;
@@ -25,6 +27,15 @@ const navItems: { href: string; icon: React.ElementType; labelKey: NavKey; badge
   { href: "/admin/faq", icon: HelpCircle, labelKey: "faq" },
   { href: "/admin/avis", icon: MessageSquareQuote, labelKey: "testimonials", badge: "testimonials" },
   { href: "/admin/tickets", icon: Mail, labelKey: "tickets", badge: "tickets" },
+  { href: "/admin/journal", icon: History, labelKey: "activityLog" },
+  { href: "/admin/equipe", icon: UserCog, labelKey: "team" },
+];
+
+/** Endpoint de chaque badge et permission nécessaire pour l'interroger */
+const BADGE_SOURCES: { key: keyof BadgeCounts; url: string; permission: AdminPermission }[] = [
+  { key: "moderation", url: "/api/admin/moderation/count", permission: "moderation.view" },
+  { key: "tickets", url: "/api/admin/tickets/count", permission: "tickets.view" },
+  { key: "testimonials", url: "/api/admin/testimonials/count", permission: "testimonials.view" },
 ];
 
 const settingsNav: { icon: React.ElementType; labelKey: NavKey; children: { href: string; icon: React.ElementType; labelKey: NavKey }[] } = {
@@ -87,12 +98,15 @@ function SidebarContent({
   isSettingsActive,
   settingsOpen,
   badgeCounts,
+  permissions,
   onToggleSettings,
   onNavigate,
   onClose,
   collapsed = false,
 }: {
   pathname: string;
+  /** null tant que les permissions ne sont pas chargées : rien n'est masqué */
+  permissions: AdminPermission[] | null;
   isSettingsActive: boolean;
   settingsOpen: boolean;
   badgeCounts: BadgeCounts;
@@ -105,6 +119,9 @@ function SidebarContent({
   const { t } = useI18n();
   // En mode réduit, les libellés sont masqués et passent en infobulle (title)
   const itemLayout = collapsed ? "justify-center px-0" : "gap-3 px-3";
+  const allowed = (href: string) => !permissions || canAccessAdminPath(href, permissions);
+  const visibleItems = navItems.filter((i) => allowed(i.href));
+  const visibleSettings = settingsNav.children.filter((c) => allowed(c.href));
   return (
     <>
       <div className={`relative border-b border-white/10 ${collapsed ? "py-4 px-2" : "p-5"}`}>
@@ -131,7 +148,7 @@ function SidebarContent({
       </div>
 
       <nav className={`flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden sidebar-scroll ${collapsed ? "p-2" : "p-3"}`}>
-        {navItems.map((item) => {
+        {visibleItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));
           const count = item.badge ? badgeCounts[item.badge] : 0;
@@ -171,7 +188,7 @@ function SidebarContent({
           </button>
           {settingsOpen && (
             <div className={`mt-0.5 space-y-0.5 ${collapsed ? "pt-0.5 border-t border-white/10" : "ml-4 pl-3 border-l border-white/10"}`}>
-              {settingsNav.children.map((child) => {
+              {visibleSettings.map((child) => {
                 const ChildIcon = child.icon;
                 const isChildActive = pathname === child.href || pathname.startsWith(child.href);
                 return (
@@ -204,6 +221,22 @@ function SidebarContent({
   );
 }
 
+/** Page ouverte sans la permission nécessaire (lien direct, favori…) */
+function RestrictedPage({ href }: { href: string }) {
+  const { t } = useI18n();
+  const nav = t.adminNav;
+  return (
+    <div className="max-w-md mx-auto py-20 text-center">
+      <div className="w-14 h-14 rounded-2xl bg-[#FFF3E0] text-[#E87722] flex items-center justify-center mx-auto mb-4">
+        <Lock size={24} strokeWidth={1.25} />
+      </div>
+      <h1 className="text-xl font-medium text-[#1A1A2E]">{nav.restrictedTitle}</h1>
+      <p className="text-sm text-gray-500 mt-2">{nav.restrictedText}</p>
+      <Link href={href} className="inline-block mt-5 text-sm font-medium text-[#E87722] hover:underline">{nav.restrictedBack}</Link>
+    </div>
+  );
+}
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { t } = useI18n();
@@ -213,17 +246,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [prevPathname, setPrevPathname] = useState(pathname);
   const [badgeCounts, setBadgeCounts] = useState<BadgeCounts>({ moderation: 0, tickets: 0, testimonials: 0 });
+  const router = useRouter();
+  const me = useLoadAdminMe(pathname);
+  const permissions = me?.permissions ?? null;
+  const canOpenPage = !permissions || canAccessAdminPath(pathname, permissions);
+  const permissionsKey = permissions?.join(",");
 
   useEffect(() => {
-    const load = (key: keyof BadgeCounts, url: string) =>
+    if (!permissions) return;
+    BADGE_SOURCES.filter((b) => permissions.includes(b.permission)).forEach(({ key, url }) =>
       fetch(url)
         .then((r) => r.json())
         .then((d) => setBadgeCounts((prev) => ({ ...prev, [key]: d.count ?? 0 })))
-        .catch(() => {});
-    load("moderation", "/api/admin/moderation/count");
-    load("tickets", "/api/admin/tickets/count");
-    load("testimonials", "/api/admin/testimonials/count");
-  }, [pathname]);
+        .catch(() => {})
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, permissionsKey]);
+
+  // Admin sans accès au dashboard : on l'envoie sur sa première page autorisée
+  useEffect(() => {
+    if (permissions && pathname === "/admin" && !canOpenPage) router.replace(firstAccessibleAdminPath(permissions));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, permissionsKey, canOpenPage]);
 
   // Ferme le menu mobile à chaque changement de page
   if (pathname !== prevPathname) {
@@ -252,6 +296,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           isSettingsActive={isSettingsActive}
           settingsOpen={settingsOpen}
           badgeCounts={badgeCounts}
+          permissions={permissions}
           onToggleSettings={() => setSettingsOpen((open) => !open)}
           collapsed={!sidebarOpen}
         />
@@ -277,6 +322,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           isSettingsActive={isSettingsActive}
           settingsOpen={settingsOpen}
           badgeCounts={badgeCounts}
+          permissions={permissions}
           onToggleSettings={() => setSettingsOpen((open) => !open)}
           onNavigate={() => setMobileMenuOpen(false)}
           onClose={() => setMobileMenuOpen(false)}
@@ -314,7 +360,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </div>
 
-        <div className="p-4 sm:p-6">{children}</div>
+        <div className="p-4 sm:p-6">
+            {!me ? (
+              <div className="py-24 flex justify-center"><Loader2 className="w-8 h-8 text-[#E87722] animate-spin" /></div>
+            ) : canOpenPage ? (
+              children
+            ) : pathname === "/admin" ? (
+              <div className="py-24 flex justify-center"><Loader2 className="w-8 h-8 text-[#E87722] animate-spin" /></div>
+            ) : (
+              <RestrictedPage href={permissions ? firstAccessibleAdminPath(permissions) : "/admin"} />
+            )}
+        </div>
       </main>
     </div>
   );

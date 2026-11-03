@@ -4,7 +4,7 @@ import { requireAdminSession } from "@/lib/admin";
 import { ProfileStatus } from "@/generated/prisma/client";
 
 export async function GET() {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("moderation.view");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }

@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminSession, setProfileStatus, restoreProfile, hardDeleteUser } from "@/lib/admin";
 import { ProfileStatus } from "@/generated/prisma/client";
 import { getCountryFlagMap } from "@/lib/countries";
+import type { AdminPermission } from "@/lib/admin-permissions";
+import { getUserLabel, logAdminActivity } from "@/lib/admin-activity";
 import {
   AU_PAIR_COMPLETION_FIELDS,
   FAMILY_COMPLETION_FIELDS,
@@ -10,7 +12,7 @@ import {
 } from "@/lib/profile-completion";
 
 export async function GET() {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("users.view");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -68,13 +70,25 @@ export async function GET() {
   return NextResponse.json({ users });
 }
 
+/** Permission requise par action (validation = module Modération ; masquage et corbeille = module Utilisateurs) */
+const ACTION_PERMISSIONS: Record<string, AdminPermission> = {
+  validate: "moderation.validate",
+  hide: "users.suspend",
+  unhide: "users.suspend",
+  suspend: "users.suspend",
+  delete: "users.delete",
+  restore: "users.delete",
+  purge: "users.delete",
+};
+
 export async function PATCH(req: Request) {
-  const session = await requireAdminSession();
+  const body = await req.json().catch(() => ({}));
+  const permission = ACTION_PERMISSIONS[(body as { action?: string })?.action ?? ""];
+  const session = permission ? await requireAdminSession(permission) : null;
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
 
-  const body = await req.json();
   const { userId, role, action } = body as {
     userId?: string;
     role?: "AU_PAIR" | "FAMILLE";
@@ -85,13 +99,20 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 });
   }
 
+  // Libellé lu avant l'action (la purge supprime l'utilisateur)
+  const targetLabel = await getUserLabel(userId);
+  const log = () =>
+    logAdminActivity(session, { action: `users.${action}`, targetType: role, targetId: userId, targetLabel }, req);
+
   if (action === "purge") {
     await hardDeleteUser(userId);
+    await log();
     return NextResponse.json({ success: true });
   }
 
   if (action === "restore") {
     const status = await restoreProfile(userId, role);
+    await log();
     return NextResponse.json({ success: true, status });
   }
 
@@ -105,6 +126,7 @@ export async function PATCH(req: Request) {
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(req.url).origin;
   await setProfileStatus(userId, role, statusMap[action], session.user.id as string, baseUrl);
+  await log();
 
   return NextResponse.json({ success: true });
 }

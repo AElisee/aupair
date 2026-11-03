@@ -100,6 +100,13 @@ model User {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
+  // Back-office : rôle d'administration (null = admin historique, accès complet)
+  adminRoleId  String?
+  adminRole    AdminRole? @relation(fields: [adminRoleId], references: [id], onDelete: SetNull)
+  /** Propriétaire de la plateforme : ne peut être ni rétrogradé, ni suspendu, ni retiré */
+  isAdminOwner Boolean    @default(false)
+  lastLoginAt  DateTime?
+
   accounts         Account[]
   sessions         Session[]
   auPairProfile    AuPairProfile?
@@ -121,6 +128,24 @@ model User {
   adminEmailsReceived  AdminEmail[]
 
   @@map("users")
+}
+
+/// Rôle d'administration : un ensemble de permissions du back-office (src/lib/admin-permissions.ts)
+model AdminRole {
+  id          String   @id @default(cuid())
+  /// Identifiant stable des rôles système (ex. "super-admin")
+  slug        String?  @unique
+  name        String   @unique
+  description String   @default("")
+  color       String   @default("#3A5BA8")
+  permissions String[]
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members User[]
+
+  @@map("admin_roles")
 }
 
 model Account {
@@ -626,4 +651,27 @@ model AppSettings {
   updatedAt            DateTime @updatedAt
 
   @@map("app_settings")
+}
+
+/// Journal d'activité du back-office : une ligne par action d'un administrateur (src/lib/admin-activity.ts).
+/// Nom/email de l'admin et libellé de la cible sont copiés pour que l'historique survive aux suppressions.
+model AdminActivityLog {
+  id          String   @id @default(cuid())
+  adminId     String?
+  adminName   String?
+  adminEmail  String?
+  /// Code de l'action, ex. "users.validate" ; le module est le préfixe
+  action      String
+  module      String
+  targetType  String?
+  targetId    String?
+  targetLabel String?
+  details     Json?
+  ip          String?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([module, createdAt])
+  @@index([adminId, createdAt])
+  @@map("admin_activity_logs")
 }

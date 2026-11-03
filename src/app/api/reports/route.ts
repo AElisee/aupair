@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin";
+import { logAdminActivity } from "@/lib/admin-activity";
 import { getConversationUsers } from "@/lib/messages";
 
 export async function POST(req: Request) {
@@ -42,7 +43,7 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("moderation.view");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -72,7 +73,7 @@ export async function GET(req: Request) {
 }
 
 export async function PATCH(req: Request) {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("moderation.validate");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -93,6 +94,7 @@ export async function PATCH(req: Request) {
         ? { isResolved: true, resolvedAt: new Date(), resolvedBy: session.user.id as string }
         : { isResolved: false, resolvedAt: null, resolvedBy: null },
   });
+  await logAdminActivity(session, { action: "moderation.report", targetType: "REPORT", targetId: reportId, details: { action } }, req);
 
   return NextResponse.json({ success: true });
 }

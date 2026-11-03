@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getUserLabel, logAdminActivity } from "@/lib/admin-activity";
 import { requireAdminSession, setProfileStatus } from "@/lib/admin";
 import { ProfileStatus } from "@/generated/prisma/client";
 import { getCountryFlagMap } from "@/lib/countries";
@@ -11,7 +12,7 @@ function waitingDays(createdAt: Date): number {
 }
 
 export async function GET() {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("moderation.view");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -65,7 +66,7 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
-  const session = await requireAdminSession();
+  const session = await requireAdminSession("moderation.validate");
   if (!session) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
@@ -90,6 +91,13 @@ export async function PATCH(req: Request) {
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(req.url).origin;
   await setProfileStatus(userId, role, statusMap[action], session.user.id as string, baseUrl);
+  await logAdminActivity(session, {
+    action: action === "validate" ? "moderation.validate" : "moderation.reject",
+    targetType: role,
+    targetId: userId,
+    targetLabel: await getUserLabel(userId),
+    details: action === "validate" ? undefined : { status: statusMap[action] },
+  }, req);
 
   return NextResponse.json({ success: true });
 }
