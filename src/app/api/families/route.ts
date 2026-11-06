@@ -44,11 +44,12 @@ export async function GET() {
     flag: flagMap[p.country] ?? "",
     kids: p.numberOfKids,
     kidsAges: p.kidsAges,
-    tasks: p.auPairTasks ?? "",
+    // Présentation et tâches réservées aux au pairs abonnés
+    tasks: limited ? "" : p.auPairTasks ?? "",
     hoursPerWeek: p.hoursPerWeek ?? 0,
     pocketMoney: p.pocketMoney ?? 0,
     languages: p.preferredLanguages,
-    description: p.description ?? "",
+    description: limited ? "" : p.description ?? "",
     familyPhotoUrl: p.familyPhotoUrl ?? "",
   }));
 
@@ -61,5 +62,11 @@ export async function GET() {
     .map(([name, count]) => ({ name, count, flag: flagMap[name] ?? "" }))
     .sort((a, b) => b.count - a.count);
 
-  return NextResponse.json({ families, limited, total: allProfiles.length, countries });
+  return NextResponse.json({
+    families,
+    limited,
+    freeLimit: FREE_FAMILIES_LIMIT,
+    total: allProfiles.length,
+    countries,
+  });
 }

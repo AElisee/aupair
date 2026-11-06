@@ -374,6 +374,15 @@ export const dashboard = {
     minKids: { fr: "Nombre d'enfants min.", en: "Min. number of children" },
     minPocketMoney: { fr: "Argent de poche min.", en: "Min. pocket money" },
     foundCount: { fr: (n: number) => `${n} familles trouvées`, en: (n: number) => `${n} families found` },
+    subscribeToSeeAll: { fr: "Abonnez-vous pour découvrir toutes les familles", en: "Subscribe to discover all families" },
+    freeLimitNote: {
+      fr: (n: number) => `Sans abonnement, seules ${n} familles s'affichent.`,
+      en: (n: number) => `Without a subscription, only ${n} families are shown.`,
+    },
+    detailsLocked: {
+      fr: "Abonnez-vous pour voir la présentation et tous les détails de cette famille.",
+      en: "Subscribe to see this family's introduction and all its details.",
+    },
     noneFound: { fr: "Aucune famille trouvée avec ces critères.", en: "No family matches these criteria." },
     limitedBanner: {
       fr: (shown: number, total: number) =>

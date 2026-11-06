@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { MessageCircle, RotateCcw, SearchX } from "lucide-react";
+import { RotateCcw, SearchX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SubscriptionBanner as LimitedBanner } from "@/components/dashboard/SubscriptionLock";
-import { FamilyCard, FamilyCardSkeleton, type Family, type FamilyViewer } from "@/components/families/FamilyCard";
+import { FamilyCard, FamilyCardSkeleton, FamilyResultsCount, type Family, type FamilyViewer } from "@/components/families/FamilyCard";
 import { FamilyFilterFields, useFamilySearch, useFamilySortOptions } from "@/components/families/FamilyFilters";
 import {
   ActiveFilterChips,
@@ -33,6 +33,7 @@ export default function TrouverFamilleContent() {
   const [total, setTotal] = useState(0);
   // Au pair sans abonnement : l'API ne renvoie qu'un échantillon aléatoire de familles
   const [limited, setLimited] = useState(false);
+  const [freeLimit, setFreeLimit] = useState(5);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -53,6 +54,7 @@ export default function TrouverFamilleContent() {
         setCountryTotals(data.countries);
         setTotal(data.total ?? data.families?.length ?? 0);
         setLimited(!!data.limited);
+        if (typeof data.freeLimit === "number") setFreeLimit(data.freeLimit);
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
@@ -78,7 +80,7 @@ export default function TrouverFamilleContent() {
     <div className="bg-[#F5F5F5] min-h-screen">
       <DirectoryHero
         title={f.title}
-        subtitle={loading || error ? f.subtitleLoading : f.subtitle(total)}
+        subtitle={f.subtitle}
         search={s.search}
         onSearchChange={s.setSearch}
         searchPlaceholder={t.searchFamilies.searchPlaceholder}
@@ -137,9 +139,12 @@ export default function TrouverFamilleContent() {
 
           {!error && (
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-              <p className="text-sm text-gray-600" aria-live="polite">
-                {loading ? t.common.loading : t.searchFamilies.foundCount(s.filtered.length)}
-              </p>
+              <FamilyResultsCount
+                loading={loading}
+                count={s.filtered.length}
+                freeLimit={limited ? freeLimit : null}
+                href={viewer === "auPair" ? "/dashboard/au-pair/abonnement" : "/inscription?role=au-pair"}
+              />
               <SortSelect value={s.sort} onChange={s.setSort} options={sortOptions} />
             </div>
           )}
@@ -172,7 +177,7 @@ export default function TrouverFamilleContent() {
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-                {s.visible.map((fam) => <FamilyCard key={fam.id} fam={fam} viewer={viewer} />)}
+                {s.visible.map((fam) => <FamilyCard key={fam.id} fam={fam} viewer={viewer} locked={limited} />)}
               </div>
               {s.paginated && (
                 <ShowMore
@@ -213,7 +218,6 @@ function SubscriptionBanner({
     >
       <div className="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/10" />
       <div className="relative flex-1">
-        <MessageCircle className="w-6 h-6 mb-2 opacity-90" strokeWidth={1.75} />
         <p className="font-semibold">{f.bannerTitle}</p>
         <p className="text-sm text-white/85 mt-1">{f.bannerText(price, days)}</p>
         {limitNote && <p className="text-sm font-medium mt-2">{limitNote}</p>}

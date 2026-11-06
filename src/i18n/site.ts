@@ -777,12 +777,8 @@ export const site = {
   findFamily: {
     title: { fr: "Trouvez votre famille d'accueil", en: "Find your host family" },
     subtitle: {
-      fr: (n: number) => `${n} famille${n > 1 ? "s" : ""} vérifiée${n > 1 ? "s" : ""} attend${n > 1 ? "ent" : ""} un au pair. Filtrez par pays, langue ou nombre d'enfants.`,
-      en: (n: number) => `${n} verified ${n === 1 ? "family is" : "families are"} looking for an au pair. Filter by country, language or number of children.`,
-    },
-    subtitleLoading: {
-      fr: "Des familles vérifiées attendent un au pair. Filtrez par pays, langue ou nombre d'enfants.",
-      en: "Verified families are looking for an au pair. Filter by country, language or number of children.",
+      fr: "Plusieurs familles vérifiées attendent un au pair. Filtrez par pays, langue ou nombre d'enfants.",
+      en: "Many verified families are looking for an au pair. Filter by country, language or number of children.",
     },
     showResults: {
       fr: (n: number) => `Voir ${n} famille${n > 1 ? "s" : ""}`,

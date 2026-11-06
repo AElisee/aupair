@@ -32,13 +32,36 @@ export async function getCountryCounts(): Promise<{
   };
 }
 
+/**
+ * Codes ISO de pays qu'un profil peut encore porter sans ligne `Country` correspondante
+ * (ex. « États-Unis », dont la ligne a été renommée en « Italie » par le seed) :
+ * repli pour que leur drapeau s'affiche quand même.
+ */
+const FALLBACK_COUNTRY_CODES: Record<string, string> = {
+  "États-Unis": "US",
+  Canada: "CA",
+  "Royaume-Uni": "GB",
+  Espagne: "ES",
+  "Pays-Bas": "NL",
+  Irlande: "IE",
+  Autriche: "AT",
+};
+
+/** "US" → "🇺🇸" (regional indicator symbols) */
+function isoToFlagEmoji(code: string): string {
+  return [...code.toUpperCase()].map((c) => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65)).join("");
+}
+
 export async function getCountryFlagMap(): Promise<Record<string, string>> {
+  // Pays désactivés inclus : un profil peut encore référencer un pays retiré des listes
   const countries = await prisma.country.findMany({
-    where: { isActive: true },
     select: { name: true, flag: true },
   });
 
-  return Object.fromEntries(countries.map((c) => [c.name, c.flag]));
+  const fallback = Object.fromEntries(
+    Object.entries(FALLBACK_COUNTRY_CODES).map(([name, code]) => [name, isoToFlagEmoji(code)])
+  );
+  return { ...fallback, ...Object.fromEntries(countries.map((c) => [c.name, c.flag])) };
 }
 
 /** Sépare un numéro WhatsApp complet ("+237 6XX...") en indicatif + reste. */

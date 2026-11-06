@@ -7,7 +7,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { SubscriptionBanner } from "@/components/dashboard/SubscriptionLock";
 import { Button } from "@/components/ui/button";
-import { FamilyCard, FamilyCardSkeleton, type Family } from "@/components/families/FamilyCard";
+import { FamilyCard, FamilyCardSkeleton, FamilyResultsCount, type Family } from "@/components/families/FamilyCard";
 import { FamilyFilterFields, useFamilySearch, useFamilySortOptions } from "@/components/families/FamilyFilters";
 import {
   ActiveFilterChips,
@@ -28,7 +28,7 @@ export default function RechercheFamillePage() {
   const [families, setFamilies] = useState<Family[]>([]);
   const [countryTotals, setCountryTotals] = useState<CountryChip[]>();
   // Au pair sans abonnement : l'API ne renvoie qu'un échantillon aléatoire de familles
-  const [limited, setLimited] = useState<{ total: number } | null>(null);
+  const [limited, setLimited] = useState<{ total: number; freeLimit: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -47,7 +47,7 @@ export default function RechercheFamillePage() {
       .then((data) => {
         setFamilies(data.families ?? []);
         setCountryTotals(data.countries);
-        setLimited(data.limited ? { total: data.total ?? 0 } : null);
+        setLimited(data.limited ? { total: data.total ?? 0, freeLimit: data.freeLimit ?? 5 } : null);
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
@@ -78,9 +78,7 @@ export default function RechercheFamillePage() {
       <div className="space-y-5">
         <PageHeader
           title={t.searchFamilies.title}
-          subtitle={
-            loading || error ? f.subtitleLoading : t.searchFamilies.availableCount(limited ? limited.total : families.length)
-          }
+          subtitle={f.subtitle}
         />
 
         {s.countryLimit ? (
@@ -146,9 +144,12 @@ export default function RechercheFamillePage() {
         {/* ─── Résultats ───────────────────────────────────────────────── */}
         {!error && (
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-gray-600" aria-live="polite">
-              {loading ? t.common.loading : t.searchFamilies.foundCount(s.filtered.length)}
-            </p>
+            <FamilyResultsCount
+              loading={loading}
+              count={s.filtered.length}
+              freeLimit={limited ? limited.freeLimit : null}
+              href="/dashboard/au-pair/abonnement"
+            />
             <SortSelect value={s.sort} onChange={s.setSort} options={sortOptions} />
           </div>
         )}
@@ -177,7 +178,7 @@ export default function RechercheFamillePage() {
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-              {s.visible.map((fam) => <FamilyCard key={fam.id} fam={fam} viewer="auPair" />)}
+              {s.visible.map((fam) => <FamilyCard key={fam.id} fam={fam} viewer="auPair" locked={!!limited} />)}
             </div>
 
             {s.paginated && (

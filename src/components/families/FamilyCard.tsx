@@ -36,7 +36,8 @@ function Stat({ icon: Icon, label, value }: { icon: typeof Baby; label: string; 
   );
 }
 
-export function FamilyCard({ fam, viewer }: { fam: Family; viewer: FamilyViewer }) {
+/** `locked` : liste limitée (visiteur ou au pair sans abonnement), la présentation n'est pas envoyée */
+export function FamilyCard({ fam, viewer, locked = false }: { fam: Family; viewer: FamilyViewer; locked?: boolean }) {
   const { t, tValue } = useI18n();
   const f = t.findFamily;
   const extraLanguages = fam.languages.length - 3;
@@ -71,7 +72,16 @@ export function FamilyCard({ fam, viewer }: { fam: Family; viewer: FamilyViewer 
 
       <div className="flex-1 flex flex-col p-4 sm:p-5">
         <h3 className="text-lg font-semibold text-[#1A1A2E] truncate">{fam.name}</h3>
-        {fam.description && <p className="text-sm text-gray-500 mt-1 line-clamp-2">{fam.description}</p>}
+        {fam.description ? (
+          <p className="text-sm text-gray-500 mt-1 line-clamp-2">{fam.description}</p>
+        ) : (
+          locked && (
+            <p className="flex items-start gap-1.5 text-sm text-gray-400 mt-1">
+              <Lock className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+              <span className="line-clamp-2">{t.searchFamilies.detailsLocked}</span>
+            </p>
+          )
+        )}
 
         <div className="grid grid-cols-3 gap-2 mt-4">
           <Stat icon={Baby} label={f.statKids} value={String(fam.kids)} />
@@ -131,6 +141,36 @@ export function FamilyCard({ fam, viewer }: { fam: Family; viewer: FamilyViewer 
     <Link href={href} className="group block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E87722]">
       {body}
     </Link>
+  );
+}
+
+/**
+ * Ligne au-dessus des résultats : nombre de familles trouvées, ou, quand la liste est limitée,
+ * une invitation à s'abonner avec la limite d'affichage sans abonnement.
+ */
+export function FamilyResultsCount({
+  loading,
+  count,
+  freeLimit,
+  href,
+}: { loading: boolean; count: number; freeLimit: number | null; href: string }) {
+  const { t } = useI18n();
+  if (loading) return <p className="text-sm text-gray-600">{t.common.loading}</p>;
+  if (freeLimit === null) {
+    return (
+      <p className="text-sm text-gray-600" aria-live="polite">
+        {t.searchFamilies.foundCount(count)}
+      </p>
+    );
+  }
+  return (
+    <div className="min-w-0" aria-live="polite">
+      <Link href={href} className="inline-flex items-center gap-1.5 text-sm font-medium text-[#E87722] hover:underline">
+        <Lock className="w-4 h-4 shrink-0" />
+        {t.searchFamilies.subscribeToSeeAll}
+      </Link>
+      <p className="text-xs text-gray-500 mt-0.5">{t.searchFamilies.freeLimitNote(freeLimit)}</p>
+    </div>
   );
 }
 
