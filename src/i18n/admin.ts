@@ -256,6 +256,13 @@ export const admin = {
     kpiRecent: { fr: "Inscrits sous 24 h", en: "Signed up in 24 h" },
     kpiRecentCaption: { fr: (p: number) => `${p} % de la file`, en: (p: number) => `${p}% of the queue` },
     reject: { fr: "Rejeter", en: "Reject" },
+    validateTitle: { fr: "Valider cette inscription ?", en: "Approve this sign-up?" },
+    // Texte autour du nom (affiché en gras entre les deux)
+    validateTextBefore: { fr: "Le profil de ", en: "" },
+    validateTextAfter: {
+      fr: " sera activé et visible sur la plateforme. Un email de confirmation lui sera envoyé.",
+      en: "'s profile will be activated and visible on the platform. A confirmation email will be sent.",
+    },
     rejectTitle: { fr: "Rejeter cette inscription ?", en: "Reject this sign-up?" },
     deleteTitle: { fr: "Supprimer cette inscription ?", en: "Delete this sign-up?" },
     reasonLabel: { fr: "Motif (facultatif, inclus dans l'email)", en: "Reason (optional, included in the email)" },

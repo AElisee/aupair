@@ -281,6 +281,7 @@ export default function AdminProfilePage() {
   const [showPhoto, setShowPhoto] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [confirmSuspend, setConfirmSuspend] = useState(false);
+  const [confirmValidate, setConfirmValidate] = useState(false);
   const [feedback, setFeedback] = useState<{ ok: boolean; text: string } | null>(null);
   const { origin: originCountries, host: hostCountries } = useCountries();
   const { t, locale, tValue, relativeDate } = useI18n();
@@ -327,6 +328,7 @@ export default function AdminProfilePage() {
     } finally {
       setProcessing(false);
       setConfirmSuspend(false);
+      setConfirmValidate(false);
     }
   };
 
@@ -465,7 +467,13 @@ export default function AdminProfilePage() {
                         label={a.label}
                         color={a.color}
                         disabled={processing}
-                        onClick={() => (a.action === "suspend" ? setConfirmSuspend(true) : performAction(a.action))}
+                        onClick={() =>
+                          a.action === "suspend"
+                            ? setConfirmSuspend(true)
+                            : a.action === "validate"
+                              ? setConfirmValidate(true)
+                              : performAction(a.action)
+                        }
                       />
                     ))}
                   </div>
@@ -715,6 +723,25 @@ export default function AdminProfilePage() {
             loading={processing}
             onConfirm={() => performAction("suspend")}
             onCancel={() => setConfirmSuspend(false)}
+          />
+        )}
+
+        {confirmValidate && (
+          <ConfirmDialog
+            title={t.adminModeration.validateTitle}
+            variant="default"
+            showIcon={false}
+            description={
+              <>
+                {t.adminModeration.validateTextBefore}
+                <strong className="font-semibold text-[#1A1A2E]">{displayName}</strong>
+                {t.adminModeration.validateTextAfter}
+              </>
+            }
+            confirmLabel={c.validate}
+            loading={processing}
+            onConfirm={() => performAction("validate")}
+            onCancel={() => setConfirmValidate(false)}
           />
         )}
 

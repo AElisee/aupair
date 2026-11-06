@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { BLUE, GREEN, INDIGO, ORANGE, PAGE_TITLE, KpiGrid, pct } from "@/components/admin/AdminUI";
 import { useAdminCan } from "@/components/admin/AdminPermissionsContext";
 import { AdminAvatar, AdminDateTime, AdminIconButton, TD, TH } from "@/components/admin/AdminTable";
+import Pagination from "@/components/admin/Pagination";
 
 type PendingProfile = {
   userId: string;
@@ -37,9 +38,18 @@ type RefusedProfile = PendingProfile & {
 
 type Tab = "pending" | "refused";
 type ProfileAction = "validate" | "reject" | "delete" | "restore";
-type DecisionTarget = { profile: PendingProfile; action: "reject" | "delete" };
+type DecisionTarget = { profile: PendingProfile; action: "validate" | "reject" | "delete" };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const PAGE_SIZE = 15;
+
+/** Page courante bornée au nombre de pages (la liste peut rétrécir après une action) + tranche affichée */
+function paginate<T>(items: T[], page: number) {
+  const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const offset = (currentPage - 1) * PAGE_SIZE;
+  return { totalPages, currentPage, offset, rows: items.slice(offset, offset + PAGE_SIZE) };
+}
 
 const tabClass = (active: boolean) =>
   `px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-1.5 ${
@@ -60,6 +70,8 @@ export default function ModerationPage() {
   const [profiles, setProfiles] = useState<PendingProfile[]>([]);
   const [refused, setRefused] = useState<RefusedProfile[]>([]);
   const [tab, setTab] = useState<Tab>("pending");
+  const [pendingPage, setPendingPage] = useState(1);
+  const [refusedPage, setRefusedPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(0);
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -115,7 +127,7 @@ export default function ModerationPage() {
   };
 
   const handleAction = (p: PendingProfile, action: ProfileAction) => {
-    if (action === "validate" || action === "restore") {
+    if (action === "restore") {
       performAction(p, action);
       return;
     }
@@ -125,9 +137,12 @@ export default function ModerationPage() {
 
   const confirmDecision = async () => {
     if (!decision) return;
-    await performAction(decision.profile, decision.action, reason.trim());
+    await performAction(decision.profile, decision.action, decision.action === "validate" ? undefined : reason.trim());
     setDecision(null);
   };
+
+  const pendingView = paginate(profiles, pendingPage);
+  const refusedView = paginate(refused, refusedPage);
 
   const auPairPending = profiles.filter((p) => p.role === "AU_PAIR").length;
   const completeCount = profiles.filter((p) => p.hasPhoto && p.hasId).length;
@@ -234,6 +249,7 @@ export default function ModerationPage() {
             profiles.length === 0 ? (
               empty(m.emptyTitle, m.emptyText)
             ) : (
+              <>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 border-b border-gray-100">
@@ -247,11 +263,11 @@ export default function ModerationPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {profiles.map((p, i) => {
+                    {pendingView.rows.map((p, i) => {
                       const busy = processingId === p.userId;
                       return (
                         <tr key={p.userId} className="hover:bg-gray-50 transition-colors">
-                          <td className={`${TD} text-xs text-gray-400 tabular-nums`}>{i + 1}</td>
+                          <td className={`${TD} text-xs text-gray-400 tabular-nums`}>{pendingView.offset + i + 1}</td>
                           <td className={TD}>{profileCell(p, p.description)}</td>
                           <td className={TD}>{roleBadge(p)}</td>
                           <td className={TD}>
@@ -287,10 +303,19 @@ export default function ModerationPage() {
                   </tbody>
                 </table>
               </div>
+              <Pagination
+                currentPage={pendingView.currentPage}
+                totalPages={pendingView.totalPages}
+                pageSize={PAGE_SIZE}
+                totalItems={profiles.length}
+                onPageChange={setPendingPage}
+              />
+              </>
             )
           ) : refused.length === 0 ? (
             empty(m.emptyRefusedTitle, m.emptyRefusedText)
           ) : (
+            <>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b border-gray-100">
@@ -306,12 +331,12 @@ export default function ModerationPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {refused.map((p, i) => {
+                  {refusedView.rows.map((p, i) => {
                     const busy = processingId === p.userId;
                     const deleted = p.status === "DELETED";
                     return (
                       <tr key={p.userId} className="hover:bg-gray-50 transition-colors">
-                        <td className={`${TD} text-xs text-gray-400 tabular-nums`}>{i + 1}</td>
+                        <td className={`${TD} text-xs text-gray-400 tabular-nums`}>{refusedView.offset + i + 1}</td>
                         <td className={TD}>{profileCell(p, p.email)}</td>
                         <td className={TD}>{roleBadge(p)}</td>
                         <td className={TD}>
@@ -356,11 +381,38 @@ export default function ModerationPage() {
                 </tbody>
               </table>
             </div>
+            <Pagination
+              currentPage={refusedView.currentPage}
+              totalPages={refusedView.totalPages}
+              pageSize={PAGE_SIZE}
+              totalItems={refused.length}
+              onPageChange={setRefusedPage}
+            />
+            </>
           )}
         </div>
       </div>
 
-      {decision && (
+      {decision?.action === "validate" && (
+        <ConfirmDialog
+          title={m.validateTitle}
+          variant="default"
+          showIcon={false}
+          description={
+            <>
+              {m.validateTextBefore}
+              <strong className="font-semibold text-[#1A1A2E]">{decision.profile.name}</strong>
+              {m.validateTextAfter}
+            </>
+          }
+          confirmLabel={c.validate}
+          loading={processingId === decision.profile.userId}
+          onConfirm={confirmDecision}
+          onCancel={() => setDecision(null)}
+        />
+      )}
+
+      {decision && decision.action !== "validate" && (
         <ConfirmDialog
           title={decision.action === "reject" ? m.rejectTitle : m.deleteTitle}
           variant={decision.action === "delete" ? "destructive" : "default"}
