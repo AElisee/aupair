@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { Lock, RotateCcw, SearchX } from "lucide-react";
+import { RotateCcw, SearchX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SubscriptionBanner as LimitedBanner } from "@/components/dashboard/SubscriptionLock";
 import { FamilyCard, FamilyCardSkeleton, FamilyResultsCount, type Family, type FamilyViewer } from "@/components/families/FamilyCard";
@@ -73,7 +73,8 @@ export default function TrouverFamilleContent() {
   const guestLimitNote = limited && hasMore ? f.guestLimited : undefined;
   // Sans abonnement (visiteur ou au pair non abonné) : ni recherche, ni filtres, ni tri
   const filtersLocked = viewer !== "other" && (loading || limited);
-  const lockedHref = viewer === "auPair" ? "/dashboard/au-pair/abonnement" : "/inscription?role=au-pair";
+  // Colonne latérale vide (au pair non abonné : ni filtres ni bannière) → résultats recentrés pleine largeur
+  const showAside = !filtersLocked || viewer === "guest";
 
   const filterFields = (
     <FamilyFilterFields filters={s.filters} onChange={s.updateFilters} hostCountries={hostCountries} languages={languages} />
@@ -89,23 +90,7 @@ export default function TrouverFamilleContent() {
         searchPlaceholder={t.searchFamilies.searchPlaceholder}
         activeCount={s.activeCount}
         onOpenFilters={() => setSheetOpen(true)}
-        locked={
-          filtersLocked && (
-            <div className="inline-flex flex-col sm:flex-row items-center gap-3 rounded-2xl bg-white/10 px-5 py-4 text-white">
-              <span className="flex items-center gap-2 text-sm">
-                <Lock className="w-4 h-4 text-[#E87722] shrink-0" />
-                {f.filtersLocked}
-              </span>
-              {!loading && (
-                <Link href={lockedHref}>
-                  <Button size="sm" className="h-9">
-                    {viewer === "auPair" ? f.filtersLockedCtaAuPair : f.filtersLockedCtaGuest}
-                  </Button>
-                </Link>
-              )}
-            </div>
-          )
-        }
+        locked={filtersLocked}
         countryChips={
           s.countryChips.length > 1 && <CountryChips
             chips={s.countryChips}
@@ -117,8 +102,13 @@ export default function TrouverFamilleContent() {
       />
 
       {/* ─── Résultats ────────────────────────────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 lg:grid lg:grid-cols-[260px_1fr] lg:gap-8">
-        <aside className="hidden lg:block">
+      <div
+        className={cn(
+          "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10",
+          showAside && "lg:grid lg:grid-cols-[260px_1fr] lg:gap-8"
+        )}
+      >
+        {showAside && <aside className="hidden lg:block">
           <div className="sticky top-24 space-y-6">
             {!filtersLocked && (
               <FilterPanel activeCount={s.activeCount} onClear={s.clearFilters}>
@@ -129,7 +119,7 @@ export default function TrouverFamilleContent() {
               <SubscriptionBanner price={subscription.priceEur} days={subscription.days} limitNote={guestLimitNote} compact />
             )}
           </div>
-        </aside>
+        </aside>}
 
         <main className="min-w-0">
           {s.countryLimit && viewer !== "other" ? (

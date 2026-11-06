@@ -99,8 +99,8 @@ export function DirectoryHero({
   activeCount: number;
   onOpenFilters: () => void;
   countryChips: React.ReactNode;
-  /** Remplace la recherche, le bouton filtres et les raccourcis pays (ex. recherche réservée aux abonnés) */
-  locked?: React.ReactNode;
+  /** Masque la recherche, le bouton filtres et les raccourcis pays (recherche réservée aux abonnés) */
+  locked?: boolean;
 }) {
   const { t } = useI18n();
   if (locked) {
@@ -113,7 +113,6 @@ export function DirectoryHero({
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8 sm:pt-14 sm:pb-10 text-center">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight">{title}</h1>
           <p className="text-gray-300 mt-3 max-w-2xl mx-auto text-sm sm:text-base">{subtitle}</p>
-          <div className="mt-6 max-w-3xl mx-auto">{locked}</div>
         </div>
       </section>
     );

@@ -1,9 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { Lock, RotateCcw, Search, SearchX, SlidersHorizontal } from "lucide-react";
+import { RotateCcw, Search, SearchX, SlidersHorizontal } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { SubscriptionBanner } from "@/components/dashboard/SubscriptionLock";
@@ -91,21 +90,7 @@ export default function RechercheFamillePage() {
         )}
 
         {/* ─── Recherche + filtres ─────────────────────────────────────── */}
-        {filtersLocked ? (
-          !loading && (
-            <div className="bg-white rounded-2xl border border-gray-100 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
-              <span className="flex items-center gap-2 text-sm text-gray-600 flex-1">
-                <Lock className="w-4 h-4 text-[#E87722] shrink-0" />
-                {f.filtersLocked}
-              </span>
-              <Link href="/dashboard/au-pair/abonnement" className="shrink-0">
-                <Button size="sm" className="h-9 w-full sm:w-auto">
-                  {f.filtersLockedCtaAuPair}
-                </Button>
-              </Link>
-            </div>
-          )
-        ) : (
+        {!filtersLocked && (
           <>
             <div className="bg-white rounded-2xl border border-gray-100 p-3 sm:p-4 space-y-3">
               <div className="flex gap-2">

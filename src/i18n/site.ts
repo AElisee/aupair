@@ -803,12 +803,6 @@ export const site = {
       fr: "Vous ne voyez qu'une partie des familles. Inscrivez-vous et abonnez-vous pour voir toutes les familles.",
       en: "You are only seeing some of the families. Sign up and subscribe to see all families.",
     },
-    filtersLocked: {
-      fr: "La recherche et les filtres sont réservés aux au pairs abonnés.",
-      en: "Search and filters are reserved for subscribed au pairs.",
-    },
-    filtersLockedCtaGuest: { fr: "S'inscrire pour filtrer", en: "Sign up to filter" },
-    filtersLockedCtaAuPair: { fr: "M'abonner pour filtrer", en: "Subscribe to filter" },
     guestCountryLimited: {
       fr: (country: string) => `${country} : d'autres familles vous attendent. Inscrivez-vous et abonnez-vous pour toutes les voir.`,
       en: (country: string) => `${country}: more families are waiting for you. Sign up and subscribe to see them all.`,
