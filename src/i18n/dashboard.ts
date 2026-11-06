@@ -385,16 +385,12 @@ export const dashboard = {
     },
     noneFound: { fr: "Aucune famille trouvée avec ces critères.", en: "No family matches these criteria." },
     limitedBanner: {
-      fr: (shown: number, total: number) =>
-        `Sans abonnement, vous voyez ${shown} familles sur ${total}. Abonnez-vous pour voir toutes les familles, les contacter et les ajouter en favoris.`,
-      en: (shown: number, total: number) =>
-        `Without a subscription you see ${shown} of ${total} families. Subscribe to see all families, contact them and add them to your favourites.`,
+      fr: "Sans abonnement, vous ne voyez qu'une partie des familles. Abonnez-vous pour voir toutes les familles, les contacter et les ajouter en favoris.",
+      en: "Without a subscription you only see some of the families. Subscribe to see all families, contact them and add them to your favourites.",
     },
     countryLimited: {
-      fr: (country: string, total: number, shown: number) =>
-        `${country} : ${total} ${total > 1 ? "familles" : "famille"}, vous en voyez ${shown}. Abonnez-vous pour toutes les voir et les contacter.`,
-      en: (country: string, total: number, shown: number) =>
-        `${country}: ${total} ${total > 1 ? "families" : "family"}, you can see ${shown}. Subscribe to see and contact them all.`,
+      fr: (country: string) => `${country} : d'autres familles vous attendent. Abonnez-vous pour toutes les voir et les contacter.`,
+      en: (country: string) => `${country}: more families are waiting for you. Subscribe to see and contact them all.`,
     },
   },
 

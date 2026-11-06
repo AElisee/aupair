@@ -800,14 +800,18 @@ export const site = {
       en: (price: number, days: number) => `Au pair subscription: €${price} for ${days} days — full profiles and unlimited messaging.`,
     },
     guestLimited: {
-      fr: (shown: number, total: number) => `Vous voyez ${shown} familles sur ${total}. Inscrivez-vous et abonnez-vous pour voir toutes les familles.`,
-      en: (shown: number, total: number) => `You are seeing ${shown} of ${total} families. Sign up and subscribe to see all families.`,
+      fr: "Vous ne voyez qu'une partie des familles. Inscrivez-vous et abonnez-vous pour voir toutes les familles.",
+      en: "You are only seeing some of the families. Sign up and subscribe to see all families.",
     },
+    filtersLocked: {
+      fr: "La recherche et les filtres sont réservés aux au pairs abonnés.",
+      en: "Search and filters are reserved for subscribed au pairs.",
+    },
+    filtersLockedCtaGuest: { fr: "S'inscrire pour filtrer", en: "Sign up to filter" },
+    filtersLockedCtaAuPair: { fr: "M'abonner pour filtrer", en: "Subscribe to filter" },
     guestCountryLimited: {
-      fr: (country: string, total: number, shown: number) =>
-        `${country} : ${total} ${total > 1 ? "familles" : "famille"}, vous en voyez ${shown}. Inscrivez-vous et abonnez-vous pour toutes les voir.`,
-      en: (country: string, total: number, shown: number) =>
-        `${country}: ${total} ${total > 1 ? "families" : "family"}, you can see ${shown}. Sign up and subscribe to see them all.`,
+      fr: (country: string) => `${country} : d'autres familles vous attendent. Inscrivez-vous et abonnez-vous pour toutes les voir.`,
+      en: (country: string) => `${country}: more families are waiting for you. Sign up and subscribe to see them all.`,
     },
     signUpCta: { fr: "S'inscrire", en: "Sign up" },
     bannerCta: { fr: "Créer mon profil au pair", en: "Create my au pair profile" },

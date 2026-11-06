@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ProfileStatus } from "@/generated/prisma/client";
-import { getCountryFlagMap } from "@/lib/countries";
+import { CountryType, ProfileStatus } from "@/generated/prisma/client";
+import { getCountriesByType, getCountryFlagMap } from "@/lib/countries";
 import { auth } from "@/lib/auth";
 import { hasActiveSubscription } from "@/lib/subscription";
 
@@ -24,14 +24,17 @@ export async function GET() {
     ? true
     : session.user.role === "AU_PAIR" && !(await hasActiveSubscription(session.user.id));
 
-  const [allProfiles, flagMap] = await Promise.all([
+  const [allProfiles, flagMap, hostCountries] = await Promise.all([
     prisma.familyProfile.findMany({
       where: { status: ProfileStatus.ACTIVE },
       orderBy: { createdAt: "desc" },
       include: { user: { select: { name: true } } },
     }),
     getCountryFlagMap(),
+    getCountriesByType(CountryType.HOST),
   ]);
+  // Seuls les pays d'accueil actifs (gérés dans /admin/pays) apparaissent en raccourci
+  const hostNames = new Set(hostCountries.map((c) => c.name));
 
   // 5 familles tirées au hasard à chaque chargement
   const profiles = limited ? shuffle(allProfiles).slice(0, FREE_FAMILIES_LIMIT) : allProfiles;
@@ -56,17 +59,24 @@ export async function GET() {
   // Compteurs par pays calculés sur toutes les familles, même quand la liste est limitée
   const countryCounts = new Map<string, number>();
   allProfiles.forEach((p) => {
-    if (p.country) countryCounts.set(p.country, (countryCounts.get(p.country) ?? 0) + 1);
+    if (p.country && hostNames.has(p.country)) countryCounts.set(p.country, (countryCounts.get(p.country) ?? 0) + 1);
   });
+  // Sans abonnement, aucun nombre de familles n'est exposé : seulement s'il en existe d'autres que l'échantillon
+  const shownByCountry = new Map<string, number>();
+  profiles.forEach((p) => shownByCountry.set(p.country, (shownByCountry.get(p.country) ?? 0) + 1));
   const countries = [...countryCounts]
-    .map(([name, count]) => ({ name, count, flag: flagMap[name] ?? "" }))
-    .sort((a, b) => b.count - a.count);
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, count]) => ({
+      name,
+      flag: flagMap[name] ?? "",
+      ...(limited ? { hasMore: count > (shownByCountry.get(name) ?? 0) } : { count }),
+    }));
 
   return NextResponse.json({
     families,
     limited,
     freeLimit: FREE_FAMILIES_LIMIT,
-    total: allProfiles.length,
+    ...(limited ? { hasMore: allProfiles.length > profiles.length } : { total: allProfiles.length }),
     countries,
   });
 }

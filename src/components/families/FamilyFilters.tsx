@@ -54,10 +54,8 @@ export function useFamilySearch(families: Family[], countryTotals?: CountryChip[
   // Pays sélectionné dont une partie des familles n'est pas dans l'échantillon reçu (liste limitée)
   const countryLimit = useMemo(() => {
     if (!filters.country || !countryTotals) return null;
-    const total = countryTotals.find((c) => c.name === filters.country)?.count ?? 0;
-    const shown = families.filter((fam) => fam.country === filters.country).length;
-    return total > shown ? { country: filters.country, total, shown } : null;
-  }, [filters.country, countryTotals, families]);
+    return countryTotals.find((c) => c.name === filters.country)?.hasMore ? filters.country : null;
+  }, [filters.country, countryTotals]);
 
   // Les totaux par pays renvoyés par l'API priment : la liste peut n'être qu'un échantillon
   const countryChips = useMemo(

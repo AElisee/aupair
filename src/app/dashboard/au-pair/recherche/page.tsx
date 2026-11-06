@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { RotateCcw, Search, SearchX, SlidersHorizontal } from "lucide-react";
+import { Lock, RotateCcw, Search, SearchX, SlidersHorizontal } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { SubscriptionBanner } from "@/components/dashboard/SubscriptionLock";
@@ -28,7 +29,10 @@ export default function RechercheFamillePage() {
   const [families, setFamilies] = useState<Family[]>([]);
   const [countryTotals, setCountryTotals] = useState<CountryChip[]>();
   // Au pair sans abonnement : l'API ne renvoie qu'un échantillon aléatoire de familles
-  const [limited, setLimited] = useState<{ total: number; freeLimit: number } | null>(null);
+  const [limited, setLimited] = useState<{
+    hasMore: boolean;
+    freeLimit: number;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -47,7 +51,7 @@ export default function RechercheFamillePage() {
       .then((data) => {
         setFamilies(data.families ?? []);
         setCountryTotals(data.countries);
-        setLimited(data.limited ? { total: data.total ?? 0, freeLimit: data.freeLimit ?? 5 } : null);
+        setLimited(data.limited ? { hasMore: !!data.hasMore, freeLimit: data.freeLimit ?? 5 } : null);
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
@@ -62,6 +66,8 @@ export default function RechercheFamillePage() {
   };
 
   const closeSheet = useCallback(() => setSheetOpen(false), []);
+  // Sans abonnement : ni recherche, ni filtres, ni tri (masqués aussi pendant le chargement)
+  const filtersLocked = loading || !!limited;
 
   const filterFields = (className?: string) => (
     <FamilyFilterFields
@@ -76,70 +82,80 @@ export default function RechercheFamillePage() {
   return (
     <DashboardLayout role="au-pair" userName={session?.user?.name ?? ""}>
       <div className="space-y-5">
-        <PageHeader
-          title={t.searchFamilies.title}
-          subtitle={f.subtitle}
-        />
+        <PageHeader title={t.searchFamilies.title} subtitle={f.subtitle} />
 
         {s.countryLimit ? (
-          <SubscriptionBanner
-            message={t.searchFamilies.countryLimited(tValue(s.countryLimit.country), s.countryLimit.total, s.countryLimit.shown)}
-          />
+          <SubscriptionBanner message={t.searchFamilies.countryLimited(tValue(s.countryLimit))} />
         ) : (
-          limited &&
-          limited.total > families.length && (
-            <SubscriptionBanner message={t.searchFamilies.limitedBanner(families.length, limited.total)} />
-          )
+          limited && limited.hasMore && <SubscriptionBanner message={t.searchFamilies.limitedBanner} />
         )}
 
         {/* ─── Recherche + filtres ─────────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-3 sm:p-4 space-y-3">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-              <input
-                type="search"
-                inputMode="search"
-                placeholder={t.searchFamilies.searchPlaceholder}
-                aria-label={t.searchFamilies.searchPlaceholder}
-                value={s.search}
-                onChange={(e) => s.setSearch(e.target.value)}
-                className="w-full h-12 pl-12 pr-4 rounded-xl bg-[#F5F5F5] text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#E87722] focus:bg-white"
-              />
+        {filtersLocked ? (
+          !loading && (
+            <div className="bg-white rounded-2xl border border-gray-100 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+              <span className="flex items-center gap-2 text-sm text-gray-600 flex-1">
+                <Lock className="w-4 h-4 text-[#E87722] shrink-0" />
+                {f.filtersLocked}
+              </span>
+              <Link href="/dashboard/au-pair/abonnement" className="shrink-0">
+                <Button size="sm" className="h-9 w-full sm:w-auto">
+                  {f.filtersLockedCtaAuPair}
+                </Button>
+              </Link>
             </div>
-            <button
-              type="button"
-              onClick={() => setSheetOpen(true)}
-              aria-label={t.common.filters}
-              className="lg:hidden relative h-12 px-4 flex items-center gap-2 rounded-xl border border-gray-200 text-[#1A1A2E] text-sm font-medium hover:bg-gray-50 transition-colors"
-            >
-              <SlidersHorizontal className="w-5 h-5 text-[#E87722]" />
-              <span className="hidden sm:inline">{t.common.filters}</span>
-              {s.activeCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-[#E87722] text-white text-[11px] font-semibold flex items-center justify-center">
-                  {s.activeCount}
-                </span>
-              )}
-            </button>
-          </div>
+          )
+        ) : (
+          <>
+            <div className="bg-white rounded-2xl border border-gray-100 p-3 sm:p-4 space-y-3">
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                  <input
+                    type="search"
+                    inputMode="search"
+                    placeholder={t.searchFamilies.searchPlaceholder}
+                    aria-label={t.searchFamilies.searchPlaceholder}
+                    value={s.search}
+                    onChange={(e) => s.setSearch(e.target.value)}
+                    className="w-full h-12 pl-12 pr-4 rounded-xl bg-[#F5F5F5] text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#E87722] focus:bg-white"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSheetOpen(true)}
+                  aria-label={t.common.filters}
+                  className="lg:hidden relative h-12 px-4 flex items-center gap-2 rounded-xl border border-gray-200 text-[#1A1A2E] text-sm font-medium hover:bg-gray-50 transition-colors"
+                >
+                  <SlidersHorizontal className="w-5 h-5 text-[#E87722]" />
+                  <span className="hidden sm:inline">{t.common.filters}</span>
+                  {s.activeCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-[#E87722] text-white text-[11px] font-semibold flex items-center justify-center">
+                      {s.activeCount}
+                    </span>
+                  )}
+                </button>
+              </div>
 
-          <div className="hidden lg:flex items-center gap-3">
-            {filterFields("flex-1 grid grid-cols-4 gap-3")}
-            {s.activeCount > 0 && (
-              <button type="button" onClick={s.clearFilters} className="shrink-0 text-xs font-medium text-[#E87722] hover:underline">
-                {d.clearAll}
-              </button>
-            )}
-          </div>
-        </div>
+              <div className="hidden lg:flex items-center gap-3">
+                {filterFields("flex-1 grid grid-cols-4 gap-3")}
+                {s.activeCount > 0 && (
+                  <button type="button" onClick={s.clearFilters} className="shrink-0 text-xs font-medium text-[#E87722] hover:underline">
+                    {d.clearAll}
+                  </button>
+                )}
+              </div>
+            </div>
 
-        <CountryChips
-          chips={s.countryChips}
-          value={s.filters.country}
-          onChange={(country) => s.updateFilters({ country })}
-          variant="light"
-          className="-mx-4 px-4 sm:mx-0 sm:px-0"
-        />
+            <CountryChips
+              chips={s.countryChips}
+              value={s.filters.country}
+              onChange={(country) => s.updateFilters({ country })}
+              variant="light"
+              className="-mx-4 px-4 sm:mx-0 sm:px-0"
+            />
+          </>
+        )}
 
         {/* ─── Résultats ───────────────────────────────────────────────── */}
         {!error && (
@@ -150,7 +166,7 @@ export default function RechercheFamillePage() {
               freeLimit={limited ? limited.freeLimit : null}
               href="/dashboard/au-pair/abonnement"
             />
-            <SortSelect value={s.sort} onChange={s.setSort} options={sortOptions} />
+            {!filtersLocked && <SortSelect value={s.sort} onChange={s.setSort} options={sortOptions} />}
           </div>
         )}
 
@@ -160,7 +176,9 @@ export default function RechercheFamillePage() {
           <DirectoryEmptyState icon={RotateCcw} title={f.loadError} action={<Button onClick={retry}>{d.retry}</Button>} />
         ) : loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-            {Array.from({ length: 6 }, (_, i) => <FamilyCardSkeleton key={i} />)}
+            {Array.from({ length: 6 }, (_, i) => (
+              <FamilyCardSkeleton key={i} />
+            ))}
           </div>
         ) : s.filtered.length === 0 ? (
           <DirectoryEmptyState
@@ -178,7 +196,9 @@ export default function RechercheFamillePage() {
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-              {s.visible.map((fam) => <FamilyCard key={fam.id} fam={fam} viewer="auPair" locked={!!limited} />)}
+              {s.visible.map((fam) => (
+                <FamilyCard key={fam.id} fam={fam} viewer="auPair" locked={!!limited} />
+              ))}
             </div>
 
             {s.paginated && (
@@ -193,7 +213,12 @@ export default function RechercheFamillePage() {
         )}
       </div>
 
-      <FilterSheet open={sheetOpen} onClose={closeSheet} onClear={s.clearFilters} resultLabel={f.showResults(s.filtered.length)}>
+      <FilterSheet
+        open={sheetOpen && !filtersLocked}
+        onClose={closeSheet}
+        onClear={s.clearFilters}
+        resultLabel={f.showResults(s.filtered.length)}
+      >
         {filterFields()}
       </FilterSheet>
     </DashboardLayout>

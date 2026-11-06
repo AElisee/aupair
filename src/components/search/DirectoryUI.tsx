@@ -13,11 +13,12 @@ import { cn } from "@/lib/utils";
  * hero de recherche, raccourcis pays, tiroir de filtres mobile, tri, pastilles des filtres actifs, état vide.
  */
 
-export type CountryChip = { name: string; count: number; flag: string };
+/** `count` absent quand la liste est limitée (sans abonnement) : `hasMore` indique alors s'il existe d'autres familles */
+export type CountryChip = { name: string; flag: string; count?: number; hasMore?: boolean };
 
 /** Compte les éléments par pays, du plus fourni au moins fourni */
 export function buildCountryChips<T>(items: T[], getCountry: (item: T) => string, getFlag: (item: T) => string): CountryChip[] {
-  const chips = new Map<string, CountryChip>();
+  const chips = new Map<string, CountryChip & { count: number }>();
   items.forEach((item) => {
     const name = getCountry(item);
     if (!name) return;
@@ -72,7 +73,6 @@ export function CountryChips({
         >
           <CountryFlag flag={c.flag} className="h-4 w-auto rounded-[2px]" />
           {tValue(c.name)}
-          <span className="text-xs opacity-70">{c.count}</span>
         </button>
       ))}
     </div>
@@ -89,6 +89,7 @@ export function DirectoryHero({
   activeCount,
   onOpenFilters,
   countryChips,
+  locked,
 }: {
   title: string;
   subtitle: string;
@@ -98,8 +99,25 @@ export function DirectoryHero({
   activeCount: number;
   onOpenFilters: () => void;
   countryChips: React.ReactNode;
+  /** Remplace la recherche, le bouton filtres et les raccourcis pays (ex. recherche réservée aux abonnés) */
+  locked?: React.ReactNode;
 }) {
   const { t } = useI18n();
+  if (locked) {
+    return (
+      <section
+        className="relative overflow-hidden"
+        style={{ background: "linear-gradient(135deg, #1A1A2E 0%, #16213e 50%, #0f3460 100%)" }}
+      >
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#E87722] opacity-15 rounded-full blur-3xl" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8 sm:pt-14 sm:pb-10 text-center">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight">{title}</h1>
+          <p className="text-gray-300 mt-3 max-w-2xl mx-auto text-sm sm:text-base">{subtitle}</p>
+          <div className="mt-6 max-w-3xl mx-auto">{locked}</div>
+        </div>
+      </section>
+    );
+  }
   return (
     <section
       className="relative overflow-hidden"

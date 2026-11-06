@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { RotateCcw, SearchX } from "lucide-react";
+import { Lock, RotateCcw, SearchX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SubscriptionBanner as LimitedBanner } from "@/components/dashboard/SubscriptionLock";
 import { FamilyCard, FamilyCardSkeleton, FamilyResultsCount, type Family, type FamilyViewer } from "@/components/families/FamilyCard";
@@ -30,7 +30,7 @@ export default function TrouverFamilleContent() {
 
   const [families, setFamilies] = useState<Family[]>([]);
   const [countryTotals, setCountryTotals] = useState<CountryChip[]>();
-  const [total, setTotal] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
   // Au pair sans abonnement : l'API ne renvoie qu'un échantillon aléatoire de familles
   const [limited, setLimited] = useState(false);
   const [freeLimit, setFreeLimit] = useState(5);
@@ -52,7 +52,7 @@ export default function TrouverFamilleContent() {
       .then((data) => {
         setFamilies(data.families ?? []);
         setCountryTotals(data.countries);
-        setTotal(data.total ?? data.families?.length ?? 0);
+        setHasMore(!!data.hasMore);
         setLimited(!!data.limited);
         if (typeof data.freeLimit === "number") setFreeLimit(data.freeLimit);
       })
@@ -70,7 +70,10 @@ export default function TrouverFamilleContent() {
 
   const closeSheet = useCallback(() => setSheetOpen(false), []);
 
-  const guestLimitNote = limited && total > families.length ? f.guestLimited(families.length, total) : undefined;
+  const guestLimitNote = limited && hasMore ? f.guestLimited : undefined;
+  // Sans abonnement (visiteur ou au pair non abonné) : ni recherche, ni filtres, ni tri
+  const filtersLocked = viewer !== "other" && (loading || limited);
+  const lockedHref = viewer === "auPair" ? "/dashboard/au-pair/abonnement" : "/inscription?role=au-pair";
 
   const filterFields = (
     <FamilyFilterFields filters={s.filters} onChange={s.updateFilters} hostCountries={hostCountries} languages={languages} />
@@ -86,6 +89,23 @@ export default function TrouverFamilleContent() {
         searchPlaceholder={t.searchFamilies.searchPlaceholder}
         activeCount={s.activeCount}
         onOpenFilters={() => setSheetOpen(true)}
+        locked={
+          filtersLocked && (
+            <div className="inline-flex flex-col sm:flex-row items-center gap-3 rounded-2xl bg-white/10 px-5 py-4 text-white">
+              <span className="flex items-center gap-2 text-sm">
+                <Lock className="w-4 h-4 text-[#E87722] shrink-0" />
+                {f.filtersLocked}
+              </span>
+              {!loading && (
+                <Link href={lockedHref}>
+                  <Button size="sm" className="h-9">
+                    {viewer === "auPair" ? f.filtersLockedCtaAuPair : f.filtersLockedCtaGuest}
+                  </Button>
+                </Link>
+              )}
+            </div>
+          )
+        }
         countryChips={
           s.countryChips.length > 1 && <CountryChips
             chips={s.countryChips}
@@ -100,9 +120,11 @@ export default function TrouverFamilleContent() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 lg:grid lg:grid-cols-[260px_1fr] lg:gap-8">
         <aside className="hidden lg:block">
           <div className="sticky top-24 space-y-6">
-            <FilterPanel activeCount={s.activeCount} onClear={s.clearFilters}>
-              {filterFields}
-            </FilterPanel>
+            {!filtersLocked && (
+              <FilterPanel activeCount={s.activeCount} onClear={s.clearFilters}>
+                {filterFields}
+              </FilterPanel>
+            )}
             {viewer === "guest" && (
               <SubscriptionBanner price={subscription.priceEur} days={subscription.days} limitNote={guestLimitNote} compact />
             )}
@@ -115,19 +137,19 @@ export default function TrouverFamilleContent() {
               className="mb-6"
               {...(viewer === "guest"
                 ? {
-                    message: f.guestCountryLimited(tValue(s.countryLimit.country), s.countryLimit.total, s.countryLimit.shown),
+                    message: f.guestCountryLimited(tValue(s.countryLimit)),
                     href: "/inscription?role=au-pair",
                     cta: f.signUpCta,
                   }
                 : {
-                    message: t.searchFamilies.countryLimited(tValue(s.countryLimit.country), s.countryLimit.total, s.countryLimit.shown),
+                    message: t.searchFamilies.countryLimited(tValue(s.countryLimit)),
                   })}
             />
           ) : (
             viewer === "auPair" &&
             limited &&
-            total > families.length && (
-              <LimitedBanner className="mb-6" message={t.searchFamilies.limitedBanner(families.length, total)} />
+            hasMore && (
+              <LimitedBanner className="mb-6" message={t.searchFamilies.limitedBanner} />
             )
           )}
 
@@ -145,7 +167,7 @@ export default function TrouverFamilleContent() {
                 freeLimit={limited ? freeLimit : null}
                 href={viewer === "auPair" ? "/dashboard/au-pair/abonnement" : "/inscription?role=au-pair"}
               />
-              <SortSelect value={s.sort} onChange={s.setSort} options={sortOptions} />
+              {!filtersLocked && <SortSelect value={s.sort} onChange={s.setSort} options={sortOptions} />}
             </div>
           )}
 
@@ -192,7 +214,7 @@ export default function TrouverFamilleContent() {
         </main>
       </div>
 
-      <FilterSheet open={sheetOpen} onClose={closeSheet} onClear={s.clearFilters} resultLabel={f.showResults(s.filtered.length)}>
+      <FilterSheet open={sheetOpen && !filtersLocked} onClose={closeSheet} onClear={s.clearFilters} resultLabel={f.showResults(s.filtered.length)}>
         {filterFields}
       </FilterSheet>
     </div>
