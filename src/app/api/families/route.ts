@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { CountryType, ProfileStatus } from "@/generated/prisma/client";
-import { getCountriesByType, getCountryFlagMap } from "@/lib/countries";
+import { getCountriesByType, getCountryFlagMap, VISIBLE_FAMILY_COUNTRY_FILTER } from "@/lib/countries";
 import { auth } from "@/lib/auth";
 import { hasActiveSubscription } from "@/lib/subscription";
 
@@ -26,7 +26,7 @@ export async function GET() {
 
   const [allProfiles, flagMap, hostCountries] = await Promise.all([
     prisma.familyProfile.findMany({
-      where: { status: ProfileStatus.ACTIVE },
+      where: { status: ProfileStatus.ACTIVE, ...VISIBLE_FAMILY_COUNTRY_FILTER },
       orderBy: { createdAt: "desc" },
       include: { user: { select: { name: true } } },
     }),

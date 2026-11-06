@@ -33,6 +33,22 @@ export async function getCountryCounts(): Promise<{
 }
 
 /**
+ * Pays dont les familles ne sont jamais affichées aux au pairs ni aux visiteurs
+ * (liste, fiche détaillée, suggestions). Plusieurs graphies pour couvrir les saisies anciennes.
+ */
+export const HIDDEN_FAMILY_COUNTRIES = [
+  "États-Unis",
+  "Etats-Unis",
+  "États Unis",
+  "Etats Unis",
+  "USA",
+  "United States",
+];
+
+/** Filtre Prisma excluant les familles des pays masqués (`HIDDEN_FAMILY_COUNTRIES`). */
+export const VISIBLE_FAMILY_COUNTRY_FILTER = { country: { notIn: HIDDEN_FAMILY_COUNTRIES } };
+
+/**
  * Codes ISO de pays qu'un profil peut encore porter sans ligne `Country` correspondante
  * (ex. « États-Unis », dont la ligne a été renommée en « Italie » par le seed) :
  * repli pour que leur drapeau s'affiche quand même.

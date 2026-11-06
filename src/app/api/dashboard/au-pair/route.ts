@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ProfileStatus } from "@/generated/prisma/client";
 import { calculateAge } from "@/lib/utils";
-import { getCountryFlagMap } from "@/lib/countries";
+import { getCountryFlagMap, VISIBLE_FAMILY_COUNTRY_FILTER } from "@/lib/countries";
 import { rankSuggestions } from "@/lib/suggestions";
 import { AU_PAIR_COMPLETION_FIELDS, getProfileCompletion } from "@/lib/profile-completion";
 
@@ -50,7 +50,7 @@ export async function GET() {
   // Suggestions de familles : favoris, pays ciblé par l'au pair, âge/genre/langues attendus par la famille
   const [familyProfiles, favorites, flagMap] = await Promise.all([
     prisma.familyProfile.findMany({
-      where: { status: ProfileStatus.ACTIVE },
+      where: { status: ProfileStatus.ACTIVE, ...VISIBLE_FAMILY_COUNTRY_FILTER },
       include: { user: { select: { name: true } } },
     }),
     prisma.favorite.findMany({ where: { userId: session.user.id }, select: { targetId: true } }),

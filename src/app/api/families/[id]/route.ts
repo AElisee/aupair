@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { ProfileStatus } from "@/generated/prisma/client";
 import { registerProfileView } from "@/lib/profile-views";
 import { hasActiveSubscription } from "@/lib/subscription";
+import { VISIBLE_FAMILY_COUNTRY_FILTER } from "@/lib/countries";
 
 export async function GET(
   req: Request,
@@ -20,7 +21,7 @@ export async function GET(
   const { id } = await params;
 
   const profile = await prisma.familyProfile.findFirst({
-    where: { userId: id, status: ProfileStatus.ACTIVE },
+    where: { userId: id, status: ProfileStatus.ACTIVE, ...VISIBLE_FAMILY_COUNTRY_FILTER },
     include: { user: { select: { name: true } } },
   });
 
