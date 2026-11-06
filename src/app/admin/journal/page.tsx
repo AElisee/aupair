@@ -26,6 +26,7 @@ const LOG_COLORS: Record<AdminLogModule, string> = {
   auth: "#6B7280",
   users: BLUE,
   moderation: GREEN,
+  reports: "#DC2626",
   payments: TEAL,
   countries: INDIGO,
   blog: INDIGO,

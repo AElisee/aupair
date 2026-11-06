@@ -156,6 +156,61 @@ export function accountValidatedEmailHtml(params: {
   `);
 }
 
+function reasonBlock(reason?: string | null) {
+  const text = reason?.trim();
+  if (!text) return "";
+  const body = escapeHtml(text).replace(/\r?\n/g, "<br />");
+  return `
+    <div style="margin:20px 0;padding:14px 16px;background:#FFF3E0;border-left:3px solid ${BRAND_COLOR};border-radius:8px;">
+      <p style="margin:0 0 4px;font-weight:700;color:${DARK_COLOR};">Motif</p>
+      <p style="margin:0;">${body}</p>
+    </div>`;
+}
+
+/** Email envoyé lorsqu'un administrateur rejette une inscription depuis /admin/moderation. */
+export function accountRejectedEmailHtml(params: {
+  name?: string | null;
+  role: "AU_PAIR" | "FAMILLE";
+  reason?: string | null;
+  supportEmail: string;
+}) {
+  const { name, role, reason, supportEmail } = params;
+  const roleLabel = role === "AU_PAIR" ? "au pair" : "famille d'accueil";
+
+  return layout(`
+    <p>Bonjour ${escapeHtml(name?.trim() || "")},</p>
+    <p>Après examen par notre équipe, votre profil ${roleLabel} n'a pas pu être validé sur AuPair A.EU.</p>
+    ${reasonBlock(reason)}
+    <p>Si vous pensez qu'il s'agit d'une erreur ou souhaitez plus d'informations, contactez-nous à
+      <a href="mailto:${supportEmail}" style="color:${BRAND_COLOR};">${supportEmail}</a>.</p>
+    <p>— L'équipe AuPair A.EU</p>
+    <p style="color:#888888;font-size:12px;">
+      Cet email est envoyé automatiquement, merci de ne pas y répondre.
+    </p>
+  `);
+}
+
+/** Email envoyé lorsqu'un administrateur supprime une inscription depuis /admin/moderation. */
+export function accountDeletedEmailHtml(params: {
+  name?: string | null;
+  reason?: string | null;
+  supportEmail: string;
+}) {
+  const { name, reason, supportEmail } = params;
+
+  return layout(`
+    <p>Bonjour ${escapeHtml(name?.trim() || "")},</p>
+    <p>Votre compte AuPair A.EU a été supprimé par notre équipe. Vous ne pouvez plus vous y connecter.</p>
+    ${reasonBlock(reason)}
+    <p>Pour toute question, contactez-nous à
+      <a href="mailto:${supportEmail}" style="color:${BRAND_COLOR};">${supportEmail}</a>.</p>
+    <p>— L'équipe AuPair A.EU</p>
+    <p style="color:#888888;font-size:12px;">
+      Cet email est envoyé automatiquement, merci de ne pas y répondre.
+    </p>
+  `);
+}
+
 /** Email libre rédigé par un administrateur depuis /admin/utilisateurs. */
 export function adminMessageEmailHtml(params: { message: string }) {
   const body = escapeHtml(params.message.trim()).replace(/\r?\n/g, "<br />");

@@ -126,6 +126,11 @@ export const dashboard = {
     },
     browseFamilies: { fr: "Consulter les familles d'accueil", en: "Browse host families" },
     browseAuPairs: { fr: "Consulter les au pairs", en: "Browse au pairs" },
+    rejectedTitle: { fr: "Inscription non validée", en: "Sign-up not approved" },
+    rejectedText: {
+      fr: (email: string) => `Après examen, notre équipe n'a pas pu valider votre profil. Pour plus d'informations, écrivez-nous à ${email}.`,
+      en: (email: string) => `After review, our team could not approve your profile. For more information, write to us at ${email}.`,
+    },
   },
 
   // ─── Bandeaux / cartes "abonnement requis" ─────────────────────────────────
@@ -517,6 +522,7 @@ export const dashboard = {
 
   profileStatus: {
     PENDING: { fr: "En attente de validation", en: "Pending approval" },
+    REJECTED: { fr: "Inscription non validée", en: "Sign-up not approved" },
     ACTIVE: { fr: "Profil validé", en: "Profile approved" },
     HIDDEN: { fr: "Profil masqué", en: "Profile hidden" },
     SUSPENDED: { fr: "Profil suspendu", en: "Profile suspended" },

@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { requireAdminSession } from "@/lib/admin";
-import { logAdminActivity } from "@/lib/admin-activity";
-import { getConversationUsers } from "@/lib/messages";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -40,61 +37,4 @@ export async function POST(req: Request) {
   });
 
   return NextResponse.json({ report }, { status: 201 });
-}
-
-export async function GET(req: Request) {
-  const session = await requireAdminSession("moderation.view");
-  if (!session) {
-    return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
-  }
-
-  const { searchParams } = new URL(req.url);
-  const resolved = searchParams.get("resolved");
-
-  const reports = await prisma.report.findMany({
-    where: resolved === null ? undefined : { isResolved: resolved === "true" },
-    orderBy: [{ isResolved: "asc" }, { createdAt: "desc" }],
-  });
-
-  const userIds = [...new Set(reports.flatMap((r) => [r.reporterId, r.reportedId]))];
-  const usersMap = await getConversationUsers(userIds);
-
-  return NextResponse.json({
-    reports: reports.map((r) => ({
-      id: r.id,
-      reason: r.reason,
-      description: r.description,
-      isResolved: r.isResolved,
-      createdAt: r.createdAt.toISOString(),
-      reporter: usersMap.get(r.reporterId) ?? null,
-      reported: usersMap.get(r.reportedId) ?? null,
-    })),
-  });
-}
-
-export async function PATCH(req: Request) {
-  const session = await requireAdminSession("moderation.validate");
-  if (!session) {
-    return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
-  }
-
-  const { reportId, action } = (await req.json().catch(() => ({}))) as {
-    reportId?: string;
-    action?: "resolve" | "reopen";
-  };
-
-  if (!reportId || !action) {
-    return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 });
-  }
-
-  await prisma.report.update({
-    where: { id: reportId },
-    data:
-      action === "resolve"
-        ? { isResolved: true, resolvedAt: new Date(), resolvedBy: session.user.id as string }
-        : { isResolved: false, resolvedAt: null, resolvedBy: null },
-  });
-  await logAdminActivity(session, { action: "moderation.report", targetType: "REPORT", targetId: reportId, details: { action } }, req);
-
-  return NextResponse.json({ success: true });
 }

@@ -57,7 +57,7 @@ import {
   type KpiItem,
 } from "@/components/admin/AdminUI";
 
-type ProfileStatus = "PENDING" | "ACTIVE" | "HIDDEN" | "SUSPENDED" | "DELETED";
+type ProfileStatus = "PENDING" | "REJECTED" | "ACTIVE" | "HIDDEN" | "SUSPENDED" | "DELETED";
 type SubscriptionStatus = "ACTIVE" | "EXPIRED" | "CANCELLED" | "REFUNDED";
 
 type CommonDetail = {
@@ -134,6 +134,7 @@ type Action = "validate" | "hide" | "unhide" | "suspend";
 
 const STATUS_VARIANTS: Record<ProfileStatus, "warning" | "success" | "secondary" | "destructive"> = {
   PENDING: "warning",
+  REJECTED: "destructive",
   ACTIVE: "success",
   HIDDEN: "secondary",
   SUSPENDED: "destructive",
@@ -404,11 +405,11 @@ export default function AdminProfilePage() {
     ];
 
     const actions: { action: Action; icon: LucideIcon; label: string; color: string }[] = [];
-    if (status === "PENDING") actions.push({ action: "validate", icon: CheckCircle, label: c.validate, color: GREEN });
+    if (status === "PENDING" || status === "REJECTED") actions.push({ action: "validate", icon: CheckCircle, label: c.validate, color: GREEN });
     if (status === "ACTIVE") actions.push({ action: "hide", icon: EyeOff, label: c.hide, color: INDIGO });
     if (status === "HIDDEN") actions.push({ action: "unhide", icon: Eye, label: c.unhide, color: INDIGO });
     if (status === "SUSPENDED") actions.push({ action: "unhide", icon: RotateCcw, label: tp.reactivate, color: GREEN });
-    else if (status !== "DELETED") actions.push({ action: "suspend", icon: Ban, label: c.suspend, color: "#DC2626" });
+    else if (status !== "DELETED" && status !== "REJECTED") actions.push({ action: "suspend", icon: Ban, label: c.suspend, color: "#DC2626" });
     // Seules les actions autorisées par le rôle de l'admin sont proposées
     const allowedActions = actions.filter((a) => can(a.action === "validate" ? "moderation.validate" : "users.suspend"));
 

@@ -1,121 +1,190 @@
 "use client";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { CheckCircle, X, Eye, EyeOff, Ban, Trash2, Clock, Loader2, Flag, Hourglass, BadgeCheck } from "lucide-react";
-import { useEffect, useState } from "react";
+import { CheckCircle, X, Eye, Ban, Trash2, Clock, Loader2, Hourglass, BadgeCheck, UserPlus, RotateCcw, UserX } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { CountryFlag } from "@/components/ui/CountryFlag";
 import { useI18n } from "@/i18n";
 import { Separator } from "@/components/ui/separator";
 import { BLUE, GREEN, INDIGO, ORANGE, PAGE_TITLE, KpiGrid, pct } from "@/components/admin/AdminUI";
+import { useAdminCan } from "@/components/admin/AdminPermissionsContext";
+import { AdminAvatar, AdminDateTime, AdminIconButton, TD, TH } from "@/components/admin/AdminTable";
 
 type PendingProfile = {
   userId: string;
   role: "AU_PAIR" | "FAMILLE";
   name: string;
+  email: string;
   country: string;
   flag: string;
   age: number;
   description: string;
   waitingDays: number;
+  createdAt: number;
   hasPhoto: boolean;
   photoUrl: string;
   hasId: boolean;
 };
 
-type ReportUser = { id: string; name: string; role: string } | null;
-
-type Report = {
-  id: string;
-  reason: string;
-  description: string | null;
-  isResolved: boolean;
-  createdAt: string;
-  reporter: ReportUser;
-  reported: ReportUser;
+type RefusedProfile = PendingProfile & {
+  status: "REJECTED" | "SUSPENDED" | "DELETED";
+  decidedAt: string;
+  decidedBy: string | null;
+  reason: string | null;
 };
+
+type Tab = "pending" | "refused";
+type ProfileAction = "validate" | "reject" | "delete" | "restore";
+type DecisionTarget = { profile: PendingProfile; action: "reject" | "delete" };
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const tabClass = (active: boolean) =>
+  `px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-1.5 ${
+    active ? "bg-[#1A1A2E] text-white" : "bg-white text-gray-500 border border-gray-200 hover:border-[#E87722]"
+  }`;
+const counterClass = (active: boolean) => `text-xs rounded-full px-1.5 ${active ? "bg-white/20" : "bg-gray-100"}`;
+
+function StateIcon({ ok, label }: { ok: boolean; label: string }) {
+  return (
+    <span className={`flex items-center gap-1 text-xs whitespace-nowrap ${ok ? "text-green-600" : "text-red-500"}`}>
+      {ok ? <CheckCircle className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+      {label}
+    </span>
+  );
+}
 
 export default function ModerationPage() {
   const [profiles, setProfiles] = useState<PendingProfile[]>([]);
-  const [reports, setReports] = useState<Report[]>([]);
+  const [refused, setRefused] = useState<RefusedProfile[]>([]);
+  const [tab, setTab] = useState<Tab>("pending");
   const [loading, setLoading] = useState(true);
+  const [now, setNow] = useState(0);
   const [processingId, setProcessingId] = useState<string | null>(null);
-  const [processingReportId, setProcessingReportId] = useState<string | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<PendingProfile | null>(null);
+  const [decision, setDecision] = useState<DecisionTarget | null>(null);
+  const [reason, setReason] = useState("");
+  const [notice, setNotice] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState(false);
   const { t, locale, tValue } = useI18n();
+  const can = useAdminCan();
+  const canAct = can("moderation.validate");
   const c = t.adminCommon;
   const m = t.adminModeration;
 
-  useEffect(() => {
-    Promise.all([
-      fetch("/api/admin/moderation").then((res) => res.json()),
-      fetch("/api/reports?resolved=false").then((res) => res.json()),
-    ])
-      .then(([moderationData, reportsData]) => {
-        setProfiles(moderationData.profiles ?? []);
-        setReports(reportsData.reports ?? []);
-      })
-      .finally(() => setLoading(false));
+  // Chaque liste est chargée indépendamment : l'échec de l'une ne vide pas l'autre
+  const loadAll = useCallback(async () => {
+    const fetchList = async <T,>(url: string): Promise<T[]> => {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`${url} → ${res.status}`);
+      return (await res.json()).profiles ?? [];
+    };
+    const [pendingRes, refusedRes] = await Promise.allSettled([
+      fetchList<PendingProfile>("/api/admin/moderation"),
+      fetchList<RefusedProfile>("/api/admin/moderation?view=refused"),
+    ]);
+    if (pendingRes.status === "fulfilled") setProfiles(pendingRes.value);
+    if (refusedRes.status === "fulfilled") setRefused(refusedRes.value);
+    setLoadError(pendingRes.status === "rejected" || refusedRes.status === "rejected");
+    setNow(Date.now());
   }, []);
 
-  const performAction = async (p: PendingProfile, action: "validate" | "hide" | "suspend" | "delete") => {
+  useEffect(() => {
+    loadAll().finally(() => setLoading(false));
+  }, [loadAll]);
+
+  const performAction = async (p: PendingProfile, action: ProfileAction, actionReason?: string) => {
     setProcessingId(p.userId);
+    setNotice(null);
     try {
       const res = await fetch("/api/admin/moderation", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: p.userId, role: p.role, action }),
+        body: JSON.stringify({ userId: p.userId, role: p.role, action, reason: actionReason }),
       });
       if (res.ok) {
-        setProfiles((prev) => prev.filter((item) => item.userId !== p.userId));
+        const data = await res.json().catch(() => ({}));
+        if (data.emailSent === false) setNotice(m.emailFailed);
+        // Le profil change d'onglet (ou quitte la modération) : on recharge les deux listes
+        await loadAll();
       }
     } finally {
       setProcessingId(null);
     }
   };
 
-  const handleAction = (p: PendingProfile, action: "validate" | "hide" | "suspend" | "delete") => {
-    if (action === "delete") {
-      setDeleteTarget(p);
+  const handleAction = (p: PendingProfile, action: ProfileAction) => {
+    if (action === "validate" || action === "restore") {
+      performAction(p, action);
       return;
     }
-    performAction(p, action);
+    setReason("");
+    setDecision({ profile: p, action });
   };
 
-  const confirmDelete = async () => {
-    if (!deleteTarget) return;
-    await performAction(deleteTarget, "delete");
-    setDeleteTarget(null);
-  };
-
-  const handleResolveReport = async (reportId: string) => {
-    setProcessingReportId(reportId);
-    try {
-      const res = await fetch("/api/reports", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reportId, action: "resolve" }),
-      });
-      if (res.ok) {
-        setReports((prev) => prev.filter((r) => r.id !== reportId));
-      }
-    } finally {
-      setProcessingReportId(null);
-    }
+  const confirmDecision = async () => {
+    if (!decision) return;
+    await performAction(decision.profile, decision.action, reason.trim());
+    setDecision(null);
   };
 
   const auPairPending = profiles.filter((p) => p.role === "AU_PAIR").length;
   const completeCount = profiles.filter((p) => p.hasPhoto && p.hasId).length;
+  const recentCount = profiles.filter((p) => now - p.createdAt < DAY_MS).length;
   const maxWait = profiles.reduce((max, p) => Math.max(max, p.waitingDays), 0);
   const avgWait = profiles.length > 0 ? Math.round(profiles.reduce((sum, p) => sum + p.waitingDays, 0) / profiles.length) : 0;
   const kpis = [
     { icon: Hourglass, value: profiles.length, label: m.kpiPending, caption: m.kpiAuPairShare(auPairPending), ratio: pct(auPairPending, profiles.length), color: ORANGE },
     { icon: Clock, value: m.days(avgWait), label: m.kpiAvgWait, caption: m.kpiMaxWait(maxWait), ratio: pct(avgWait, maxWait), color: INDIGO },
     { icon: BadgeCheck, value: completeCount, label: m.kpiComplete, caption: m.kpiCompleteCaption(pct(completeCount, profiles.length)), ratio: pct(completeCount, profiles.length), color: GREEN },
-    { icon: Flag, value: reports.length, label: m.kpiReports, caption: m.kpiReportsCaption, ratio: reports.length > 0 ? 100 : 0, color: BLUE },
+    { icon: UserPlus, value: recentCount, label: m.kpiRecent, caption: m.kpiRecentCaption(pct(recentCount, profiles.length)), ratio: pct(recentCount, profiles.length), color: BLUE },
   ];
+
+  const profileCell = (p: PendingProfile, subtitle: string) => (
+    <div className="flex items-center gap-3 min-w-[220px]">
+      <AdminAvatar name={p.name} src={p.photoUrl} />
+      <div className="min-w-0">
+        <p className="font-medium text-[#1A1A2E] flex items-center gap-1.5">
+          {p.name}
+          {p.flag && (
+            <span title={tValue(p.country)} className="inline-flex shrink-0">
+              <CountryFlag flag={p.flag} className="h-3 w-[18px] object-cover rounded-[2px]" />
+            </span>
+          )}
+        </p>
+        {subtitle && (
+          <p className="text-xs text-gray-400 truncate max-w-[280px]" title={subtitle}>
+            {subtitle}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+
+  const roleBadge = (p: PendingProfile) => (
+    <Badge variant={p.role === "AU_PAIR" ? "default" : "secondary"}>{p.role === "AU_PAIR" ? c.roleAuPair : c.roleFamily}</Badge>
+  );
+
+  const viewLink = (p: PendingProfile) => (
+    <Link
+      href={`/admin/profil/${p.userId}?role=${p.role}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
+      title={c.viewProfile}
+    >
+      <Eye className="w-4 h-4" />
+    </Link>
+  );
+
+  const empty = (title: string, text: string) => (
+    <div className="p-12 text-center">
+      <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+      <h2 className="font-medium text-[#1A1A2E] text-lg">{title}</h2>
+      <p className="text-gray-500">{text}</p>
+    </div>
+  );
 
   return (
     <AdminLayout>
@@ -128,153 +197,195 @@ export default function ModerationPage() {
 
         {!loading && <KpiGrid items={kpis} />}
 
-        {loading ? (
-          <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
-            <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
-            <p className="text-gray-500">{c.loading}</p>
-          </div>
-        ) : profiles.length === 0 ? (
-          <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
-            <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
-            <h2 className="font-medium text-[#1A1A2E] text-lg">{m.emptyTitle}</h2>
-            <p className="text-gray-500">{m.emptyText}</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {profiles.map((p) => (
-              <div key={p.userId} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                  <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 bg-[#E87722] rounded-full flex items-center justify-center text-white text-xl font-medium flex-shrink-0 overflow-hidden">
-                      {p.photoUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={p.photoUrl} alt="" className="w-full h-full object-cover object-top" />
-                      ) : (
-                        p.name.charAt(0)
-                      )}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-medium text-[#1A1A2E]">{p.name}</h3>
-                        {p.flag && <CountryFlag flag={p.flag} className="h-4 w-auto rounded-[2px] shrink-0" />}
-                        <Badge variant={p.role === "AU_PAIR" ? "default" : "secondary"}>
-                          {p.role === "AU_PAIR" ? c.roleAuPair : c.roleFamily}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-500 mb-3">{p.description}</p>
-                      <div className="flex items-center gap-3 text-xs">
-                        <span className={`flex items-center gap-1 ${p.hasPhoto ? "text-green-600" : "text-red-500"}`}>
-                          {p.hasPhoto ? <CheckCircle className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
-                          {m.photo}
-                        </span>
-                        <span className={`flex items-center gap-1 ${p.hasId ? "text-green-600" : "text-red-500"}`}>
-                          {p.hasId ? <CheckCircle className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
-                          {m.idDocument}
-                        </span>
-                        <span className="flex items-center gap-1 text-gray-400">
-                          <Clock className="w-3.5 h-3.5" />
-                          {p.waitingDays === 0 ? m.today : m.days(p.waitingDays)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
-                    <Link
-                      href={`/admin/profil/${p.userId}?role=${p.role}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl font-medium transition-all duration-200 h-8 px-3 text-xs border-2 border-blue-200 text-blue-600 bg-transparent hover:bg-blue-50"
-                    >
-                      <Eye className="w-3.5 h-3.5 mr-1" /> {c.viewProfile}
-                    </Link>
-                    <Button size="sm" disabled={processingId === p.userId} onClick={() => handleAction(p, "validate")}
-                      className="bg-green-500 hover:bg-green-600 text-white">
-                      <CheckCircle className="w-3.5 h-3.5 mr-1" /> {c.validate}
-                    </Button>
-                    <Button size="sm" variant="outline" className="text-gray-600 border-gray-200 hover:bg-gray-50"
-                      disabled={processingId === p.userId} onClick={() => handleAction(p, "hide")}>
-                      <EyeOff className="w-3.5 h-3.5 mr-1" /> {c.hide}
-                    </Button>
-                    <Button size="sm" variant="outline" className="text-amber-600 border-amber-200 hover:bg-amber-50"
-                      disabled={processingId === p.userId} onClick={() => handleAction(p, "suspend")}>
-                      <Ban className="w-3.5 h-3.5 mr-1" /> {c.suspend}
-                    </Button>
-                    <Button size="sm" variant="destructive" disabled={processingId === p.userId} onClick={() => handleAction(p, "delete")}>
-                      <Trash2 className="w-3.5 h-3.5 mr-1" /> {c.delete}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
+        {notice && (
+          <div className="flex items-start justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <span>{notice}</span>
+            <button type="button" onClick={() => setNotice(null)} aria-label={c.close} className="text-amber-600 hover:text-amber-800">
+              <X className="w-4 h-4" />
+            </button>
           </div>
         )}
-      </div>
 
-      {/* Signalements */}
-      <div className="space-y-4 mt-8">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-medium text-[#1A1A2E]">{m.reportsTitle}</h2>
-          <Badge variant="destructive">{m.openReports(reports.length)}</Badge>
+        {loadError && (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{m.loadError}</div>
+        )}
+
+        {/* Onglets */}
+        <div className="flex flex-wrap gap-2">
+          <button onClick={() => setTab("pending")} className={tabClass(tab === "pending")}>
+            <Hourglass className="w-4 h-4" />
+            {m.tabPending}
+            {profiles.length > 0 && <span className={counterClass(tab === "pending")}>{profiles.length}</span>}
+          </button>
+          <button onClick={() => setTab("refused")} className={tabClass(tab === "refused")}>
+            <UserX className="w-4 h-4" />
+            {m.tabRefused}
+            {refused.length > 0 && <span className={counterClass(tab === "refused")}>{refused.length}</span>}
+          </button>
         </div>
 
-        {loading ? (
-          <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
-            <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
-            <p className="text-gray-500">{c.loading}</p>
-          </div>
-        ) : reports.length === 0 ? (
-          <div className="bg-white rounded-2xl p-8 text-center border border-gray-100">
-            <CheckCircle className="w-10 h-10 text-green-500 mx-auto mb-2" />
-            <p className="text-gray-500 text-sm">{m.noReports}</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {reports.map((r) => (
-              <div key={r.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <Flag className="w-4 h-4 text-red-500" />
-                      <span className="font-medium text-[#1A1A2E]">{tValue(r.reason)}</span>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-2">
-                      <span className="font-medium">{r.reporter?.name ?? c.unknownUser}</span> {m.reported}{" "}
-                      <span className="font-medium">{r.reported?.name ?? c.unknownUser}</span>
-                    </p>
-                    {r.description && (
-                      <p className="text-sm text-gray-500 italic mb-2">&laquo; {r.description} &raquo;</p>
-                    )}
-                    <p className="text-xs text-gray-400">{new Date(r.createdAt).toLocaleString(locale)}</p>
-                  </div>
-                  <Button
-                    size="sm"
-                    disabled={processingReportId === r.id}
-                    onClick={() => handleResolveReport(r.id)}
-                    className="bg-green-500 hover:bg-green-600 text-white flex-shrink-0"
-                  >
-                    <CheckCircle className="w-3.5 h-3.5 mr-1" /> {m.markResolved}
-                  </Button>
-                </div>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          {loading ? (
+            <div className="p-12 text-center">
+              <Loader2 className="w-8 h-8 text-[#E87722] mx-auto mb-3 animate-spin" />
+              <p className="text-gray-500">{c.loading}</p>
+            </div>
+          ) : tab === "pending" ? (
+            profiles.length === 0 ? (
+              empty(m.emptyTitle, m.emptyText)
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 border-b border-gray-100">
+                    <tr>
+                      <th className={`${TH} w-12`}>#</th>
+                      <th className={TH}>{m.colProfile}</th>
+                      <th className={TH}>{m.colRole}</th>
+                      <th className={TH}>{m.colFile}</th>
+                      <th className={TH}>{m.colSignedUp}</th>
+                      <th className={`${TH} text-right`}>{c.actions}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {profiles.map((p, i) => {
+                      const busy = processingId === p.userId;
+                      return (
+                        <tr key={p.userId} className="hover:bg-gray-50 transition-colors">
+                          <td className={`${TD} text-xs text-gray-400 tabular-nums`}>{i + 1}</td>
+                          <td className={TD}>{profileCell(p, p.description)}</td>
+                          <td className={TD}>{roleBadge(p)}</td>
+                          <td className={TD}>
+                            <div className="flex flex-col gap-1">
+                              <StateIcon ok={p.hasPhoto} label={m.photo} />
+                              <StateIcon ok={p.hasId} label={m.idDocument} />
+                            </div>
+                          </td>
+                          <td className={TD}>
+                            <AdminDateTime value={p.createdAt} locale={locale} />
+                          </td>
+                          <td className={TD}>
+                            <div className="flex items-center justify-end gap-1">
+                              {viewLink(p)}
+                              {canAct && (
+                                <>
+                                  <AdminIconButton title={c.validate} disabled={busy} onClick={() => handleAction(p, "validate")} className="text-green-600 hover:bg-green-50">
+                                    <CheckCircle className="w-4 h-4" />
+                                  </AdminIconButton>
+                                  <AdminIconButton title={m.reject} disabled={busy} onClick={() => handleAction(p, "reject")} className="text-amber-600 hover:bg-amber-50">
+                                    <Ban className="w-4 h-4" />
+                                  </AdminIconButton>
+                                  <AdminIconButton title={c.delete} disabled={busy} onClick={() => handleAction(p, "delete")} className="text-red-500 hover:bg-red-50">
+                                    <Trash2 className="w-4 h-4" />
+                                  </AdminIconButton>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
-            ))}
-          </div>
-        )}
+            )
+          ) : refused.length === 0 ? (
+            empty(m.emptyRefusedTitle, m.emptyRefusedText)
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b border-gray-100">
+                  <tr>
+                    <th className={`${TH} w-12`}>#</th>
+                    <th className={TH}>{m.colProfile}</th>
+                    <th className={TH}>{m.colRole}</th>
+                    <th className={TH}>{c.status}</th>
+                    <th className={TH}>{m.colSignedUp}</th>
+                    <th className={TH}>{m.colDecision}</th>
+                    <th className={TH}>{m.colReason}</th>
+                    <th className={`${TH} text-right`}>{c.actions}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {refused.map((p, i) => {
+                    const busy = processingId === p.userId;
+                    const deleted = p.status === "DELETED";
+                    return (
+                      <tr key={p.userId} className="hover:bg-gray-50 transition-colors">
+                        <td className={`${TD} text-xs text-gray-400 tabular-nums`}>{i + 1}</td>
+                        <td className={TD}>{profileCell(p, p.email)}</td>
+                        <td className={TD}>{roleBadge(p)}</td>
+                        <td className={TD}>
+                          <Badge variant={deleted ? "destructive" : "warning"}>
+                            {deleted ? c.profileStatus.DELETED : c.profileStatus.REJECTED}
+                          </Badge>
+                        </td>
+                        <td className={TD}>
+                          <AdminDateTime value={p.createdAt} locale={locale} />
+                        </td>
+                        <td className={TD}>
+                          <AdminDateTime value={p.decidedAt} locale={locale} />
+                          {p.decidedBy && <p className="text-[11px] text-gray-400 whitespace-nowrap">{m.decidedBy(p.decidedBy)}</p>}
+                        </td>
+                        <td className={TD}>
+                          {p.reason ? (
+                            <p className="text-xs text-gray-500 italic line-clamp-2 min-w-[180px] max-w-[300px]" title={p.reason}>
+                              {p.reason}
+                            </p>
+                          ) : (
+                            <span className="text-gray-400 text-xs">—</span>
+                          )}
+                        </td>
+                        <td className={TD}>
+                          <div className="flex items-center justify-end gap-1">
+                            {viewLink(p)}
+                            {canAct && (
+                              <>
+                                <AdminIconButton title={c.validate} disabled={busy} onClick={() => handleAction(p, "validate")} className="text-green-600 hover:bg-green-50">
+                                  <CheckCircle className="w-4 h-4" />
+                                </AdminIconButton>
+                                <AdminIconButton title={m.restore} disabled={busy} onClick={() => handleAction(p, "restore")} className="text-gray-500 hover:bg-gray-100">
+                                  <RotateCcw className="w-4 h-4" />
+                                </AdminIconButton>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
 
-      {deleteTarget && (
+      {decision && (
         <ConfirmDialog
-          title={m.deleteTitle}
+          title={decision.action === "reject" ? m.rejectTitle : m.deleteTitle}
+          variant={decision.action === "delete" ? "destructive" : "default"}
+          showIcon={false}
+          wide
           description={
             <>
-              {m.profileOf}{" "}
-              <span className="font-medium text-[#1A1A2E]">{deleteTarget.name}</span>{" "}
-              {c.willBeDeleted} {c.irreversible}
+              <p className="font-medium text-[#1A1A2E]">{decision.profile.name}</p>
+              <label className="block mt-4 text-xs font-medium text-gray-600">
+                {m.reasonLabel}
+                <textarea
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  maxLength={1000}
+                  rows={5}
+                  placeholder={m.reasonPlaceholder}
+                  className="mt-1.5 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-[#1A1A2E] font-normal focus:outline-none focus:ring-2 focus:ring-[#E87722] resize-y"
+                />
+              </label>
             </>
           }
-          confirmLabel={c.delete}
-          loading={processingId === deleteTarget.userId}
-          onConfirm={confirmDelete}
-          onCancel={() => setDeleteTarget(null)}
+          confirmLabel={decision.action === "reject" ? m.reject : c.delete}
+          loading={processingId === decision.profile.userId}
+          onConfirm={confirmDecision}
+          onCancel={() => setDecision(null)}
         />
       )}
     </AdminLayout>

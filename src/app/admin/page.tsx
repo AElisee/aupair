@@ -190,7 +190,7 @@ export default function AdminPage() {
           <div className="flex flex-wrap items-center gap-2">
             {kpis.openReports > 0 && (
               <Link
-                href="/admin/moderation"
+                href="/admin/signalements"
                 className="inline-flex items-center gap-2 h-9 px-3.5 rounded-xl border border-gray-200 bg-white/80 text-sm text-[#1A1A2E] hover:border-[#E87722]/40 transition-colors"
               >
                 <Flag {...ICON} size={16} className="text-[#E87722]" />

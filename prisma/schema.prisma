@@ -48,6 +48,7 @@ enum Currency {
 
 enum ProfileStatus {
   PENDING
+  REJECTED
   ACTIVE
   HIDDEN
   SUSPENDED

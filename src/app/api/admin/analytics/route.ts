@@ -67,7 +67,7 @@ export async function GET() {
   }));
 
   const profileStatusCounts = (groups: { status: string; _count: { _all: number } }[]) => {
-    const result: Record<string, number> = { PENDING: 0, ACTIVE: 0, HIDDEN: 0, SUSPENDED: 0, DELETED: 0 };
+    const result: Record<string, number> = { PENDING: 0, REJECTED: 0, ACTIVE: 0, HIDDEN: 0, SUSPENDED: 0, DELETED: 0 };
     for (const g of groups) result[g.status] = g._count._all;
     return result;
   };

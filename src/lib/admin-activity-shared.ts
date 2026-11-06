@@ -15,7 +15,11 @@ export const ADMIN_LOG_ACTIONS = [
   "users.email",
   "moderation.validate",
   "moderation.reject",
+  "moderation.delete",
+  "moderation.restore",
   "moderation.report",
+  "reports.resolve",
+  "reports.reopen",
   "payments.export",
   "countries.create",
   "countries.update",
@@ -51,7 +55,7 @@ export type AdminLogAction = (typeof ADMIN_LOG_ACTIONS)[number];
 
 /** Modules filtrables (ordre d'affichage) */
 export const ADMIN_LOG_MODULES = [
-  "auth", "users", "moderation", "payments", "countries", "blog", "faq", "testimonials", "tickets", "settings", "team",
+  "auth", "users", "moderation", "reports", "payments", "countries", "blog", "faq", "testimonials", "tickets", "settings", "team",
 ] as const;
 
 export type AdminLogModule = (typeof ADMIN_LOG_MODULES)[number];

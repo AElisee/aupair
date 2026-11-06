@@ -345,8 +345,8 @@ export default function DashboardLayout({ children, role, userName }: DashboardL
     );
   }
 
-  if (profileStatus === "PENDING") {
-    return <PendingValidationGate role={role} />;
+  if (profileStatus === "PENDING" || profileStatus === "REJECTED") {
+    return <PendingValidationGate role={role} rejected={profileStatus === "REJECTED"} />;
   }
 
   const collapsed = !sidebarOpen;

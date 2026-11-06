@@ -7,7 +7,7 @@ import { signOut } from "next-auth/react";
 import { useI18n } from "@/i18n";
 import type { admin } from "@/i18n/admin";
 import { LanguageToggle } from "./LanguageToggle";
-import { Globe, LayoutDashboard, Users, Shield, DollarSign, FileText, HelpCircle, Mail, MessageSquareQuote, LogOut, Bell, Settings, ChevronDown, SlidersHorizontal, Menu, X, Send, Wallet, KeyRound, FileCheck, ChevronRight, Share2, UserCog, Loader2, Lock, History } from "lucide-react";
+import { Flag, Globe, LayoutDashboard, Users, Shield, DollarSign, FileText, HelpCircle, Mail, MessageSquareQuote, LogOut, Bell, Settings, ChevronDown, SlidersHorizontal, Menu, X, Send, Wallet, KeyRound, FileCheck, ChevronRight, Share2, UserCog, Loader2, Lock, History } from "lucide-react";
 import { canAccessAdminPath, firstAccessibleAdminPath, type AdminPermission } from "@/lib/admin-permissions";
 import { useLoadAdminMe } from "@/components/admin/AdminPermissionsContext";
 
@@ -15,12 +15,13 @@ import { useLoadAdminMe } from "@/components/admin/AdminPermissionsContext";
 type NavKey = keyof typeof admin.adminNav;
 
 /** Compteurs affichés en badge dans le menu */
-type BadgeCounts = { moderation: number; tickets: number; testimonials: number };
+type BadgeCounts = { moderation: number; reports: number; tickets: number; testimonials: number };
 
 const navItems: { href: string; icon: React.ElementType; labelKey: NavKey; badge?: keyof BadgeCounts }[] = [
   { href: "/admin", icon: LayoutDashboard, labelKey: "dashboard" },
   { href: "/admin/utilisateurs", icon: Users, labelKey: "users" },
   { href: "/admin/moderation", icon: Shield, labelKey: "moderation", badge: "moderation" },
+  { href: "/admin/signalements", icon: Flag, labelKey: "reports", badge: "reports" },
   { href: "/admin/paiements", icon: DollarSign, labelKey: "payments" },
   { href: "/admin/pays", icon: Globe, labelKey: "countries" },
   { href: "/admin/blog", icon: FileText, labelKey: "blog" },
@@ -34,6 +35,7 @@ const navItems: { href: string; icon: React.ElementType; labelKey: NavKey; badge
 /** Endpoint de chaque badge et permission nécessaire pour l'interroger */
 const BADGE_SOURCES: { key: keyof BadgeCounts; url: string; permission: AdminPermission }[] = [
   { key: "moderation", url: "/api/admin/moderation/count", permission: "moderation.view" },
+  { key: "reports", url: "/api/admin/reports/count", permission: "reports.view" },
   { key: "tickets", url: "/api/admin/tickets/count", permission: "tickets.view" },
   { key: "testimonials", url: "/api/admin/testimonials/count", permission: "testimonials.view" },
 ];
@@ -245,7 +247,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [prevPathname, setPrevPathname] = useState(pathname);
-  const [badgeCounts, setBadgeCounts] = useState<BadgeCounts>({ moderation: 0, tickets: 0, testimonials: 0 });
+  const [badgeCounts, setBadgeCounts] = useState<BadgeCounts>({ moderation: 0, reports: 0, tickets: 0, testimonials: 0 });
   const router = useRouter();
   const me = useLoadAdminMe(pathname);
   const permissions = me?.permissions ?? null;

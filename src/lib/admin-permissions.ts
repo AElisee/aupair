@@ -13,6 +13,7 @@ export const ADMIN_MODULES = [
   { key: "dashboard", actions: ["view"] },
   { key: "users", actions: ["view", "suspend", "delete", "email"] },
   { key: "moderation", actions: ["view", "validate"] },
+  { key: "reports", actions: ["view", "resolve"] },
   { key: "payments", actions: ["view", "export"] },
   { key: "countries", actions: ["view", "create", "update", "delete"] },
   { key: "blog", actions: ["view", "create", "update", "delete"] },
@@ -101,7 +102,8 @@ export function resolveAdminPermissions(user: {
 export const PAGE_PERMISSIONS: { prefix: string; anyOf: AdminPermission[] }[] = [
   { prefix: "/admin/utilisateurs", anyOf: ["users.view"] },
   { prefix: "/admin/moderation", anyOf: ["moderation.view"] },
-  { prefix: "/admin/profil", anyOf: ["users.view", "moderation.view"] },
+  { prefix: "/admin/signalements", anyOf: ["reports.view"] },
+  { prefix: "/admin/profil", anyOf: ["users.view", "moderation.view", "reports.view"] },
   { prefix: "/admin/paiements", anyOf: ["payments.view"] },
   { prefix: "/admin/pays", anyOf: ["countries.view"] },
   { prefix: "/admin/blog", anyOf: ["blog.view"] },
@@ -125,7 +127,7 @@ export function canAccessAdminPath(pathname: string, permissions: readonly Admin
 /** Première page accessible : redirection d'un admin sans accès au dashboard */
 export function firstAccessibleAdminPath(permissions: readonly AdminPermission[]) {
   const candidates = [
-    "/admin", "/admin/moderation", "/admin/utilisateurs", "/admin/paiements", "/admin/tickets",
+    "/admin", "/admin/moderation", "/admin/signalements", "/admin/utilisateurs", "/admin/paiements", "/admin/tickets",
     "/admin/avis", "/admin/blog", "/admin/faq", "/admin/pays", "/admin/parametres/constantes", "/admin/journal",
   ];
   return candidates.find((p) => canAccessAdminPath(p, permissions)) ?? "/admin/parametres/compte";

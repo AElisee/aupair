@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminSession, setProfileStatus, restoreProfile, hardDeleteUser } from "@/lib/admin";
 import { ProfileStatus } from "@/generated/prisma/client";
 import { getCountryFlagMap } from "@/lib/countries";
+import { VALIDATED_PROFILE_WHERE } from "@/lib/profile-status";
 import type { AdminPermission } from "@/lib/admin-permissions";
 import { getUserLabel, logAdminActivity } from "@/lib/admin-activity";
 import {
@@ -18,13 +19,13 @@ export async function GET() {
   }
 
   const [auPairs, families, activeSubscriptions, flagMap] = await Promise.all([
-    // Les comptes en attente de validation sont gérés dans /admin/moderation
+    // Seuls les comptes validés : en attente, rejetés et supprimés avant validation sont dans /admin/moderation
     prisma.auPairProfile.findMany({
-      where: { status: { not: ProfileStatus.PENDING } },
+      where: VALIDATED_PROFILE_WHERE,
       include: { user: { select: { name: true, email: true, createdAt: true } } },
     }),
     prisma.familyProfile.findMany({
-      where: { status: { not: ProfileStatus.PENDING } },
+      where: VALIDATED_PROFILE_WHERE,
       include: { user: { select: { name: true, email: true, createdAt: true } } },
     }),
     prisma.subscription.findMany({

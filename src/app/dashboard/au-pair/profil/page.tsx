@@ -34,10 +34,11 @@ import { formatPhoneDigits } from "@/lib/phone";
 import { SelectField } from "@/components/ui/select-field";
 import { DateField } from "@/components/ui/date-field";
 
-type ProfileStatus = "PENDING" | "ACTIVE" | "HIDDEN" | "SUSPENDED" | "DELETED";
+type ProfileStatus = "PENDING" | "REJECTED" | "ACTIVE" | "HIDDEN" | "SUSPENDED" | "DELETED";
 
 const STATUS_VARIANTS: Record<ProfileStatus, "warning" | "success" | "secondary" | "destructive"> = {
   PENDING: "warning",
+  REJECTED: "destructive",
   ACTIVE: "success",
   HIDDEN: "secondary",
   SUSPENDED: "destructive",

@@ -34,25 +34,36 @@ export async function setProfileStatus(
       ? { status, validatedAt: new Date(), validatedBy: adminId }
       : { status };
 
+  // Première validation : profil en attente, rejeté, ou jamais validé puis suspendu/supprimé
+  // (cf. src/lib/profile-status.ts). L'email « compte validé » n'est envoyé que dans ce cas.
   let wasPending = false;
+  const isAwaitingValidation = (b: { status: ProfileStatus; validatedAt: Date | null }) =>
+    b.status === ProfileStatus.PENDING ||
+    b.status === ProfileStatus.REJECTED ||
+    (!b.validatedAt && (b.status === ProfileStatus.SUSPENDED || b.status === ProfileStatus.DELETED));
   let recipient: { email: string; name: string } | null = null;
 
   if (role === "AU_PAIR") {
     const before = await prisma.auPairProfile.findUnique({
       where: { userId },
-      select: { status: true, firstName: true, user: { select: { email: true } } },
+      select: { status: true, validatedAt: true, firstName: true, user: { select: { email: true } } },
     });
-    wasPending = before?.status === ProfileStatus.PENDING;
+    wasPending = !!before && isAwaitingValidation(before);
     if (before) recipient = { email: before.user.email, name: before.firstName };
     await prisma.auPairProfile.update({ where: { userId }, data });
   } else {
     const before = await prisma.familyProfile.findUnique({
       where: { userId },
-      select: { status: true, user: { select: { email: true, name: true } } },
+      select: { status: true, validatedAt: true, user: { select: { email: true, name: true } } },
     });
-    wasPending = before?.status === ProfileStatus.PENDING;
+    wasPending = !!before && isAwaitingValidation(before);
     if (before) recipient = { email: before.user.email, name: before.user.name ?? "" };
     await prisma.familyProfile.update({ where: { userId }, data });
+  }
+
+  // Une inscription supprimée avant validation puis validée doit pouvoir se reconnecter
+  if (status === ProfileStatus.ACTIVE && wasPending) {
+    await prisma.user.update({ where: { id: userId }, data: { isActive: true } });
   }
 
   if (status === ProfileStatus.ACTIVE && wasPending && recipient) {
