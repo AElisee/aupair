@@ -157,6 +157,7 @@ const SERVER_ERRORS: Record<string, string> = {
   "Document introuvable.": "Document not found.",
   "Conversation invalide": "Invalid conversation.",
   "Paramètres manquants": "Missing parameters.",
+  "Le motif est obligatoire.": "A reason is required.",
   "Nom, email et rôle sont obligatoires.": "Name, email and role are required.",
   "Rôle introuvable.": "Role not found.",
   "Un administrateur utilise déjà cet email.": "An administrator already uses this email.",

@@ -19,7 +19,6 @@ import {
   House,
   CreditCard,
   Hourglass,
-  ShieldCheck,
   Flag,
   Loader2,
   UserPlus,
@@ -197,15 +196,6 @@ export default function AdminPage() {
                 {d.reportsCount(kpis.openReports)}
               </Link>
             )}
-            {kpis.pendingProfiles > 0 && (
-              <Link
-                href="/admin/moderation"
-                className="inline-flex items-center gap-2 h-9 px-3.5 rounded-xl bg-gradient-to-r from-[#F08A3C] to-[#E87722] text-white text-sm shadow-[0_6px_16px_-6px_rgba(232,119,34,0.7)] hover:brightness-105 transition"
-              >
-                <ShieldCheck {...ICON} size={16} />
-                {d.moderateCount(kpis.pendingProfiles)}
-              </Link>
-            )}
           </div>
         </div>
         <Separator />
@@ -345,7 +335,17 @@ export default function AdminPage() {
           </Panel>
 
           <Panel className="p-5" tint={ORANGE}>
-            <PanelHeader icon={Eye} color={ORANGE} title={ta.visitorsTitle} subtitle={ta.visitorsSubtitle} />
+            <PanelHeader
+              icon={Eye}
+              color={ORANGE}
+              title={ta.visitorsTitle}
+              subtitle={ta.visitorsSubtitle}
+              action={
+                <Link href="/admin/visiteurs" className="text-xs font-medium text-[#E87722] hover:underline whitespace-nowrap">
+                  {t.adminVisitors.seeDetails}
+                </Link>
+              }
+            />
             <div className="grid sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4 items-center">
               <ChartContainer config={visitorsConfig} className="mx-auto aspect-square w-full max-w-[220px]">
                 {/* Rayons en % pour rester dans le cadre ; piste de fond complète, arc = part vs période précédente */}

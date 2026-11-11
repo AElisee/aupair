@@ -258,6 +258,13 @@ model AuPairProfile {
   validatedAt         DateTime?
   validatedBy         String?
 
+  // Dernière suspension / suppression / rejet : date et heure, admin (nom copié) et motif.
+  // Remis à zéro quand le profil redevient actif ou repasse en attente.
+  statusChangedAt     DateTime?
+  statusChangedById   String?
+  statusChangedBy     String?
+  statusReason        String?   @db.Text
+
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
 
@@ -302,6 +309,13 @@ model FamilyProfile {
   profileViews       Int           @default(0)
   validatedAt        DateTime?
   validatedBy        String?
+
+  // Dernière suspension / suppression / rejet : date et heure, admin (nom copié) et motif.
+  // Remis à zéro quand le profil redevient actif ou repasse en attente.
+  statusChangedAt    DateTime?
+  statusChangedById  String?
+  statusChangedBy    String?
+  statusReason       String?   @db.Text
 
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
@@ -516,9 +530,11 @@ model Notification {
 // navigateur (aucune donnée personnelle), `day` = date UTC au format AAAA-MM-JJ.
 model SiteVisit {
   id        String   @id @default(cuid())
-  visitorId String
-  day       String
-  createdAt DateTime @default(now())
+  visitorId   String
+  day         String
+  /// Visiteur connecté à un compte (session valide) au moins une fois ce jour-là
+  withAccount Boolean  @default(false)
+  createdAt   DateTime @default(now())
 
   @@unique([visitorId, day])
   @@index([day])

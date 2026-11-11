@@ -40,6 +40,10 @@ export async function GET(
       status: profile.status,
       profileViews: profile.profileViews,
       validatedAt: profile.validatedAt,
+      // Dernière suspension / suppression / rejet (null après une réactivation)
+      statusChange: profile.statusChangedAt
+        ? { at: profile.statusChangedAt, by: profile.statusChangedBy, reason: profile.statusReason }
+        : null,
       updatedAt: profile.updatedAt,
       completion,
       missingFields,
@@ -99,6 +103,10 @@ export async function GET(
       status: profile.status,
       profileViews: profile.profileViews,
       validatedAt: profile.validatedAt,
+      // Dernière suspension / suppression / rejet (null après une réactivation)
+      statusChange: profile.statusChangedAt
+        ? { at: profile.statusChangedAt, by: profile.statusChangedBy, reason: profile.statusReason }
+        : null,
       updatedAt: profile.updatedAt,
       completion,
       missingFields,

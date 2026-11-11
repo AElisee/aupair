@@ -144,6 +144,7 @@ export default function AdminActivityLogPage() {
     if (Array.isArray(d.added) && d.added.length) chips.push(tl.detailAdded(d.added.length));
     if (Array.isArray(d.removed) && d.removed.length) chips.push(tl.detailRemoved(d.removed.length));
     if (typeof d.subject === "string") chips.push(tl.detailSubject(d.subject));
+    if (typeof d.reason === "string" && d.reason) chips.push(tl.detailReason(d.reason.length > 80 ? `${d.reason.slice(0, 80)}…` : d.reason));
     if (d.status === "FAILED") chips.push(tl.detailEmailFailed);
     else if (typeof d.status === "string" && log.module === "tickets") chips.push(tl.detailStatus(t.adminTickets.statuses[d.status as keyof typeof t.adminTickets.statuses] ?? d.status));
     else if (typeof d.status === "string" && log.module === "moderation") chips.push(tl.detailStatus(c.profileStatus[d.status as keyof typeof c.profileStatus] ?? d.status));

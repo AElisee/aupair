@@ -5,6 +5,7 @@ import { CheckCircle, X, Eye, Ban, Trash2, Clock, Loader2, Hourglass, BadgeCheck
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import { isValidStatusReason, STATUS_REASON_MAX_LENGTH, STATUS_REASON_MIN_LENGTH } from "@/lib/status-reason";
 import { CountryFlag } from "@/components/ui/CountryFlag";
 import { useI18n } from "@/i18n";
 import { Separator } from "@/components/ui/separator";
@@ -422,18 +423,23 @@ export default function ModerationPage() {
             <>
               <p className="font-medium text-[#1A1A2E]">{decision.profile.name}</p>
               <label className="block mt-4 text-xs font-medium text-gray-600">
-                {m.reasonLabel}
+                {/* Motif obligatoire pour une suppression, facultatif pour un rejet */}
+                {decision.action === "delete" ? t.adminStatusChange.reasonRequiredEmail : m.reasonLabel}
                 <textarea
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
-                  maxLength={1000}
+                  maxLength={STATUS_REASON_MAX_LENGTH}
                   rows={5}
                   placeholder={m.reasonPlaceholder}
                   className="mt-1.5 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-[#1A1A2E] font-normal focus:outline-none focus:ring-2 focus:ring-[#E87722] resize-y"
                 />
               </label>
+              {decision.action === "delete" && (
+                <p className="mt-1 text-[11px] text-gray-400">{t.adminStatusChange.reasonHint(STATUS_REASON_MIN_LENGTH)}</p>
+              )}
             </>
           }
+          confirmDisabled={decision.action === "delete" && !isValidStatusReason(reason)}
           confirmLabel={decision.action === "reject" ? m.reject : c.delete}
           loading={processingId === decision.profile.userId}
           onConfirm={confirmDecision}

@@ -41,6 +41,12 @@ function ConnexionForm() {
   const rawCallback = searchParams.get("callbackUrl");
   const safeCallbackUrl = getSafeCallbackUrl(rawCallback);
 
+  // Connexion OAuth refusée par le callback signIn (inscription rejetée)
+  const urlError = searchParams.get("error");
+  useEffect(() => {
+    if (urlError === "account_rejected") setError(l.accountRejected);
+  }, [urlError, l.accountRejected]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -59,7 +65,9 @@ function ConnexionForm() {
         setError(
           result.code === "pending_validation"
             ? l.pendingValidation
-            : l.invalidCredentials
+            : result.code === "account_rejected"
+              ? l.accountRejected
+              : l.invalidCredentials
         );
         return;
       }

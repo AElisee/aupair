@@ -72,6 +72,63 @@ export const admin = {
     keepEmpty: { fr: "•••••••••••••••• (laisser vide pour ne pas changer)", en: "•••••••••••••••• (leave empty to keep it)" },
   },
 
+  // ─── Visiteurs (/admin/visiteurs) ──────────────────────────────────────────
+  adminVisitors: {
+    title: { fr: "Visiteurs", en: "Visitors" },
+    subtitle: {
+      fr: "Visiteurs uniques du site public (un même navigateur compte une fois par période).",
+      en: "Unique visitors of the public site (the same browser counts once per period).",
+    },
+    kpiToday: { fr: "Aujourd'hui", en: "Today" },
+    kpi7d: { fr: "7 derniers jours", en: "Last 7 days" },
+    kpi30d: { fr: "30 derniers jours", en: "Last 30 days" },
+    kpiTotal: { fr: "Depuis le début", en: "All time" },
+    kpiTodayCaption: { fr: (p: number) => `${p} % des 7 derniers jours`, en: (p: number) => `${p}% of the last 7 days` },
+    kpi7dCaption: { fr: (p: number) => `${p} % des 30 derniers jours`, en: (p: number) => `${p}% of the last 30 days` },
+    kpiTrend: { fr: (c: string) => `${c} vs 30 jours précédents`, en: (c: string) => `${c} vs previous 30 days` },
+    kpiTotalCaption: { fr: "Visiteurs uniques", en: "Unique visitors" },
+    chartTitle: { fr: "Évolution des visiteurs", en: "Visitor trend" },
+    chartSubtitle: {
+      day: { fr: "Visiteurs uniques par jour", en: "Unique visitors per day" },
+      week: { fr: "Visiteurs uniques par semaine (lundi → dimanche)", en: "Unique visitors per week (Monday → Sunday)" },
+      month: { fr: "Visiteurs uniques par mois", en: "Unique visitors per month" },
+    },
+    granularity: {
+      day: { fr: "Jour", en: "Day" },
+      week: { fr: "Semaine", en: "Week" },
+      month: { fr: "Mois", en: "Month" },
+    },
+    range: {
+      day: { fr: (n: number) => `${n} derniers jours`, en: (n: number) => `Last ${n} days` },
+      week: { fr: (n: number) => `${n} dernières semaines`, en: (n: number) => `Last ${n} weeks` },
+      month: { fr: (n: number) => `${n} derniers mois`, en: (n: number) => `Last ${n} months` },
+    },
+    rangeAria: { fr: "Période affichée", en: "Displayed range" },
+    visitorsLabel: { fr: "Visiteurs", en: "Visitors" },
+    weekOf: { fr: (d: string) => `Semaine du ${d}`, en: (d: string) => `Week of ${d}` },
+    weekRange: { fr: (a: string, b: string) => `Semaine du ${a} au ${b}`, en: (a: string, b: string) => `Week of ${a} – ${b}` },
+    statRangeUnique: { fr: "Visiteurs uniques sur la période", en: "Unique visitors over the range" },
+    statAverage: {
+      day: { fr: "Moyenne par jour", en: "Daily average" },
+      week: { fr: "Moyenne par semaine", en: "Weekly average" },
+      month: { fr: "Moyenne par mois", en: "Monthly average" },
+    },
+    withAccount: { fr: "Avec compte", en: "With an account" },
+    withoutAccount: { fr: "Sans compte", en: "Without an account" },
+    statWithAccount: { fr: "Connectés à un compte", en: "Signed in to an account" },
+    statWithAccountCaption: { fr: (p: number) => `${p} % des visiteurs`, en: (p: number) => `${p}% of visitors` },
+    statChange: { fr: "vs période précédente", en: "vs previous range" },
+    tableTitle: { fr: "Détail par période", en: "Breakdown by period" },
+    colPeriod: { fr: "Période", en: "Period" },
+    colVisitors: { fr: "Total", en: "Total" },
+    colChange: { fr: "Évolution", en: "Change" },
+    showTable: { fr: "Afficher le détail", en: "Show breakdown" },
+    hideTable: { fr: "Masquer le détail", en: "Hide breakdown" },
+    empty: { fr: "Aucune visite enregistrée sur cette période.", en: "No visit recorded over this range." },
+    loadError: { fr: "Impossible de charger les visiteurs.", en: "Could not load visitors." },
+    seeDetails: { fr: "Voir l'évolution", en: "See the trend" },
+  },
+
   // ─── Menu latéral ──────────────────────────────────────────────────────────
   adminNav: {
     dashboard: { fr: "Dashboard", en: "Dashboard" },
@@ -87,6 +144,7 @@ export const admin = {
     tickets: { fr: "Tickets support", en: "Support tickets" },
     team: { fr: "Équipe", en: "Team" },
     activityLog: { fr: "Journal d'activité", en: "Activity log" },
+    visitors: { fr: "Visiteurs", en: "Visitors" },
     restrictedTitle: { fr: "Accès restreint", en: "Restricted access" },
     restrictedText: {
       fr: "Votre rôle ne vous donne pas accès à cette page. Contactez un super administrateur si vous en avez besoin.",
@@ -154,7 +212,6 @@ export const admin = {
     shareOfUsers: { fr: (pct: number) => `${pct} % des inscrits`, en: (pct: number) => `${pct}% of users` },
     shareOfAuPairs: { fr: (pct: number) => `${pct} % des au pairs`, en: (pct: number) => `${pct}% of au pairs` },
     shareOfProfiles: { fr: (pct: number) => `${pct} % des profils`, en: (pct: number) => `${pct}% of profiles` },
-    moderateCount: { fr: (n: number) => `Modérer · ${n}`, en: (n: number) => `Moderate · ${n}` },
     reportsCount: { fr: (n: number) => `Signalements · ${n}`, en: (n: number) => `Reports · ${n}` },
     validationTitle: { fr: "Profils validés", en: "Approved profiles" },
     validationSubtitle: { fr: "Au pairs et familles actifs", en: "Active au pairs and families" },
@@ -220,6 +277,41 @@ export const admin = {
       fr: "et toutes ses données (profil, messages, abonnements, favoris...) seront définitivement supprimés.",
       en: "and all its data (profile, messages, subscriptions, favourites...) will be permanently deleted.",
     },
+  },
+
+  // ─── Suspension / suppression : motif et traçabilité ───────────────────────
+  adminStatusChange: {
+    reasonRequired: { fr: "Motif (obligatoire)", en: "Reason (required)" },
+    reasonRequiredEmail: { fr: "Motif (obligatoire, inclus dans l'email)", en: "Reason (required, included in the email)" },
+    reasonPlaceholder: {
+      fr: "Ex. : comportement inapproprié signalé par plusieurs membres…",
+      en: "E.g. inappropriate behaviour reported by several members…",
+    },
+    reasonHint: {
+      fr: (n: number) => `Au moins ${n} caractères. Le motif, la date et votre nom sont enregistrés.`,
+      en: (n: number) => `At least ${n} characters. The reason, date and your name are recorded.`,
+    },
+    suspendTitle: { fr: "Suspendre ce compte ?", en: "Suspend this account?" },
+    suspendText: {
+      fr: "Le profil ne sera plus visible sur la plateforme. Vous pourrez le réactiver plus tard.",
+      en: "The profile will no longer be visible on the platform. You can reactivate it later.",
+    },
+    suspend: { fr: "Suspendre", en: "Suspend" },
+    reactivate: { fr: "Réactiver", en: "Reactivate" },
+    on: {
+      fr: (date: string, time: string) => `Le ${date} à ${time}`,
+      en: (date: string, time: string) => `On ${date} at ${time}`,
+    },
+    by: { fr: (name: string) => `par ${name}`, en: (name: string) => `by ${name}` },
+    unknownAdmin: { fr: "un administrateur", en: "an administrator" },
+    reason: { fr: "Motif", en: "Reason" },
+    noReason: { fr: "Aucun motif enregistré", en: "No reason recorded" },
+    bannerTitle: {
+      SUSPENDED: { fr: "Compte suspendu", en: "Account suspended" },
+      DELETED: { fr: "Compte supprimé (corbeille)", en: "Account deleted (trash)" },
+      REJECTED: { fr: "Inscription rejetée", en: "Sign-up rejected" },
+    },
+    error: { fr: "L'action n'a pas pu être effectuée.", en: "The action could not be completed." },
   },
 
   // ─── Modération ────────────────────────────────────────────────────────────
@@ -1068,6 +1160,7 @@ export const admin = {
     ip: { fr: (ip: string) => `IP ${ip}`, en: (ip: string) => `IP ${ip}` },
     showDetails: { fr: "Détails", en: "Details" },
     // Détails (valeurs du champ `details`)
+    detailReason: { fr: (r: string) => `Motif : ${r}`, en: (r: string) => `Reason: ${r}` },
     detailFields: { fr: (fields: string) => `Champs : ${fields}`, en: (fields: string) => `Fields: ${fields}` },
     detailRows: { fr: (n: number) => `${n} ligne(s) exportée(s)`, en: (n: number) => `${n} row(s) exported` },
     detailRole: { fr: (role: string) => `Rôle : ${role}`, en: (role: string) => `Role: ${role}` },

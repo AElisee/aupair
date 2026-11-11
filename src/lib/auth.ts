@@ -19,6 +19,23 @@ class PendingValidationError extends CredentialsSignin {
   code = "pending_validation";
 }
 
+/** Identifiants valides mais inscription refusée par la modération (code lu par /connexion). */
+class AccountRejectedError extends CredentialsSignin {
+  code = "account_rejected";
+}
+
+/** Statut du profil métier (au pair ou famille) d'un utilisateur, null s'il n'en a pas. */
+async function getProfileStatus(userId: string) {
+  const u = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      auPairProfile: { select: { status: true } },
+      familyProfile: { select: { status: true } },
+    },
+  });
+  return u?.auPairProfile?.status ?? u?.familyProfile?.status ?? null;
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   providers: [
@@ -77,6 +94,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const profileStatus =
           user.auPairProfile?.status ?? user.familyProfile?.status;
         if (profileStatus === "PENDING") throw new PendingValidationError();
+        if (profileStatus === "REJECTED") throw new AccountRejectedError();
 
         return {
           id: user.id,
@@ -90,6 +108,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
+    // Connexion OAuth (Google/Facebook) d'un compte existant dont l'inscription a été rejetée :
+    // refusée, avec le même message que la connexion par mot de passe.
+    async signIn({ user, account }) {
+      if (account?.type === "credentials" || !user.email) return true;
+      const existing = await prisma.user.findUnique({
+        where: { email: user.email.trim().toLowerCase() },
+        select: { id: true },
+      });
+      if (existing && (await getProfileStatus(existing.id)) === "REJECTED") {
+        return "/connexion?error=account_rejected";
+      }
+      return true;
+    },
     async jwt({ token, user, trigger }) {
       if (user) {
         token.role = (user as { role?: string }).role;
@@ -146,10 +177,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           isActive: true,
           role: true,
           adminRole: { select: { permissions: true, isSystem: true } },
+          auPairProfile: { select: { status: true } },
+          familyProfile: { select: { status: true } },
         },
       });
 
       if (!dbUser || !dbUser.isActive) return null;
+
+      // Inscription rejetée par la modération : la session déjà ouverte est fermée.
+      const profileStatus = dbUser.auPairProfile?.status ?? dbUser.familyProfile?.status;
+      if (profileStatus === "REJECTED") return null;
 
       // Rôle et permissions relus à chaque requête : un changement de rôle ou de
       // permissions par un autre admin s'applique immédiatement côté API.

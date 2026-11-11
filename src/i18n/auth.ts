@@ -25,6 +25,10 @@ export const auth = {
       fr: "Votre compte est en cours de validation. Vous recevrez un email dès qu'il sera activé.",
       en: "Your account is being reviewed. You will receive an email as soon as it is activated.",
     },
+    accountRejected: {
+      fr: "Votre inscription n'a pas été validée. Pour toute question, contactez support@aupairaeu.com.",
+      en: "Your sign-up was not approved. For any question, contact support@aupairaeu.com.",
+    },
     genericError: { fr: "Une erreur est survenue. Veuillez réessayer.", en: "Something went wrong. Please try again." },
     email: { fr: "Adresse email", en: "Email address" },
     emailPlaceholder: { fr: "votre@email.com", en: "your@email.com" },

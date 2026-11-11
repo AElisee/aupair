@@ -6,11 +6,22 @@ import { getCountryFlagMap } from "@/lib/countries";
 import { VALIDATED_PROFILE_WHERE } from "@/lib/profile-status";
 import type { AdminPermission } from "@/lib/admin-permissions";
 import { getUserLabel, logAdminActivity } from "@/lib/admin-activity";
+import { cleanStatusReason, isValidStatusReason, STATUS_REASON_REQUIRED_ERROR } from "@/lib/status-reason";
 import {
   AU_PAIR_COMPLETION_FIELDS,
   FAMILY_COMPLETION_FIELDS,
   getProfileCompletion,
 } from "@/lib/profile-completion";
+
+/** Dernière suspension / suppression : date et heure, admin, motif (null si le compte n'en a pas) */
+function statusChangeDTO(p: { statusChangedAt: Date | null; statusChangedBy: string | null; statusReason: string | null }) {
+  return p.statusChangedAt
+    ? { at: p.statusChangedAt.toISOString(), by: p.statusChangedBy, reason: p.statusReason }
+    : null;
+}
+
+/** Actions qui exigent un motif (enregistré sur le profil, au journal et affiché aux admins) */
+const REASON_REQUIRED = new Set(["suspend", "delete"]);
 
 export async function GET() {
   const session = await requireAdminSession("users.view");
@@ -50,6 +61,7 @@ export async function GET() {
       subscribed: subscribedUserIds.has(p.userId),
       createdAt: p.user.createdAt,
       photoUrl: p.profilePhotoUrl ?? "",
+      statusChange: statusChangeDTO(p),
     })),
     ...families.map((p) => ({
       id: p.userId,
@@ -63,6 +75,7 @@ export async function GET() {
       subscribed: false,
       createdAt: p.user.createdAt,
       photoUrl: p.familyPhotoUrl ?? "",
+      statusChange: statusChangeDTO(p),
     })),
   ]
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
@@ -100,10 +113,19 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 });
   }
 
+  const reason = cleanStatusReason((body as { reason?: unknown }).reason);
+  if (REASON_REQUIRED.has(action) && !isValidStatusReason(reason)) {
+    return NextResponse.json({ error: STATUS_REASON_REQUIRED_ERROR }, { status: 400 });
+  }
+
   // Libellé lu avant l'action (la purge supprime l'utilisateur)
   const targetLabel = await getUserLabel(userId);
   const log = () =>
-    logAdminActivity(session, { action: `users.${action}`, targetType: role, targetId: userId, targetLabel }, req);
+    logAdminActivity(
+      session,
+      { action: `users.${action}`, targetType: role, targetId: userId, targetLabel, details: reason ? { reason } : undefined },
+      req,
+    );
 
   if (action === "purge") {
     await hardDeleteUser(userId);
@@ -126,8 +148,11 @@ export async function PATCH(req: Request) {
   } as const;
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(req.url).origin;
-  await setProfileStatus(userId, role, statusMap[action], session.user.id as string, baseUrl);
+  await setProfileStatus(userId, role, statusMap[action], session.user as { id: string }, baseUrl, reason);
   await log();
 
-  return NextResponse.json({ success: true });
+  const statusChange = REASON_REQUIRED.has(action)
+    ? { at: new Date().toISOString(), by: session.user.name || session.user.email || null, reason }
+    : null;
+  return NextResponse.json({ success: true, statusChange });
 }

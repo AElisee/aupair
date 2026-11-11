@@ -100,6 +100,8 @@ export function resolveAdminPermissions(user: {
 
 /** Permission(s) requise(s) pour ouvrir chaque page du back-office (liste vide = tout admin) */
 export const PAGE_PERMISSIONS: { prefix: string; anyOf: AdminPermission[] }[] = [
+  // Courbe des visiteurs : mêmes données que le dashboard
+  { prefix: "/admin/visiteurs", anyOf: ["dashboard.view"] },
   { prefix: "/admin/utilisateurs", anyOf: ["users.view"] },
   { prefix: "/admin/moderation", anyOf: ["moderation.view"] },
   { prefix: "/admin/signalements", anyOf: ["reports.view"] },

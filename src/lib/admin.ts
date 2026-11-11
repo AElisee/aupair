@@ -17,22 +17,41 @@ export async function requireAdminSession(anyOf?: AdminPermission | AdminPermiss
   return session;
 }
 
+/** Statuts qui retirent le compte de la plateforme : date, admin et motif sont conservés sur le profil */
+const SANCTION_STATUSES: ProfileStatus[] = [ProfileStatus.SUSPENDED, ProfileStatus.DELETED, ProfileStatus.REJECTED];
+
+/** Efface la trace de la dernière suspension / suppression (profil réactivé ou remis en attente) */
+const CLEARED_STATUS_CHANGE = { statusChangedAt: null, statusChangedById: null, statusChangedBy: null, statusReason: null };
+
+type StatusActor = { id: string; name?: string | null; email?: string | null };
+
 /**
  * Met à jour le statut du profil au pair ou famille d'un utilisateur.
  * Lors d'une première validation (PENDING -> ACTIVE), envoie un email
  * informant l'utilisateur que son compte a été validé.
+ * Une suspension, suppression ou un rejet enregistre la date et l'heure, l'admin (nom copié)
+ * et le motif sur le profil ; une réactivation les efface (l'historique reste au journal).
  */
 export async function setProfileStatus(
   userId: string,
   role: "AU_PAIR" | "FAMILLE",
   status: ProfileStatus,
-  adminId: string,
-  baseUrl?: string
+  admin: StatusActor,
+  baseUrl?: string,
+  reason?: string
 ) {
   const data =
     status === ProfileStatus.ACTIVE
-      ? { status, validatedAt: new Date(), validatedBy: adminId }
-      : { status };
+      ? { status, validatedAt: new Date(), validatedBy: admin.id, ...CLEARED_STATUS_CHANGE }
+      : SANCTION_STATUSES.includes(status)
+        ? {
+            status,
+            statusChangedAt: new Date(),
+            statusChangedById: admin.id,
+            statusChangedBy: admin.name || admin.email || null,
+            statusReason: reason?.trim() || null,
+          }
+        : { status };
 
   // Première validation : profil en attente, rejeté, ou jamais validé puis suspendu/supprimé
   // (cf. src/lib/profile-status.ts). L'email « compte validé » n'est envoyé que dans ce cas.
@@ -103,11 +122,11 @@ export async function restoreProfile(userId: string, role: "AU_PAIR" | "FAMILLE"
   if (role === "AU_PAIR") {
     const profile = await prisma.auPairProfile.findUnique({ where: { userId }, select: { validatedAt: true } });
     status = profile?.validatedAt ? ProfileStatus.ACTIVE : ProfileStatus.PENDING;
-    await prisma.auPairProfile.update({ where: { userId }, data: { status } });
+    await prisma.auPairProfile.update({ where: { userId }, data: { status, ...CLEARED_STATUS_CHANGE } });
   } else {
     const profile = await prisma.familyProfile.findUnique({ where: { userId }, select: { validatedAt: true } });
     status = profile?.validatedAt ? ProfileStatus.ACTIVE : ProfileStatus.PENDING;
-    await prisma.familyProfile.update({ where: { userId }, data: { status } });
+    await prisma.familyProfile.update({ where: { userId }, data: { status, ...CLEARED_STATUS_CHANGE } });
   }
 
   await prisma.user.update({ where: { id: userId }, data: { isActive: true } });

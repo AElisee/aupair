@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import AdminLayout from "@/components/layout/AdminLayout";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import StatusReasonDialog, { StatusChangeInfo, type StatusChange } from "@/components/admin/StatusReasonDialog";
 import { useAdminCan } from "@/components/admin/AdminPermissionsContext";
 import { Badge } from "@/components/ui/badge";
 import PhotoViewerModal from "@/components/ui/photo-viewer-modal";
@@ -66,6 +67,8 @@ type CommonDetail = {
   status: string;
   profileViews: number;
   validatedAt: string | null;
+  /** Dernière suspension / suppression / rejet (null après une réactivation) */
+  statusChange: StatusChange | null;
   updatedAt: string;
   completion: number;
   missingFields: string[];
@@ -310,14 +313,14 @@ export default function AdminProfilePage() {
     };
   }, [load]);
 
-  const performAction = async (action: Action) => {
+  const performAction = async (action: Action, reason?: string) => {
     setProcessing(true);
     setFeedback(null);
     try {
       const res = await fetch("/api/admin/users", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, role, action }),
+        body: JSON.stringify({ userId, role, action, reason }),
       });
       if (!res.ok) throw new Error();
       // Recharge le profil : le statut et la date de validation viennent du serveur
@@ -512,6 +515,17 @@ export default function AdminProfilePage() {
             </div>
           </div>
         </Panel>
+
+        {/* Suspension / suppression / rejet : quand, par qui et pourquoi */}
+        {(status === "SUSPENDED" || status === "DELETED" || status === "REJECTED") && data.statusChange && (
+          <div role="status" className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50/80 px-4 py-3.5">
+            <Ban size={20} strokeWidth={ICON.strokeWidth} className="text-red-600 shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-red-700">{t.adminStatusChange.bannerTitle[status]}</p>
+              <StatusChangeInfo change={data.statusChange} />
+            </div>
+          </div>
+        )}
 
         <KpiGrid items={kpis} />
 
@@ -716,12 +730,13 @@ export default function AdminProfilePage() {
         </div>
 
         {confirmSuspend && (
-          <ConfirmDialog
+          <StatusReasonDialog
             title={tp.suspendTitle}
-            description={tp.suspendText(displayName)}
+            name={displayName}
+            text={tp.suspendText(displayName)}
             confirmLabel={c.suspend}
             loading={processing}
-            onConfirm={() => performAction("suspend")}
+            onConfirm={(reason) => performAction("suspend", reason)}
             onCancel={() => setConfirmSuspend(false)}
           />
         )}

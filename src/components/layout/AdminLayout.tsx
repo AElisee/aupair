@@ -7,7 +7,7 @@ import { signOut } from "next-auth/react";
 import { useI18n } from "@/i18n";
 import type { admin } from "@/i18n/admin";
 import { LanguageToggle } from "./LanguageToggle";
-import { Flag, Globe, LayoutDashboard, Users, Shield, DollarSign, FileText, HelpCircle, Mail, MessageSquareQuote, LogOut, Bell, Settings, ChevronDown, SlidersHorizontal, Menu, X, Send, Wallet, KeyRound, FileCheck, ChevronRight, Share2, UserCog, Loader2, Lock, History } from "lucide-react";
+import { Flag, Globe, LayoutDashboard, Users, Shield, DollarSign, FileText, HelpCircle, Mail, MessageSquareQuote, LogOut, Bell, Settings, ChevronDown, SlidersHorizontal, Menu, X, Send, Wallet, KeyRound, FileCheck, ChevronRight, Share2, UserCog, Loader2, Lock, History, ChartSpline } from "lucide-react";
 import { canAccessAdminPath, firstAccessibleAdminPath, type AdminPermission } from "@/lib/admin-permissions";
 import { useLoadAdminMe } from "@/components/admin/AdminPermissionsContext";
 
@@ -19,6 +19,7 @@ type BadgeCounts = { moderation: number; reports: number; tickets: number; testi
 
 const navItems: { href: string; icon: React.ElementType; labelKey: NavKey; badge?: keyof BadgeCounts }[] = [
   { href: "/admin", icon: LayoutDashboard, labelKey: "dashboard" },
+  { href: "/admin/visiteurs", icon: ChartSpline, labelKey: "visitors" },
   { href: "/admin/utilisateurs", icon: Users, labelKey: "users" },
   { href: "/admin/moderation", icon: Shield, labelKey: "moderation", badge: "moderation" },
   { href: "/admin/signalements", icon: Flag, labelKey: "reports", badge: "reports" },

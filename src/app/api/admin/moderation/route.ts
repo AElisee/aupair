@@ -7,6 +7,7 @@ import { getCountryFlagMap } from "@/lib/countries";
 import { calculateAge } from "@/lib/utils";
 import { sendModerationDecisionEmail } from "@/lib/moderation-emails";
 import { REFUSED_PROFILE_WHERE } from "@/lib/profile-status";
+import { cleanStatusReason, isValidStatusReason, STATUS_REASON_REQUIRED_ERROR } from "@/lib/status-reason";
 
 function waitingDays(createdAt: Date): number {
   const diffMs = Date.now() - new Date(createdAt).getTime();
@@ -70,6 +71,9 @@ export async function GET(req: Request) {
       hasPhoto: !!p.profilePhotoUrl,
       photoUrl: p.profilePhotoUrl ?? "",
       hasId: p.idDocumentUrls.length > 0,
+      statusChangedAt: p.statusChangedAt?.toISOString() ?? null,
+      statusChangedBy: p.statusChangedBy,
+      statusReason: p.statusReason,
     })),
     ...families.map((p) => ({
       userId: p.userId,
@@ -87,6 +91,9 @@ export async function GET(req: Request) {
       hasPhoto: !!p.familyPhotoUrl,
       photoUrl: p.familyPhotoUrl ?? "",
       hasId: p.idDocumentUrls.length > 0,
+      statusChangedAt: p.statusChangedAt?.toISOString() ?? null,
+      statusChangedBy: p.statusChangedBy,
+      statusReason: p.statusReason,
     })),
   ];
 
@@ -96,9 +103,13 @@ export async function GET(req: Request) {
     return NextResponse.json({ profiles });
   }
 
-  const decisions = await getLatestDecisions(profiles.map((p) => p.userId));
+  // Décision lue sur le profil ; à défaut (décisions antérieures à ces colonnes) dans le journal
+  const decisions = await getLatestDecisions(profiles.filter((p) => !p.statusChangedAt).map((p) => p.userId));
   const withDecision = profiles
     .map((p) => {
+      if (p.statusChangedAt) {
+        return { ...p, decidedAt: p.statusChangedAt, decidedBy: p.statusChangedBy, reason: p.statusReason };
+      }
       const d = decisions.get(p.userId);
       return { ...p, decidedAt: d?.at ?? new Date(p.updatedAt).toISOString(), decidedBy: d?.by ?? null, reason: d?.reason ?? null };
     })
@@ -150,10 +161,14 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ success: true });
   }
 
-  const cleanReason = typeof reason === "string" ? reason.trim().slice(0, 1000) : "";
+  const cleanReason = cleanStatusReason(reason);
+  // La suppression exige un motif (comme dans /admin/utilisateurs) ; il reste facultatif pour un rejet
+  if (action === "delete" && !isValidStatusReason(cleanReason)) {
+    return NextResponse.json({ error: STATUS_REASON_REQUIRED_ERROR }, { status: 400 });
+  }
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(req.url).origin;
-  await setProfileStatus(userId, role, statusMap[action], session.user.id as string, baseUrl);
+  await setProfileStatus(userId, role, statusMap[action], session.user as { id: string }, baseUrl, cleanReason);
 
   if (action === "validate") {
     // setProfileStatus() réactive la connexion et envoie l'email de validation

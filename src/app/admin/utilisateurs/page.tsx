@@ -16,8 +16,10 @@ import {
   Users,
   BadgeCheck,
   CreditCard,
+  Ban,
 } from "lucide-react";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import StatusReasonDialog, { StatusChangeInfo, type StatusChange } from "@/components/admin/StatusReasonDialog";
 import SendEmailDialog from "@/components/admin/SendEmailDialog";
 import { useAdminCan } from "@/components/admin/AdminPermissionsContext";
 import { useI18n } from "@/i18n";
@@ -38,6 +40,8 @@ type AdminUser = {
   subscribed: boolean;
   createdAt: string;
   photoUrl: string;
+  /** Dernière suspension / suppression : date et heure, admin, motif */
+  statusChange: StatusChange | null;
 };
 
 type Action = "validate" | "hide" | "unhide" | "suspend" | "delete" | "restore" | "purge";
@@ -55,13 +59,16 @@ export default function UtilisateursPage() {
   const [filterCountry, setFilterCountry] = useState("");
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null);
+  const [suspendTarget, setSuspendTarget] = useState<AdminUser | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [purgeTarget, setPurgeTarget] = useState<AdminUser | null>(null);
   const [emailTarget, setEmailTarget] = useState<AdminUser | null>(null);
   const [notice, setNotice] = useState("");
   const [page, setPage] = useState(1);
-  const { t, tValue, locale } = useI18n();
+  const { t, tValue, tError, locale } = useI18n();
   const c = t.adminCommon;
   const tu = t.adminUsers;
+  const ts = t.adminStatusChange;
 
   useEffect(() => {
     fetch("/api/admin/users")
@@ -70,48 +77,68 @@ export default function UtilisateursPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const performAction = async (u: AdminUser, action: Action) => {
+  /** Renvoie `true` si l'action a réussi (les boîtes de dialogue restent ouvertes sinon) */
+  const performAction = async (u: AdminUser, action: Action, reason?: string): Promise<boolean> => {
     setProcessingId(u.id);
+    setActionError(null);
     try {
       const res = await fetch("/api/admin/users", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: u.id, role: u.role, action }),
+        body: JSON.stringify({ userId: u.id, role: u.role, action, reason }),
       });
-      if (res.ok) {
-        if (action === "purge") {
-          setUsers((prev) => prev.filter((item) => item.id !== u.id));
-          return;
-        }
-        if (action === "restore") {
-          const data = await res.json();
-          // Un compte jamais validé repasse en attente : il quitte la liste (→ /admin/moderation)
-          setUsers((prev) =>
-            data.status === "PENDING"
-              ? prev.filter((item) => item.id !== u.id)
-              : prev.map((item) => (item.id === u.id ? { ...item, status: data.status } : item)),
-          );
-          return;
-        }
-        const status = {
-          validate: "ACTIVE",
-          hide: "HIDDEN",
-          unhide: "ACTIVE",
-          suspend: "SUSPENDED",
-          delete: "DELETED",
-        }[action];
-        setUsers((prev) =>
-          prev.map((item) => (item.id === u.id ? { ...item, status } : item)),
-        );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setActionError(tError(data.error, ts.error));
+        return false;
       }
+      if (action === "purge") {
+        setUsers((prev) => prev.filter((item) => item.id !== u.id));
+        return true;
+      }
+      if (action === "restore") {
+        const data = await res.json();
+        // Un compte jamais validé repasse en attente : il quitte la liste (→ /admin/moderation)
+        setUsers((prev) =>
+          data.status === "PENDING"
+            ? prev.filter((item) => item.id !== u.id)
+            : prev.map((item) => (item.id === u.id ? { ...item, status: data.status, statusChange: null } : item)),
+        );
+        return true;
+      }
+      const status = {
+        validate: "ACTIVE",
+        hide: "HIDDEN",
+        unhide: "ACTIVE",
+        suspend: "SUSPENDED",
+        delete: "DELETED",
+      }[action];
+      // Suspension / suppression : date, admin et motif renvoyés par l'API ; réactivation : effacés
+      const data = await res.json().catch(() => ({}));
+      const statusChange: StatusChange | null | undefined =
+        action === "suspend" || action === "delete" ? data.statusChange ?? null : status === "ACTIVE" ? null : undefined;
+      setUsers((prev) =>
+        prev.map((item) =>
+          item.id === u.id ? { ...item, status, ...(statusChange !== undefined ? { statusChange } : {}) } : item,
+        ),
+      );
+      return true;
+    } catch {
+      setActionError(ts.error);
+      return false;
     } finally {
       setProcessingId(null);
     }
   };
 
   const handleAction = (u: AdminUser, action: Action) => {
+    setActionError(null);
     if (action === "delete") {
       setDeleteTarget(u);
+      return;
+    }
+    if (action === "suspend") {
+      setSuspendTarget(u);
       return;
     }
     if (action === "purge") {
@@ -121,10 +148,14 @@ export default function UtilisateursPage() {
     performAction(u, action);
   };
 
-  const confirmDelete = async () => {
+  const confirmDelete = async (reason: string) => {
     if (!deleteTarget) return;
-    await performAction(deleteTarget, "delete");
-    setDeleteTarget(null);
+    if (await performAction(deleteTarget, "delete", reason)) setDeleteTarget(null);
+  };
+
+  const confirmSuspend = async (reason: string) => {
+    if (!suspendTarget) return;
+    if (await performAction(suspendTarget, "suspend", reason)) setSuspendTarget(null);
   };
 
   const confirmPurge = async () => {
@@ -377,7 +408,12 @@ export default function UtilisateursPage() {
                           {u.role === "AU_PAIR" ? c.roleAuPair : c.roleFamily}
                         </Badge>
                       </td>
-                      <td className="px-5 py-3.5">{statusBadge(u.status)}</td>
+                      <td className="px-5 py-3.5">
+                        {statusBadge(u.status)}
+                        {(u.status === "SUSPENDED" || u.status === "DELETED") && u.statusChange && (
+                          <StatusChangeInfo change={u.statusChange} compact />
+                        )}
+                      </td>
                       <td className="px-5 py-3.5">
                         {u.subscribed ? (
                           <span className="text-green-600 text-xs font-medium flex items-center gap-1">
@@ -423,7 +459,27 @@ export default function UtilisateursPage() {
                             </>
                           ) : (
                             <>
-                              {!can("users.suspend") ? null : u.status === "HIDDEN" ? (
+                              {can("users.suspend") &&
+                                (u.status === "SUSPENDED" ? (
+                                  <button
+                                    disabled={processingId === u.id}
+                                    onClick={() => handleAction(u, "unhide")}
+                                    className="p-1.5 text-green-600 hover:bg-green-50 rounded-xl transition-colors disabled:opacity-50"
+                                    title={ts.reactivate}
+                                  >
+                                    <RotateCcw className="w-4 h-4" />
+                                  </button>
+                                ) : (
+                                  <button
+                                    disabled={processingId === u.id}
+                                    onClick={() => handleAction(u, "suspend")}
+                                    className="p-1.5 text-orange-600 hover:bg-orange-50 rounded-xl transition-colors disabled:opacity-50"
+                                    title={ts.suspend}
+                                  >
+                                    <Ban className="w-4 h-4" />
+                                  </button>
+                                ))}
+                              {!can("users.suspend") || u.status === "SUSPENDED" ? null : u.status === "HIDDEN" ? (
                                 <button
                                   disabled={processingId === u.id}
                                   onClick={() => handleAction(u, "unhide")}
@@ -480,21 +536,28 @@ export default function UtilisateursPage() {
       </div>
 
       {deleteTarget && (
-        <ConfirmDialog
+        <StatusReasonDialog
           title={tu.trashTitle}
-          description={
-            <>
-              {tu.accountOf}{" "}
-              <span className="font-medium text-[#1A1A2E]">
-                {deleteTarget.name}
-              </span>{" "}
-              {tu.trashText}
-            </>
-          }
+          name={deleteTarget.name}
+          text={<>{tu.accountOf} {deleteTarget.name} {tu.trashText}</>}
           confirmLabel={tu.moveToTrash}
           loading={processingId === deleteTarget.id}
+          error={actionError}
           onConfirm={confirmDelete}
           onCancel={() => setDeleteTarget(null)}
+        />
+      )}
+
+      {suspendTarget && (
+        <StatusReasonDialog
+          title={ts.suspendTitle}
+          name={suspendTarget.name}
+          text={ts.suspendText}
+          confirmLabel={ts.suspend}
+          loading={processingId === suspendTarget.id}
+          error={actionError}
+          onConfirm={confirmSuspend}
+          onCancel={() => setSuspendTarget(null)}
         />
       )}
 

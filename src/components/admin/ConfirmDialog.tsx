@@ -9,6 +9,8 @@ interface ConfirmDialogProps {
   confirmLabel?: string;
   cancelLabel?: string;
   loading?: boolean;
+  /** Désactive le bouton de confirmation (ex. champ obligatoire vide) */
+  confirmDisabled?: boolean;
   variant?: "destructive" | "default";
   /** Affiche l'icône d'alerte à gauche du titre (par défaut : oui) */
   showIcon?: boolean;
@@ -24,6 +26,7 @@ export default function ConfirmDialog({
   confirmLabel,
   cancelLabel,
   loading = false,
+  confirmDisabled = false,
   variant = "destructive",
   showIcon = true,
   wide = false,
@@ -72,7 +75,7 @@ export default function ConfirmDialog({
           <Button
             variant={variant === "destructive" ? "destructive" : "default"}
             onClick={onConfirm}
-            disabled={loading}
+            disabled={loading || confirmDisabled}
           >
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
             {confirmLabel ?? t.adminCommon.confirm}
