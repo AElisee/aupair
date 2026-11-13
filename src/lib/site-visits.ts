@@ -108,6 +108,27 @@ export async function getVisitorSeries(granularity: VisitorGranularity, count: n
               FROM "site_visits" WHERE "day" >= ${start} GROUP BY 1, 2
             ) v GROUP BY 1`;
 
+  // Inscriptions (comptes au pair / famille créés) par période, mêmes clés UTC que les visites
+  type SignupRow = { period: string; signups: number };
+  const signupRows =
+    granularity === "day"
+      ? await prisma.$queryRaw<SignupRow[]>`
+          SELECT to_char("createdAt", 'YYYY-MM-DD') AS "period", COUNT(*)::int AS "signups"
+          FROM "users"
+          WHERE "createdAt" >= ${start}::timestamp AND "role"::text IN ('AU_PAIR', 'FAMILLE')
+          GROUP BY 1`
+      : granularity === "week"
+        ? await prisma.$queryRaw<SignupRow[]>`
+            SELECT to_char(date_trunc('week', "createdAt"), 'YYYY-MM-DD') AS "period", COUNT(*)::int AS "signups"
+            FROM "users"
+            WHERE "createdAt" >= ${start}::timestamp AND "role"::text IN ('AU_PAIR', 'FAMILLE')
+            GROUP BY 1`
+        : await prisma.$queryRaw<SignupRow[]>`
+            SELECT to_char("createdAt", 'YYYY-MM') AS "period", COUNT(*)::int AS "signups"
+            FROM "users"
+            WHERE "createdAt" >= ${start}::timestamp AND "role"::text IN ('AU_PAIR', 'FAMILLE')
+            GROUP BY 1`;
+
   const [totals] = await prisma.$queryRaw<{ current: number; currentWithAccount: number; previous: number }[]>`
     SELECT
       COUNT(DISTINCT "visitorId") FILTER (WHERE "day" >= ${start})::int AS "current",
@@ -117,13 +138,20 @@ export async function getVisitorSeries(granularity: VisitorGranularity, count: n
   `;
 
   const byPeriod = new Map(rows.map((r) => [r.period, r]));
+  const signupsByPeriod = new Map(signupRows.map((r) => [r.period, r.signups]));
   return {
     granularity,
     points: keys.map((period) => {
       const row = byPeriod.get(period);
       const withAccount = row?.withAccount ?? 0;
       const withoutAccount = row?.withoutAccount ?? 0;
-      return { period, withAccount, withoutAccount, visitors: withAccount + withoutAccount };
+      return {
+        period,
+        withAccount,
+        withoutAccount,
+        visitors: withAccount + withoutAccount,
+        signups: signupsByPeriod.get(period) ?? 0,
+      };
     }),
     rangeUnique: totals?.current ?? 0,
     rangeWithAccount: totals?.currentWithAccount ?? 0,

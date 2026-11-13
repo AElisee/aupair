@@ -115,6 +115,7 @@ export const admin = {
     },
     withAccount: { fr: "Avec compte", en: "With an account" },
     withoutAccount: { fr: "Sans compte", en: "Without an account" },
+    signups: { fr: "Nouvelles inscriptions", en: "New sign-ups" },
     statWithAccount: { fr: "Connectés à un compte", en: "Signed in to an account" },
     statWithAccountCaption: { fr: (p: number) => `${p} % des visiteurs`, en: (p: number) => `${p}% of visitors` },
     statChange: { fr: "vs période précédente", en: "vs previous range" },

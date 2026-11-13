@@ -12,8 +12,9 @@ export const VISITOR_RANGES: Record<VisitorGranularity, number[]> = {
 /**
  * `period` : AAAA-MM-JJ (jour, ou lundi de la semaine) ou AAAA-MM (mois), en UTC.
  * Un visiteur connecté au moins une fois sur la période compte « avec compte », sinon « sans compte ».
+ * `signups` : comptes au pair / famille créés sur la période.
  */
-export type VisitorPoint = { period: string; withAccount: number; withoutAccount: number; visitors: number };
+export type VisitorPoint = { period: string; withAccount: number; withoutAccount: number; visitors: number; signups: number };
 
 export type VisitorSeries = {
   granularity: VisitorGranularity;

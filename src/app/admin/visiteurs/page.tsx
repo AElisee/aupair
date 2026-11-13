@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Area, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from "recharts";
 import { CalendarDays, CalendarRange, Eye, Loader2, TrendingDown, TrendingUp, Users } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
@@ -115,10 +115,14 @@ export default function VisiteursPage() {
   const rangeChange = data ? change(data.rangeUnique, data.prevRangeUnique) : 0;
   const RangeTrendIcon = rangeChange < 0 ? TrendingDown : TrendingUp;
 
-  // Aires empilées : « avec compte » en bas (couleur de marque), « sans compte » au-dessus
+  const signupsSum = points.reduce((acc, p) => acc + p.signups, 0);
+
+  // Aires empilées : « avec compte » en bas (couleur de marque), « sans compte » au-dessus ;
+  // inscriptions en courbe non empilée par-dessus
   const config = {
     withAccount: { label: tv.withAccount, color: ORANGE },
     withoutAccount: { label: tv.withoutAccount, color: BLUE },
+    signups: { label: tv.signups, color: GREEN },
   } satisfies ChartConfig;
   // Pas trop d'étiquettes sur l'axe X (90 jours, 52 semaines…)
   const tickInterval = points.length > 14 ? Math.ceil(points.length / 10) - 1 : 0;
@@ -213,11 +217,11 @@ export default function VisiteursPage() {
                   ))}
                 </div>
 
-                {sum === 0 ? (
+                {sum === 0 && signupsSum === 0 ? (
                   <div className="h-[280px] flex items-center justify-center text-sm text-gray-500">{tv.empty}</div>
                 ) : (
                   <ChartContainer config={config} className={`aspect-auto h-[300px] w-full transition-opacity ${loading ? "opacity-50" : ""}`}>
-                    <AreaChart data={points} margin={{ left: 0, right: 12, top: 8 }}>
+                    <ComposedChart data={points} margin={{ left: 0, right: 12, top: 8 }}>
                       <defs>
                         <linearGradient id="fillWithAccount" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="var(--color-withAccount)" stopOpacity={0.8} />
@@ -244,6 +248,7 @@ export default function VisiteursPage() {
                         content={
                           <ChartTooltipContent
                             indicator="dot"
+                            className="min-w-[15rem] gap-2 px-3 py-2"
                             labelClassName="first-letter:uppercase"
                             labelFormatter={(value) => fmt.full(String(value), g)}
                           />
@@ -265,8 +270,16 @@ export default function VisiteursPage() {
                         strokeWidth={2}
                         stackId="a"
                       />
+                      <Line
+                        dataKey="signups"
+                        type="monotone"
+                        stroke="var(--color-signups)"
+                        strokeWidth={2}
+                        dot={false}
+                        activeDot={{ r: 4 }}
+                      />
                       <ChartLegend content={<ChartLegendContent />} />
-                    </AreaChart>
+                    </ComposedChart>
                   </ChartContainer>
                 )}
 
@@ -296,6 +309,7 @@ export default function VisiteursPage() {
                         <th className={`${TH} text-right`}>{tv.withAccount}</th>
                         <th className={`${TH} text-right`}>{tv.withoutAccount}</th>
                         <th className={`${TH} text-right`}>{tv.colVisitors}</th>
+                        <th className={`${TH} text-right`}>{tv.signups}</th>
                         <th className={`${TH} text-right`}>{tv.colChange}</th>
                       </tr>
                     </thead>
@@ -312,6 +326,7 @@ export default function VisiteursPage() {
                               <td className={`${TD} text-right text-gray-600 tabular-nums`}>{formatNumber(p.withAccount)}</td>
                               <td className={`${TD} text-right text-gray-600 tabular-nums`}>{formatNumber(p.withoutAccount)}</td>
                               <td className={`${TD} text-right font-medium text-[#1A1A2E] tabular-nums`}>{formatNumber(p.visitors)}</td>
+                              <td className={`${TD} text-right text-gray-600 tabular-nums`}>{formatNumber(p.signups)}</td>
                               <td className={`${TD} text-right text-xs tabular-nums ${delta === null || delta === 0 ? "text-gray-400" : delta < 0 ? "text-red-600" : "text-[#3FA45B]"}`}>
                                 {delta === null ? "—" : signed(delta)}
                               </td>
