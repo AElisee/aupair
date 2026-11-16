@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { CheckCircle, Home, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -46,7 +45,6 @@ export default function CompleteSignupPage() {
   const { t, tError } = useI18n();
   const s = t.signup;
   const c = t.completeSignup;
-  const router = useRouter();
   const { update } = useSession();
 
   const [loadState, setLoadState] = useState<"loading" | "error" | "ready">("loading");
@@ -61,10 +59,13 @@ export default function CompleteSignupPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  /** Session rafraîchie (le proxy relit `onboarding` dans le cookie) puis redirection vers l'espace. */
+  /**
+   * Profil déjà actif (ancien compte complété) : session rafraîchie pour que le proxy relise
+   * `onboarding` dans le cookie, puis navigation complète vers l'espace.
+   */
   const goToSpace = async () => {
     const session = await update();
-    router.replace(getDefaultRedirectForRole(session?.user?.role));
+    window.location.replace(getDefaultRedirectForRole(session?.user?.role));
   };
 
   useEffect(() => {
@@ -145,7 +146,13 @@ export default function CompleteSignupPage() {
         setSubmitError(tError(data.error, s.genericError));
         return;
       }
-      // Nouveau profil : en attente de validation (l'espace affiche l'écran d'attente)
+      if (data.status === "PENDING") {
+        // Comme une inscription par formulaire : pas de session tant que l'équipe n'a pas validé
+        // le compte (la connexion est refusée jusque-là). Redirection complète vers la page de
+        // confirmation (publique), une fois le cookie de session supprimé.
+        await signOut({ redirectTo: `/inscription/confirmation?role=${role}` });
+        return;
+      }
       await goToSpace();
     } catch {
       setSubmitError(s.networkError);

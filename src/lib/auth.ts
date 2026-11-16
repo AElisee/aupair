@@ -222,6 +222,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // Inscription rejetée par la modération : la session déjà ouverte est fermée.
       const profileStatus = dbUser.auPairProfile?.status ?? dbUser.familyProfile?.status;
       if (profileStatus === "REJECTED") return null;
+      // Compte en attente de validation (inscription Google/Facebook tout juste finalisée) : pas de
+      // session, comme pour la connexion par mot de passe, refusée tant que l'équipe n'a pas validé.
+      if (profileStatus === "PENDING" && !needsOnboarding(dbUser)) return null;
 
       // Rôle et permissions relus à chaque requête : un changement de rôle ou de
       // permissions par un autre admin s'applique immédiatement côté API.
