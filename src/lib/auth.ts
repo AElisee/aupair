@@ -7,9 +7,22 @@ import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
 import { checkRateLimit, resetRateLimit } from "./rate-limit";
 import { ADMIN_SESSION_MAX_AGE_MS } from "./constants";
-import { sendSignupEmails } from "./signup-emails";
 import { resolveAdminPermissions } from "./admin-permissions";
 import { logAdminActivity } from "./admin-activity";
+import { needsOnboarding, ONBOARDING_USER_SELECT } from "./onboarding";
+
+/** "jean.dupont@gmail.com" → "je***@gmail.com" (logs). */
+function maskEmail(email?: string | null) {
+  if (!email) return "(sans email)";
+  const at = email.indexOf("@");
+  return `${email.slice(0, Math.min(2, Math.max(at, 0)))}***${at >= 0 ? email.slice(at) : ""}`;
+}
+
+/** Inscription à finaliser (compte Google/Facebook sans profil, ou profil incomplet). */
+async function readOnboarding(userId: string): Promise<boolean> {
+  const u = await prisma.user.findUnique({ where: { id: userId }, select: ONBOARDING_USER_SELECT });
+  return u ? needsOnboarding(u) : false;
+}
 
 const LOGIN_MAX_ATTEMPTS = 5;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
@@ -22,18 +35,6 @@ class PendingValidationError extends CredentialsSignin {
 /** Identifiants valides mais inscription refusée par la modération (code lu par /connexion). */
 class AccountRejectedError extends CredentialsSignin {
   code = "account_rejected";
-}
-
-/** Statut du profil métier (au pair ou famille) d'un utilisateur, null s'il n'en a pas. */
-async function getProfileStatus(userId: string) {
-  const u = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      auPairProfile: { select: { status: true } },
-      familyProfile: { select: { status: true } },
-    },
-  });
-  return u?.auPairProfile?.status ?? u?.familyProfile?.status ?? null;
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -108,17 +109,48 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    // Connexion OAuth (Google/Facebook) d'un compte existant dont l'inscription a été rejetée :
-    // refusée, avec le même message que la connexion par mot de passe.
-    async signIn({ user, account }) {
-      if (account?.type === "credentials" || !user.email) return true;
-      const existing = await prisma.user.findUnique({
-        where: { email: user.email.trim().toLowerCase() },
-        select: { id: true },
-      });
-      if (existing && (await getProfileStatus(existing.id)) === "REJECTED") {
-        return "/connexion?error=account_rejected";
+    /**
+     * Connexion OAuth (Google/Facebook). Une première connexion crée le compte (User seul, sans
+     * profil métier) : l'utilisateur doit ensuite remplir les champs obligatoires du formulaire
+     * d'inscription sur `/inscription/completer` (cf. `needsOnboarding`, imposé par proxy.ts) avant
+     * d'accéder à son espace. Pour un compte existant, mêmes refus que la connexion par mot de
+     * passe (inactif, rejeté, en attente — sauf s'il doit encore finaliser son inscription).
+     */
+    async signIn({ user, account, profile }) {
+      if (account?.type === "credentials") return true;
+
+      const email = user.email?.trim().toLowerCase();
+      // Raison du refus dans les logs serveur (adresse masquée) : l'utilisateur ne voit qu'un message générique.
+      const refuse = (reason: string, error: string) => {
+        console.warn(`[auth] Connexion ${account?.provider ?? "OAuth"} refusée (${reason}) pour ${maskEmail(email)}`);
+        return `/connexion?error=${error}`;
+      };
+
+      if (!email) return refuse("email absent", "oauth_not_allowed");
+      // Google : l'adresse doit être vérifiée, sinon la liaison automatique par email
+      // (allowDangerousEmailAccountLinking) permettrait de prendre le contrôle d'un compte.
+      if (account?.provider === "google" && profile?.email_verified !== true) {
+        return refuse("email Google non vérifié", "oauth_not_allowed");
       }
+
+      const existing = await prisma.user.findUnique({
+        where: { email },
+        select: {
+          ...ONBOARDING_USER_SELECT,
+          isActive: true,
+          auPairProfile: { select: { ...ONBOARDING_USER_SELECT.auPairProfile.select, status: true } },
+          familyProfile: { select: { ...ONBOARDING_USER_SELECT.familyProfile.select, status: true } },
+        },
+      });
+      if (!existing) return true; // nouveau compte → finalisation de l'inscription
+      // Le back-office reste accessible uniquement par mot de passe (journalisé, session plafonnée).
+      if (existing.role === "ADMIN") return refuse("compte administrateur", "oauth_not_allowed");
+      if (!existing.isActive) return refuse("compte désactivé", "oauth_not_allowed");
+
+      const status = existing.auPairProfile?.status ?? existing.familyProfile?.status;
+      if (status === "REJECTED") return refuse("inscription rejetée", "account_rejected");
+      if (needsOnboarding(existing)) return true;
+      if (status === "PENDING") return refuse("profil en attente de validation", "pending_validation");
       return true;
     },
     async jwt({ token, user, trigger }) {
@@ -139,6 +171,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.pwdAt = passwordChangedAt
           ? new Date(passwordChangedAt).getTime()
           : 0;
+        token.onboarding = user.id ? await readOnboarding(user.id) : false;
         return token;
       }
 
@@ -152,9 +185,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (trigger === "update") {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id },
-          select: { passwordChangedAt: true },
+          select: { passwordChangedAt: true, ...ONBOARDING_USER_SELECT },
         });
         token.pwdAt = dbUser?.passwordChangedAt?.getTime() ?? 0;
+        // Aussi appelé par /inscription/completer une fois l'inscription finalisée
+        token.onboarding = dbUser ? needsOnboarding(dbUser) : false;
         return token;
       }
 
@@ -177,8 +212,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           isActive: true,
           role: true,
           adminRole: { select: { permissions: true, isSystem: true } },
-          auPairProfile: { select: { status: true } },
-          familyProfile: { select: { status: true } },
+          auPairProfile: { select: { ...ONBOARDING_USER_SELECT.auPairProfile.select, status: true } },
+          familyProfile: { select: { ...ONBOARDING_USER_SELECT.familyProfile.select, status: true } },
         },
       });
 
@@ -192,6 +227,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // permissions par un autre admin s'applique immédiatement côté API.
       token.role = dbUser.role;
       token.perms = resolveAdminPermissions(dbUser);
+      token.onboarding = needsOnboarding(dbUser);
 
       const dbPwdAt = dbUser.passwordChangedAt?.getTime() ?? 0;
       if (dbPwdAt > (token.pwdAt ?? 0)) return null;
@@ -203,6 +239,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.id as string;
         session.user.role = token.role as string;
         session.user.permissions = token.perms ?? [];
+        session.user.onboarding = token.onboarding === true;
       }
       return session;
     },
@@ -218,41 +255,5 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     // ci-dessus, indépendamment de cette valeur.
     maxAge: 30 * 24 * 60 * 60,
     updateAge: 24 * 60 * 60,
-  },
-  events: {
-    /** Lors d'une première connexion OAuth, l'adapter crée le User mais pas son profil métier. */
-    async createUser({ user }) {
-      if (!user.id) return;
-
-      const parts = (user.name ?? "").trim().split(/\s+/).filter(Boolean);
-      const firstName = parts[0] || "Utilisateur";
-      const lastName = parts.slice(1).join(" ") || "Au Pair";
-
-      await prisma.auPairProfile.create({
-        data: {
-          userId: user.id,
-          status: "PENDING",
-          firstName,
-          lastName,
-          dateOfBirth: new Date("2000-01-01"),
-          gender: "",
-          nationality: "",
-          countryOfOrigin: "",
-          languages: [],
-          targetCountries: [],
-        },
-      });
-
-      if (user.email) {
-        await sendSignupEmails({
-          userId: user.id,
-          email: user.email,
-          firstName,
-          fullName: user.name?.trim() || firstName,
-          role: "AU_PAIR",
-          baseUrl: process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXTAUTH_URL ?? "",
-        });
-      }
-    },
   },
 });

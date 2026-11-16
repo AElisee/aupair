@@ -80,7 +80,7 @@ export default function ModerationPage() {
   const [reason, setReason] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
   const [loadError, setLoadError] = useState(false);
-  const { t, locale, tValue } = useI18n();
+  const { t, locale, tValue, tError } = useI18n();
   const can = useAdminCan();
   const canAct = can("moderation.validate");
   const c = t.adminCommon;
@@ -116,12 +116,15 @@ export default function ModerationPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: p.userId, role: p.role, action, reason: actionReason }),
       });
-      if (res.ok) {
-        const data = await res.json().catch(() => ({}));
-        if (data.emailSent === false) setNotice(m.emailFailed);
-        // Le profil change d'onglet (ou quitte la modération) : on recharge les deux listes
-        await loadAll();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        // Ex. profil incomplet : la validation est refusée par l'API
+        setNotice(tError(data.error, t.adminCommon.editError));
+        return;
       }
+      if (data.emailSent === false) setNotice(m.emailFailed);
+      // Le profil change d'onglet (ou quitte la modération) : on recharge les deux listes
+      await loadAll();
     } finally {
       setProcessingId(null);
     }

@@ -3,49 +3,32 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import {
-  CheckCircle,
-  ArrowRight,
-  ArrowLeft,
-  User,
-  Home,
-  Eye,
-  EyeOff,
-  FileText,
-  Upload,
-  X,
-} from "lucide-react";
+import { CheckCircle, ArrowRight, ArrowLeft, User, Home, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SelectField } from "@/components/ui/select-field";
-import { DateField } from "@/components/ui/date-field";
-import { useCountries } from "@/hooks/useCountries";
-import { useConstants } from "@/hooks/useConstants";
-import { calculateAge } from "@/lib/utils";
-import { MAX_NUMBER_OF_KIDS } from "@/lib/constants";
-import { ID_DOCUMENT_ACCEPT, validateIdDocument } from "@/lib/id-documents";
+import {
+  appendProfileFields,
+  AuPairProfileFields,
+  EMPTY_PROFILE_FORM,
+  SIGNUP_PAGE_BACKGROUND,
+  FamilyProfileFields,
+  fieldInputClass,
+  getProfileFieldErrors,
+  type ProfileForm,
+  type SignupRole,
+} from "@/components/auth/SignupProfileFields";
+import { EMAIL_REGEX, NAME_MIN_LENGTH, PASSWORD_MIN_LENGTH } from "@/lib/signup-rules";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { useI18n } from "@/i18n";
 
-type Role = "au-pair" | "famille" | null;
+type Role = SignupRole | null;
 
-const PASSWORD_MIN_LENGTH = 8;
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const EXPERIENCE_OPTIONS = [
-  "Moins d'1 an",
-  "1 an",
-  "2 ans",
-  "3 ans",
-  "4 ans",
-  "5 ans et plus",
-];
-
-const PAGE_BACKGROUND =
-  "bg-[radial-gradient(ellipse_at_top_left,rgba(232,119,34,0.06),transparent_50%),radial-gradient(ellipse_at_top_right,rgba(58,91,168,0.10),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(63,164,91,0.07),transparent_60%),linear-gradient(180deg,#F8F9FB_0%,#F5F6FA_55%,#F3F6F5_100%)] bg-fixed";
+const PAGE_BACKGROUND = SIGNUP_PAGE_BACKGROUND;
 
 function InscriptionContent() {
   const searchParams = useSearchParams();
-  const defaultRole = (searchParams.get("role") as Role) || null;
+  const roleParam = searchParams.get("role");
+  const defaultRole: Role = roleParam === "au-pair" || roleParam === "famille" ? roleParam : null;
   const [step, setStep] = useState(defaultRole ? 1 : 0);
   const [role, setRole] = useState<Role>(defaultRole);
   const [form, setForm] = useState({
@@ -53,23 +36,12 @@ function InscriptionContent() {
     lastName: "",
     email: "",
     password: "",
-    country: "",
-    gender: "",
-    dateOfBirth: "",
-    languages: [] as string[],
-    educationLevel: "",
-    experience: "",
-    city: "",
-    numberOfKids: "",
-    hostCountry: "",
+    ...EMPTY_PROFILE_FORM,
   });
   // Pièce d'identité, obligatoire pour une famille
   const [idDocument, setIdDocument] = useState<File | null>(null);
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const { origin: originCountries, host: hostCountries } = useCountries();
-  const { languages: LANGUAGES, educationLevels: EDUCATION_LEVELS } =
-    useConstants();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
   const [blurred, setBlurred] = useState<Record<string, boolean>>({});
@@ -87,36 +59,19 @@ function InscriptionContent() {
       const lastName = form.lastName.trim();
       const email = form.email.trim();
       if (!firstName) errs.firstName = e.firstName;
-      else if (firstName.length < 2) errs.firstName = e.firstNameTooShort;
+      else if (firstName.length < NAME_MIN_LENGTH) errs.firstName = e.firstNameTooShort;
       if (!lastName) errs.lastName = e.lastName;
-      else if (lastName.length < 2) errs.lastName = e.lastNameTooShort;
+      else if (lastName.length < NAME_MIN_LENGTH) errs.lastName = e.lastNameTooShort;
       if (!email) errs.email = e.email;
       else if (!EMAIL_REGEX.test(email)) errs.email = e.emailInvalid;
       if (!form.password) errs.password = e.password;
       else if (form.password.length < PASSWORD_MIN_LENGTH)
         errs.password = e.passwordTooShort;
-    } else if (step === 2 && role === "au-pair") {
-      if (!form.country) errs.country = e.country;
-      if (!form.gender) errs.gender = e.gender;
-      if (!form.dateOfBirth)
-        errs.dateOfBirth = e.dateOfBirth;
-      else if (calculateAge(form.dateOfBirth) < 18)
-        errs.dateOfBirth = e.tooYoung;
-      if (form.languages.length === 0)
-        errs.languages = e.languages;
-    } else if (step === 2 && role === "famille") {
-      if (!form.hostCountry)
-        errs.hostCountry = e.hostCountry;
-      if (!form.city) errs.city = e.city;
-      const kids = form.numberOfKids.trim();
-      if (!kids) errs.numberOfKids = e.numberOfKids;
-      else if (!/^\d+$/.test(kids) || Number(kids) > MAX_NUMBER_OF_KIDS)
-        errs.numberOfKids = e.numberOfKidsInvalid(MAX_NUMBER_OF_KIDS);
-      if (!idDocument) errs.idDocument = e.idDocument;
-      else {
-        const fileError = validateIdDocument(idDocument);
-        if (fileError) errs.idDocument = tError(fileError, fileError);
-      }
+    } else if (step === 2 && role) {
+      Object.assign(
+        errs,
+        getProfileFieldErrors(role, form, { idDocument, withIdDocument: role === "famille" }, { t, tError }),
+      );
     }
     return errs;
   })();
@@ -132,12 +87,14 @@ function InscriptionContent() {
   const markBlurred = (field: string) =>
     setBlurred((b) => (b[field] ? b : { ...b, [field]: true }));
 
-  const inputClass = (field: string) =>
-    `w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 ${
-      fieldError(field)
-        ? "border-red-300 focus:ring-red-400"
-        : "border-gray-200 focus:ring-[#E87722]"
-    }`;
+  const inputClass = (field: string) => fieldInputClass(!!fieldError(field));
+
+  const profileFieldsProps = {
+    form,
+    onChange: (patch: Partial<ProfileForm>) => setForm((f) => ({ ...f, ...patch })),
+    fieldError,
+    markBlurred,
+  };
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -145,24 +102,12 @@ function InscriptionContent() {
 
     try {
       // multipart/form-data pour pouvoir joindre la pièce d'identité de la famille
-      const fields: Record<string, string> = {
-        role: role ?? "",
-        firstName: form.firstName.trim(),
-        lastName: form.lastName.trim(),
-        email: form.email.trim(),
-        password: form.password,
-        country: form.country,
-        gender: form.gender,
-        dateOfBirth: form.dateOfBirth,
-        languages: JSON.stringify(form.languages),
-        educationLevel: form.educationLevel.trim(),
-        experience: form.experience.trim(),
-        city: form.city,
-        numberOfKids: form.numberOfKids.trim(),
-        hostCountry: form.hostCountry,
-      };
       const body = new FormData();
-      for (const [key, value] of Object.entries(fields)) body.append(key, value);
+      body.append("firstName", form.firstName.trim());
+      body.append("lastName", form.lastName.trim());
+      body.append("email", form.email.trim());
+      body.append("password", form.password);
+      if (role) appendProfileFields(body, role, form);
       if (role === "famille" && idDocument) body.append("idDocument", idDocument);
 
       const res = await fetch("/api/auth/register", { method: "POST", body });
@@ -442,142 +387,7 @@ function InscriptionContent() {
               <h2 className="text-xl font-extrabold text-[#1A1A2E] mb-6">
                 {s.auPairProfile}
               </h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    {s.countryOfOrigin}
-                  </label>
-                  <SelectField
-                    value={form.country}
-                    onChange={(v) => setForm({ ...form, country: v })}
-                    onBlur={() => markBlurred("country")}
-                    invalid={!!fieldError("country")}
-                    aria-label={s.countryOfOrigin}
-                    placeholder={s.selectYourCountry}
-                    options={originCountries.map((c) => ({
-                      value: c.name,
-                      label: tValue(c.name),
-                    }))}
-                  />
-                  {fieldError("country") && (
-                    <p className="text-xs text-red-500 mt-1">
-                      {fieldError("country")}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    {s.gender}
-                  </label>
-                  <SelectField
-                    value={form.gender}
-                    onChange={(v) => setForm({ ...form, gender: v })}
-                    onBlur={() => markBlurred("gender")}
-                    invalid={!!fieldError("gender")}
-                    aria-label={s.gender}
-                    placeholder={s.select}
-                    options={["Femme", "Homme"].map((v) => ({
-                      value: v,
-                      label: tValue(v),
-                    }))}
-                  />
-                  {fieldError("gender") && (
-                    <p className="text-xs text-red-500 mt-1">
-                      {fieldError("gender")}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    {s.dateOfBirth}
-                  </label>
-                  <DateField
-                    value={form.dateOfBirth}
-                    max={new Date().toISOString().slice(0, 10)}
-                    onChange={(v) => setForm({ ...form, dateOfBirth: v })}
-                    onBlur={() => markBlurred("dateOfBirth")}
-                    className={inputClass("dateOfBirth")}
-                  />
-                  {fieldError("dateOfBirth") && (
-                    <p className="text-xs text-red-500 mt-1">
-                      {fieldError("dateOfBirth")}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    {s.languages}
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {LANGUAGES.map((lang) => (
-                      <label
-                        key={lang}
-                        className={`flex items-center gap-2 border rounded-xl px-3 py-2 cursor-pointer text-sm transition-all ${
-                          form.languages.includes(lang)
-                            ? "border-[#E87722] bg-[#FFF3E0] text-[#E87722] font-semibold"
-                            : "border-gray-200 text-gray-700 hover:border-[#E87722]"
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          className="sr-only"
-                          checked={form.languages.includes(lang)}
-                          onChange={(e) =>
-                            setForm({
-                              ...form,
-                              languages: e.target.checked
-                                ? [...form.languages, lang]
-                                : form.languages.filter((l) => l !== lang),
-                            })
-                          }
-                        />
-                        {tValue(lang)}
-                      </label>
-                    ))}
-                  </div>
-                  {fieldError("languages") && (
-                    <p className="text-xs text-red-500 mt-1">
-                      {fieldError("languages")}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    {s.educationLevel}
-                  </label>
-                  <SelectField
-                    value={form.educationLevel}
-                    onChange={(v) => setForm({ ...form, educationLevel: v })}
-                    aria-label={s.educationLevel}
-                    placeholder={s.select}
-                    options={EDUCATION_LEVELS.filter((level) => level !== "Autre").map((level) => ({
-                      value: level,
-                      label: tValue(level),
-                    }))}
-                    allowCustom
-                    otherLabel={s.otherOption}
-                    customPlaceholder={s.educationCustomPlaceholder}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    {s.experience}
-                  </label>
-                  <SelectField
-                    value={form.experience}
-                    onChange={(v) => setForm({ ...form, experience: v })}
-                    aria-label={s.experience}
-                    placeholder={s.select}
-                    options={EXPERIENCE_OPTIONS.map((v) => ({
-                      value: v,
-                      label: tValue(v),
-                    }))}
-                    allowCustom
-                    otherLabel={s.otherOption}
-                    customPlaceholder={s.experienceCustomPlaceholder}
-                  />
-                </div>
-              </div>
+              <AuPairProfileFields {...profileFieldsProps} />
             </div>
           )}
 
@@ -586,126 +396,12 @@ function InscriptionContent() {
               <h2 className="text-xl font-extrabold text-[#1A1A2E] mb-6">
                 {s.familyProfile}
               </h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    {s.hostCountry}
-                  </label>
-                  <SelectField
-                    value={form.hostCountry}
-                    onChange={(v) => setForm({ ...form, hostCountry: v })}
-                    onBlur={() => markBlurred("hostCountry")}
-                    invalid={!!fieldError("hostCountry")}
-                    aria-label={s.hostCountry}
-                    placeholder={s.selectCountry}
-                    options={hostCountries.map((c) => ({
-                      value: c.name,
-                      label: tValue(c.name),
-                    }))}
-                  />
-                  {fieldError("hostCountry") && (
-                    <p className="text-xs text-red-500 mt-1">
-                      {fieldError("hostCountry")}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    {s.city}
-                  </label>
-                  <input
-                    type="text"
-                    value={form.city}
-                    onChange={(e) => setForm({ ...form, city: e.target.value })}
-                    onBlur={() => markBlurred("city")}
-                    className={inputClass("city")}
-                    placeholder="Paris, Lyon, Berlin..."
-                  />
-                  {fieldError("city") && (
-                    <p className="text-xs text-red-500 mt-1">
-                      {fieldError("city")}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    {s.numberOfKids}
-                  </label>
-                  <SelectField
-                    value={form.numberOfKids}
-                    onChange={(v) => setForm({ ...form, numberOfKids: v })}
-                    onBlur={() => markBlurred("numberOfKids")}
-                    invalid={!!fieldError("numberOfKids")}
-                    aria-label={s.numberOfKids}
-                    placeholder={s.select}
-                    options={["0", "1", "2", "3", "4"].map((n) => ({
-                      value: n,
-                      label: n,
-                    }))}
-                    allowCustom
-                    otherLabel={s.otherOption}
-                    customPlaceholder={s.numberOfKidsCustomPlaceholder}
-                  />
-                  {fieldError("numberOfKids") && (
-                    <p className="text-xs text-red-500 mt-1">
-                      {fieldError("numberOfKids")}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <p className="block text-sm font-semibold text-gray-700 mb-1">
-                    {s.idDocument}
-                  </p>
-                  {idDocument ? (
-                    <div
-                      className={`flex items-center gap-3 border rounded-xl px-4 py-3 ${
-                        fieldError("idDocument") ? "border-red-300" : "border-gray-200"
-                      }`}
-                    >
-                      <FileText className="w-5 h-5 text-[#E87722] shrink-0" />
-                      <span className="text-sm text-gray-700 truncate flex-1">
-                        {idDocument.name}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setIdDocument(null)}
-                        className="p-1 text-gray-400 hover:text-red-500 rounded-lg"
-                        aria-label={s.idDocumentRemove}
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ) : (
-                    <label
-                      className={`flex items-center justify-center gap-2 border-2 border-dashed rounded-xl px-4 py-5 cursor-pointer text-sm transition-colors focus-within:ring-2 focus-within:ring-[#E87722] ${
-                        fieldError("idDocument")
-                          ? "border-red-300 text-red-500"
-                          : "border-gray-200 text-gray-500 hover:border-[#E87722] hover:text-[#E87722]"
-                      }`}
-                    >
-                      <Upload className="w-4 h-4" />
-                      {s.idDocumentChoose}
-                      <input
-                        type="file"
-                        accept={ID_DOCUMENT_ACCEPT}
-                        className="sr-only"
-                        onChange={(ev) => {
-                          setIdDocument(ev.target.files?.[0] ?? null);
-                          markBlurred("idDocument");
-                          ev.target.value = "";
-                        }}
-                      />
-                    </label>
-                  )}
-                  {fieldError("idDocument") ? (
-                    <p className="text-xs text-red-500 mt-1">
-                      {fieldError("idDocument")}
-                    </p>
-                  ) : (
-                    <p className="text-xs text-gray-400 mt-1">{s.idDocumentHint}</p>
-                  )}
-                </div>
-              </div>
+              <FamilyProfileFields
+                {...profileFieldsProps}
+                idDocument={idDocument}
+                setIdDocument={setIdDocument}
+                withIdDocument
+              />
             </div>
           )}
 

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserLabel, logAdminActivity } from "@/lib/admin-activity";
-import { requireAdminSession, restoreProfile, setProfileStatus } from "@/lib/admin";
+import { getProfileMissingFields, requireAdminSession, restoreProfile, setProfileStatus } from "@/lib/admin";
+import { INCOMPLETE_PROFILE_ERROR } from "@/lib/signup-rules";
 import { ProfileStatus } from "@/generated/prisma/client";
 import { getCountryFlagMap } from "@/lib/countries";
 import { calculateAge } from "@/lib/utils";
@@ -159,6 +160,14 @@ export async function PATCH(req: Request) {
     await restoreProfile(userId, role);
     await log();
     return NextResponse.json({ success: true });
+  }
+
+  // Un profil auquel manquent les champs obligatoires de l'inscription ne peut pas être validé
+  if (action === "validate") {
+    const missing = await getProfileMissingFields(userId, role);
+    if (missing.length > 0) {
+      return NextResponse.json({ error: INCOMPLETE_PROFILE_ERROR, missing }, { status: 400 });
+    }
   }
 
   const cleanReason = cleanStatusReason(reason);

@@ -29,6 +29,10 @@ export const auth = {
       fr: "Votre inscription n'a pas été validée. Pour toute question, contactez support@aupairaeu.com.",
       en: "Your sign-up was not approved. For any question, contact support@aupairaeu.com.",
     },
+    oauthNotAllowed: {
+      fr: "Connexion impossible avec ce compte. Utilisez votre adresse email et votre mot de passe.",
+      en: "This account cannot log in this way. Please use your email address and password.",
+    },
     genericError: { fr: "Une erreur est survenue. Veuillez réessayer.", en: "Something went wrong. Please try again." },
     email: { fr: "Adresse email", en: "Email address" },
     emailPlaceholder: { fr: "votre@email.com", en: "your@email.com" },
@@ -195,5 +199,25 @@ export const auth = {
     continue: { fr: "Continuer", en: "Continue" },
     creating: { fr: "Création en cours...", en: "Creating..." },
     createMyAccount: { fr: "Créer mon compte", en: "Create my account" },
+  },
+  // Finalisation d'un compte créé via Google/Facebook (/inscription/completer)
+  completeSignup: {
+    title: { fr: "Finalisez votre inscription", en: "Complete your sign-up" },
+    intro: {
+      fr: "Pour accéder à votre espace, renseignez les informations obligatoires de l'inscription. Elles seront vérifiées par notre équipe.",
+      en: "To access your space, please fill in the required sign-up information. It will be reviewed by our team.",
+    },
+    signedInAs: {
+      fr: (email: string) => `Connecté avec ${email}`,
+      en: (email: string) => `Signed in as ${email}`,
+    },
+    roleTitle: { fr: "Vous êtes *", en: "You are *" },
+    roleRequired: { fr: "Choisissez votre profil.", en: "Choose your profile." },
+    identityTitle: { fr: "Vos informations", en: "Your details" },
+    submit: { fr: "Valider mon inscription", en: "Complete my sign-up" },
+    submitting: { fr: "Enregistrement...", en: "Saving..." },
+    termsStart: { fr: "En validant, vous acceptez nos", en: "By continuing, you accept our" },
+    loadError: { fr: "Impossible de charger votre compte. Veuillez réessayer.", en: "Unable to load your account. Please try again." },
+    signOut: { fr: "Se déconnecter", en: "Log out" },
   },
 } satisfies Dictionary;

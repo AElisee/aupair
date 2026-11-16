@@ -21,6 +21,9 @@ function ConnexionForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
+  // Une seule connexion Google/Facebook à la fois : un second clic relance le flux et remplace le
+  // cookie PKCE du premier, d'où l'erreur « invalid_grant: Invalid code verifier » au retour.
+  const [oauthPending, setOauthPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { t, locale } = useI18n();
   const l = t.login;
@@ -41,11 +44,17 @@ function ConnexionForm() {
   const rawCallback = searchParams.get("callbackUrl");
   const safeCallbackUrl = getSafeCallbackUrl(rawCallback);
 
-  // Connexion OAuth refusée par le callback signIn (inscription rejetée)
+  // Connexion OAuth refusée par le callback signIn (src/lib/auth.ts)
   const urlError = searchParams.get("error");
   useEffect(() => {
-    if (urlError === "account_rejected") setError(l.accountRejected);
-  }, [urlError, l.accountRejected]);
+    const messages: Record<string, string> = {
+      account_rejected: l.accountRejected,
+      pending_validation: l.pendingValidation,
+      oauth_not_allowed: l.oauthNotAllowed,
+    };
+    // Autre code (échec côté Auth.js : OAuthCallbackError, Configuration…) : message générique
+    if (urlError) setError(messages[urlError] ?? l.genericError);
+  }, [urlError, l.accountRejected, l.pendingValidation, l.oauthNotAllowed, l.genericError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,13 +102,29 @@ function ConnexionForm() {
   };
 
   const handleOAuth = async (provider: "google" | "facebook") => {
-    const { signIn } = await import("next-auth/react");
-    // On passe uniquement l'URL déjà validée — jamais la valeur brute
-    await signIn(provider, {
-      callbackUrl:
-        safeCallbackUrl !== "/" ? safeCallbackUrl : "/dashboard/au-pair",
-    });
+    if (oauthPending) return;
+    setOauthPending(true);
+    try {
+      const { signIn } = await import("next-auth/react");
+      // On passe uniquement l'URL déjà validée — jamais la valeur brute
+      await signIn(provider, {
+        callbackUrl:
+          safeCallbackUrl !== "/" ? safeCallbackUrl : "/dashboard/au-pair",
+      });
+    } catch {
+      setOauthPending(false);
+      setError(l.genericError);
+    }
   };
+
+  // Retour arrière depuis Google/Facebook (page restaurée du cache) : boutons réactivés
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) setOauthPending(false);
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
 
   return (
     <div className="min-h-dvh flex">
@@ -154,14 +179,16 @@ function ConnexionForm() {
           <div className="space-y-3 mb-6">
             <button
               onClick={() => handleOAuth("google")}
-              className="w-full flex items-center justify-center gap-3 border border-gray-200 rounded-xl py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              disabled={oauthPending}
+              className="w-full flex items-center justify-center gap-3 border border-gray-200 rounded-xl py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-60 disabled:cursor-wait"
             >
               <FcGoogle className="w-5 h-5" />
               {l.continueGoogle}
             </button>
             <button
               onClick={() => handleOAuth("facebook")}
-              className="w-full flex items-center justify-center gap-3 bg-[#1877F2] text-white rounded-xl py-3 text-sm font-medium hover:bg-[#166fe5] transition-colors"
+              disabled={oauthPending}
+              className="w-full flex items-center justify-center gap-3 bg-[#1877F2] text-white rounded-xl py-3 text-sm font-medium hover:bg-[#166fe5] transition-colors disabled:opacity-60 disabled:cursor-wait"
             >
               <FaFacebook className="w-5 h-5" />
               {l.continueFacebook}

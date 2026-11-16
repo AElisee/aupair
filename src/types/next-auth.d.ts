@@ -8,6 +8,8 @@ declare module "next-auth" {
       role: string;
       /** Permissions du back-office (vide si non ADMIN) */
       permissions: AdminPermission[];
+      /** Inscription à finaliser sur /inscription/completer (compte Google/Facebook, profil incomplet) */
+      onboarding: boolean;
     } & DefaultSession["user"];
   }
 
@@ -26,5 +28,7 @@ declare module "next-auth/jwt" {
     loginAt?: number;
     /** Permissions du back-office, recalculées depuis la base à chaque requête */
     perms?: AdminPermission[];
+    /** Inscription à finaliser : proxy.ts redirige l'espace vers /inscription/completer */
+    onboarding?: boolean;
   }
 }

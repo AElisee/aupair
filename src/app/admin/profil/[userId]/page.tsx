@@ -287,7 +287,7 @@ export default function AdminProfilePage() {
   const [confirmValidate, setConfirmValidate] = useState(false);
   const [feedback, setFeedback] = useState<{ ok: boolean; text: string } | null>(null);
   const { origin: originCountries, host: hostCountries } = useCountries();
-  const { t, locale, tValue, relativeDate } = useI18n();
+  const { t, locale, tValue, relativeDate, tError } = useI18n();
   const c = t.adminCommon;
   const tp = t.adminProfile;
   const formatDate = (date: string) => new Date(date).toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" });
@@ -322,7 +322,12 @@ export default function AdminProfilePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, role, action, reason }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        // Ex. profil incomplet : la validation est refusée par l'API
+        const body = await res.json().catch(() => ({}));
+        setFeedback({ ok: false, text: tError(body.error, c.editError) });
+        return;
+      }
       // Recharge le profil : le statut et la date de validation viennent du serveur
       await load();
       setFeedback({ ok: true, text: tp.statusUpdated });

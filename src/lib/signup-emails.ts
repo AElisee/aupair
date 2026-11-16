@@ -3,8 +3,10 @@ import { sendMail } from "./mail";
 import { accountCreatedEmailHtml, newSignupAdminEmailHtml } from "./email-templates";
 
 /**
- * Emails envoyés à chaque inscription (formulaire ou OAuth) : confirmation à l'utilisateur
- * (compte en attente de validation sous 24-48h) et notification à l'équipe support.
+ * Emails envoyés à chaque inscription (formulaire, ou finalisation d'un compte Google/Facebook) :
+ * confirmation à l'utilisateur (compte en attente de validation sous 24-48h) et notification à
+ * l'équipe support. `completedExisting` : un compte déjà existant vient de compléter ses champs
+ * obligatoires (son statut ne change pas) — seul le support est prévenu, pour relecture.
  * Ne lève jamais : un échec d'envoi ne doit pas faire échouer l'inscription.
  */
 export async function sendSignupEmails(params: {
@@ -15,20 +17,23 @@ export async function sendSignupEmails(params: {
   role: "AU_PAIR" | "FAMILLE";
   country?: string | null;
   baseUrl: string;
+  completedExisting?: boolean;
 }) {
-  const { userId, email, firstName, fullName, role, country, baseUrl } = params;
+  const { userId, email, firstName, fullName, role, country, baseUrl, completedExisting = false } = params;
 
   const [userMail, adminMail] = await Promise.all([
-    sendMail({
-      to: email,
-      subject: "Votre compte AuPair A.EU a bien été créé",
-      noReply: true,
-      html: accountCreatedEmailHtml({ name: firstName, role }),
-    }),
+    completedExisting
+      ? Promise.resolve({ ok: true as const })
+      : sendMail({
+          to: email,
+          subject: "Votre compte AuPair A.EU a bien été créé",
+          noReply: true,
+          html: accountCreatedEmailHtml({ name: firstName, role }),
+        }),
     sendMail({
       to: SUPPORT_EMAIL,
       replyTo: email,
-      subject: `[Inscription] ${role === "AU_PAIR" ? "Au pair" : "Famille"} — ${fullName}`,
+      subject: `[${completedExisting ? "Profil complété" : "Inscription"}] ${role === "AU_PAIR" ? "Au pair" : "Famille"} — ${fullName}`,
       html: newSignupAdminEmailHtml({
         name: fullName,
         email,

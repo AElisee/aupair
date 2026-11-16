@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ProfileStatus } from "@/generated/prisma/client";
+import { COMPLETE_AU_PAIR_WHERE } from "@/lib/onboarding";
 import { calculateAge } from "@/lib/utils";
 import { getCountryFlagMap } from "@/lib/countries";
 import { rankSuggestions } from "@/lib/suggestions";
@@ -35,7 +36,7 @@ export async function GET() {
 
   // Suggestions d'au pairs : favoris, pays ciblé, âge/genre/langues préférés
   const [auPairProfiles, favorites, flagMap] = await Promise.all([
-    prisma.auPairProfile.findMany({ where: { status: ProfileStatus.ACTIVE } }),
+    prisma.auPairProfile.findMany({ where: { status: ProfileStatus.ACTIVE, ...COMPLETE_AU_PAIR_WHERE } }),
     prisma.favorite.findMany({ where: { userId: session.user.id }, select: { targetId: true } }),
     getCountryFlagMap(),
   ]);

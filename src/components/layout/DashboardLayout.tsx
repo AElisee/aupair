@@ -2,14 +2,15 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { usePathname, useRouter } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { LogOut, ChevronRight, ChevronDown, Menu, X, Bell, Crown, User } from "lucide-react";
 import { PendingValidationGate } from "@/components/dashboard/PendingValidationGate";
 import { ICON } from "@/components/admin/AdminUI";
 import { useI18n } from "@/i18n";
 import { formatDisplayName } from "@/lib/utils";
+import { ONBOARDING_PATH } from "@/lib/onboarding";
 import { LanguageToggle } from "./LanguageToggle";
 import { DASHBOARD_NAV, type DashboardNavItem, type DashboardRole } from "./dashboard-nav";
 
@@ -245,6 +246,14 @@ function SidebarContent({
 
 export default function DashboardLayout({ children, role, userName }: DashboardLayoutProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { data: session } = useSession();
+  // Inscription Google/Facebook à finaliser : déjà redirigé par proxy.ts, sauf cookie de session
+  // émis avant cette règle (le flag y apparaît au premier rafraîchissement de la session).
+  const mustCompleteSignup = session?.user?.onboarding === true;
+  useEffect(() => {
+    if (mustCompleteSignup) router.replace(ONBOARDING_PATH);
+  }, [mustCompleteSignup, router]);
   const { t } = useI18n();
   const navItems = DASHBOARD_NAV[role];
   const [photoUrl, setPhotoUrl] = useState("");
@@ -337,7 +346,7 @@ export default function DashboardLayout({ children, role, userName }: DashboardL
     };
   }, [mobileMenuOpen]);
 
-  if (profileStatus === undefined) {
+  if (profileStatus === undefined || mustCompleteSignup) {
     return (
       <div className={`min-h-dvh flex items-center justify-center ${SPACE_BACKGROUND[role]}`}>
         <div className="w-8 h-8 border-4 border-[#E87722] border-t-transparent rounded-full animate-spin" />

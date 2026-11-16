@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ProfileStatus } from "@/generated/prisma/client";
+import { COMPLETE_AU_PAIR_WHERE } from "@/lib/onboarding";
 import { getCountryFlagMap } from "@/lib/countries";
 import { calculateAge } from "@/lib/utils";
 
@@ -12,6 +13,7 @@ export async function GET() {
     prisma.auPairProfile.findMany({
       where: {
         status: ProfileStatus.ACTIVE,
+        ...COMPLETE_AU_PAIR_WHERE,
         user: { subscriptions: { some: { status: "ACTIVE", expiresAt: { gt: new Date() } } } },
       },
       orderBy: { createdAt: "desc" },

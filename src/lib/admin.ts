@@ -4,6 +4,7 @@ import { sendMail } from "./mail";
 import { accountValidatedEmailHtml } from "./email-templates";
 import { ProfileStatus } from "@/generated/prisma/client";
 import type { AdminPermission } from "./admin-permissions";
+import { getMissingProfileFields, type ProfileRequiredField } from "./signup-rules";
 
 /**
  * Retourne la session si l'utilisateur connecté est ADMIN et détient au moins une des
@@ -15,6 +16,22 @@ export async function requireAdminSession(anyOf?: AdminPermission | AdminPermiss
   const required = anyOf === undefined ? [] : Array.isArray(anyOf) ? anyOf : [anyOf];
   if (required.length > 0 && !required.some((p) => session.user.permissions?.includes(p))) return null;
   return session;
+}
+
+/**
+ * Champs obligatoires de l'inscription manquants sur le profil (vide si complet ou introuvable).
+ * Vérifié avant toute validation : un profil incomplet ne doit jamais devenir visible.
+ */
+export async function getProfileMissingFields(userId: string, role: "AU_PAIR" | "FAMILLE"): Promise<ProfileRequiredField[]> {
+  if (role === "AU_PAIR") {
+    const p = await prisma.auPairProfile.findUnique({
+      where: { userId },
+      select: { gender: true, countryOfOrigin: true, languages: true },
+    });
+    return p ? getMissingProfileFields(role, p) : [];
+  }
+  const p = await prisma.familyProfile.findUnique({ where: { userId }, select: { country: true, city: true } });
+  return p ? getMissingProfileFields(role, p) : [];
 }
 
 /** Statuts qui retirent le compte de la plateforme : date, admin et motif sont conservés sur le profil */

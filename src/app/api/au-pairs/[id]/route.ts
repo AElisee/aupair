@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ProfileStatus } from "@/generated/prisma/client";
+import { COMPLETE_AU_PAIR_WHERE } from "@/lib/onboarding";
 import { calculateAge } from "@/lib/utils";
 import { registerProfileView } from "@/lib/profile-views";
 
@@ -24,6 +25,7 @@ export async function GET(
       where: {
         userId: id,
         status: ProfileStatus.ACTIVE,
+        ...COMPLETE_AU_PAIR_WHERE,
         user: { subscriptions: { some: { status: "ACTIVE", expiresAt: { gt: new Date() } } } },
       },
     }),

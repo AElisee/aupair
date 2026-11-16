@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { supabaseAdmin } from "@/lib/supabase";
-import { validateIdDocument } from "@/lib/id-documents";
-import { ID_DOCUMENT_BUCKET as BUCKET, uploadIdDocuments } from "@/lib/id-documents.server";
+import { ID_DOCUMENT_BUCKET as BUCKET, uploadIdDocuments, validateIdDocumentServer } from "@/lib/id-documents.server";
 
 const MAX_DOCUMENTS = 4;
 
@@ -42,7 +41,7 @@ export async function POST(request: Request) {
   }
 
   for (const file of files) {
-    const fileError = validateIdDocument(file);
+    const fileError = await validateIdDocumentServer(file);
     if (fileError) {
       return NextResponse.json({ error: fileError }, { status: 400 });
     }

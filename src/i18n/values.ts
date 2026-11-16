@@ -226,6 +226,17 @@ const SERVER_ERRORS: Record<string, string> = {
   "Vous devez avoir au moins 18 ans pour vous inscrire en tant qu'au pair.":
     "You must be at least 18 years old to sign up as an au pair.",
   "Erreur lors de la création du compte.": "Error while creating the account.",
+  "Nom ou prénom invalide.": "Invalid first or last name.",
+  "Votre inscription est déjà complète.": "Your sign-up is already complete.",
+  "Trop de tentatives. Merci de réessayer plus tard.": "Too many attempts. Please try again later.",
+  "Le mot de passe est trop long.": "The password is too long.",
+  "La ville est obligatoire.": "City is required.",
+  "Ville invalide.": "Invalid city.",
+  "Le pays d'origine est obligatoire.": "Country of origin is required.",
+  "Sélectionnez au moins une langue.": "Select at least one language.",
+  "Langue invalide.": "Invalid language.",
+  "Profil incomplet : les champs obligatoires de l'inscription ne sont pas renseignés.":
+    "Incomplete profile: the required sign-up fields are missing.",
   "Impossible de contacter la base de données.": "Unable to reach the database.",
   "Trop de tentatives d'inscription. Merci de réessayer plus tard.": "Too many sign-up attempts. Please try again later.",
   "Ce lien de réinitialisation est invalide ou a expiré.": "This reset link is invalid or has expired.",

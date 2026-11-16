@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { getSafeCallbackUrl, getDefaultRedirectForRole } from "@/lib/safe-redirect";
 import { ADMIN_SESSION_MAX_AGE_MS } from "@/lib/constants";
+import { ONBOARDING_PATH } from "@/lib/onboarding";
 
 /**
  * Routes protégées par authentification (tout utilisateur connecté)
@@ -22,7 +23,8 @@ const GUEST_ONLY = ["/connexion"];
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const isAuthRequired = AUTH_REQUIRED.some((p) => pathname.startsWith(p));
+  const isOnboarding = pathname === ONBOARDING_PATH;
+  const isAuthRequired = isOnboarding || AUTH_REQUIRED.some((p) => pathname.startsWith(p));
   const isAdminOnly = ADMIN_ONLY.some((p) => pathname.startsWith(p));
   const isGuestOnly = GUEST_ONLY.some((p) => pathname.startsWith(p));
 
@@ -39,6 +41,16 @@ export async function proxy(request: NextRequest) {
   // Un token sans id est une session invalidée (cf. callback jwt) : on la traite
   // comme une absence de session.
   const token = rawToken?.id ? rawToken : null;
+
+  // ── Inscription Google/Facebook à finaliser (champs obligatoires du formulaire) ──
+  // L'espace et la connexion renvoient vers /inscription/completer ; cette page n'est
+  // accessible qu'aux comptes qui en ont besoin.
+  if (token?.onboarding && (isGuestOnly || (isAuthRequired && !isOnboarding))) {
+    return NextResponse.redirect(new URL(ONBOARDING_PATH, request.url));
+  }
+  if (isOnboarding && token && !token.onboarding) {
+    return NextResponse.redirect(new URL(getDefaultRedirectForRole(token.role as string | undefined), request.url));
+  }
 
   // ── Déjà authentifié → on bloque l'accès aux pages réservées aux invités ───
   if (isGuestOnly) {
@@ -95,5 +107,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*", "/connexion"],
+  matcher: ["/dashboard/:path*", "/admin/:path*", "/connexion", "/inscription/completer"],
 };
