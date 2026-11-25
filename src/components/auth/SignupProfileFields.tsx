@@ -3,6 +3,7 @@
 import { FileText, Upload, X } from "lucide-react";
 import { SelectField } from "@/components/ui/select-field";
 import { DateField } from "@/components/ui/date-field";
+import { RequiredMark } from "@/components/ui/required-mark";
 import { useCountries } from "@/hooks/useCountries";
 import { useConstants } from "@/hooks/useConstants";
 import { calculateAge } from "@/lib/utils";
@@ -97,12 +98,12 @@ export function getProfileFieldErrors(
     if (!kids) errs.numberOfKids = e.numberOfKids;
     else if (!/^\d+$/.test(kids) || Number(kids) > MAX_NUMBER_OF_KIDS)
       errs.numberOfKids = e.numberOfKidsInvalid(MAX_NUMBER_OF_KIDS);
-    if (withIdDocument) {
-      if (!idDocument) errs.idDocument = e.idDocument;
-      else {
-        const fileError = validateIdDocument(idDocument);
-        if (fileError) errs.idDocument = tError(fileError, fileError);
-      }
+  }
+  if (withIdDocument) {
+    if (!idDocument) errs.idDocument = e.idDocument;
+    else {
+      const fileError = validateIdDocument(idDocument);
+      if (fileError) errs.idDocument = tError(fileError, fileError);
     }
   }
   return errs;
@@ -120,9 +121,21 @@ type FieldsProps = {
   onChange: (patch: Partial<ProfileForm>) => void;
   fieldError: (field: string) => string | null;
   markBlurred: (field: string) => void;
+  idDocument: File | null;
+  setIdDocument: (file: File | null) => void;
+  /** false : la pièce d'identité a déjà été déposée (ancien compte) */
+  withIdDocument: boolean;
 };
 
-export function AuPairProfileFields({ form, onChange, fieldError, markBlurred }: FieldsProps) {
+export function AuPairProfileFields({
+  form,
+  onChange,
+  fieldError,
+  markBlurred,
+  idDocument,
+  setIdDocument,
+  withIdDocument,
+}: FieldsProps) {
   const { t, tValue } = useI18n();
   const s = t.signup;
   const { origin: originCountries } = useCountries();
@@ -133,7 +146,7 @@ export function AuPairProfileFields({ form, onChange, fieldError, markBlurred }:
     <div className="space-y-4">
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-1">
-          {s.countryOfOrigin}
+          {s.countryOfOrigin} <RequiredMark />
         </label>
         <SelectField
           value={form.country}
@@ -141,6 +154,7 @@ export function AuPairProfileFields({ form, onChange, fieldError, markBlurred }:
           onBlur={() => markBlurred("country")}
           invalid={!!fieldError("country")}
           aria-label={s.countryOfOrigin}
+          required
           placeholder={s.selectYourCountry}
           options={originCountries.map((c) => ({
             value: c.name,
@@ -155,7 +169,7 @@ export function AuPairProfileFields({ form, onChange, fieldError, markBlurred }:
       </div>
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-1">
-          {s.gender}
+          {s.gender} <RequiredMark />
         </label>
         <SelectField
           value={form.gender}
@@ -163,6 +177,7 @@ export function AuPairProfileFields({ form, onChange, fieldError, markBlurred }:
           onBlur={() => markBlurred("gender")}
           invalid={!!fieldError("gender")}
           aria-label={s.gender}
+          required
           placeholder={s.select}
           options={GENDERS.map((v) => ({
             value: v,
@@ -177,7 +192,7 @@ export function AuPairProfileFields({ form, onChange, fieldError, markBlurred }:
       </div>
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-1">
-          {s.dateOfBirth}
+          {s.dateOfBirth} <RequiredMark />
         </label>
         <DateField
           value={form.dateOfBirth}
@@ -194,7 +209,7 @@ export function AuPairProfileFields({ form, onChange, fieldError, markBlurred }:
       </div>
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-2">
-          {s.languages}
+          {s.languages} <RequiredMark />
         </label>
         <div className="grid grid-cols-2 gap-2">
           {LANGUAGES.map((lang) => (
@@ -264,6 +279,15 @@ export function AuPairProfileFields({ form, onChange, fieldError, markBlurred }:
           customPlaceholder={s.experienceCustomPlaceholder}
         />
       </div>
+      {withIdDocument && (
+        <IdDocumentField
+          file={idDocument}
+          setFile={setIdDocument}
+          hint={s.idDocumentHintAuPair}
+          error={fieldError("idDocument")}
+          onPicked={() => markBlurred("idDocument")}
+        />
+      )}
     </div>
   );
 }
@@ -276,12 +300,7 @@ export function FamilyProfileFields({
   idDocument,
   setIdDocument,
   withIdDocument,
-}: FieldsProps & {
-  idDocument: File | null;
-  setIdDocument: (file: File | null) => void;
-  /** false : la famille a déjà déposé sa pièce d'identité (ancien compte) */
-  withIdDocument: boolean;
-}) {
+}: FieldsProps) {
   const { t, tValue } = useI18n();
   const s = t.signup;
   const { host: hostCountries } = useCountries();
@@ -291,7 +310,7 @@ export function FamilyProfileFields({
     <div className="space-y-4">
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-1">
-          {s.hostCountry}
+          {s.hostCountry} <RequiredMark />
         </label>
         <SelectField
           value={form.hostCountry}
@@ -299,6 +318,7 @@ export function FamilyProfileFields({
           onBlur={() => markBlurred("hostCountry")}
           invalid={!!fieldError("hostCountry")}
           aria-label={s.hostCountry}
+          required
           placeholder={s.selectCountry}
           options={hostCountries.map((c) => ({
             value: c.name,
@@ -313,13 +333,14 @@ export function FamilyProfileFields({
       </div>
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-1">
-          {s.city}
+          {s.city} <RequiredMark />
         </label>
         <input
           type="text"
           value={form.city}
           onChange={(e) => onChange({ city: e.target.value })}
           onBlur={() => markBlurred("city")}
+          aria-required
           className={inputClass("city")}
           placeholder="Paris, Lyon, Berlin..."
         />
@@ -331,7 +352,7 @@ export function FamilyProfileFields({
       </div>
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-1">
-          {s.numberOfKids}
+          {s.numberOfKids} <RequiredMark />
         </label>
         <SelectField
           value={form.numberOfKids}
@@ -339,6 +360,7 @@ export function FamilyProfileFields({
           onBlur={() => markBlurred("numberOfKids")}
           invalid={!!fieldError("numberOfKids")}
           aria-label={s.numberOfKids}
+          required
           placeholder={s.select}
           options={["0", "1", "2", "3", "4"].map((n) => ({
             value: n,
@@ -355,59 +377,84 @@ export function FamilyProfileFields({
         )}
       </div>
       {withIdDocument && (
-        <div>
-          <p className="block text-sm font-semibold text-gray-700 mb-1">
-            {s.idDocument}
-          </p>
-          {idDocument ? (
-            <div
-              className={`flex items-center gap-3 border rounded-xl px-4 py-3 ${
-                fieldError("idDocument") ? "border-red-300" : "border-gray-200"
-              }`}
-            >
-              <FileText className="w-5 h-5 text-[#E87722] shrink-0" />
-              <span className="text-sm text-gray-700 truncate flex-1">
-                {idDocument.name}
-              </span>
-              <button
-                type="button"
-                onClick={() => setIdDocument(null)}
-                className="p-1 text-gray-400 hover:text-red-500 rounded-lg"
-                aria-label={s.idDocumentRemove}
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            <label
-              className={`flex items-center justify-center gap-2 border-2 border-dashed rounded-xl px-4 py-5 cursor-pointer text-sm transition-colors focus-within:ring-2 focus-within:ring-[#E87722] ${
-                fieldError("idDocument")
-                  ? "border-red-300 text-red-500"
-                  : "border-gray-200 text-gray-500 hover:border-[#E87722] hover:text-[#E87722]"
-              }`}
-            >
-              <Upload className="w-4 h-4" />
-              {s.idDocumentChoose}
-              <input
-                type="file"
-                accept={ID_DOCUMENT_ACCEPT}
-                className="sr-only"
-                onChange={(ev) => {
-                  setIdDocument(ev.target.files?.[0] ?? null);
-                  markBlurred("idDocument");
-                  ev.target.value = "";
-                }}
-              />
-            </label>
-          )}
-          {fieldError("idDocument") ? (
-            <p className="text-xs text-red-500 mt-1">
-              {fieldError("idDocument")}
-            </p>
-          ) : (
-            <p className="text-xs text-gray-400 mt-1">{s.idDocumentHint}</p>
-          )}
+        <IdDocumentField
+          file={idDocument}
+          setFile={setIdDocument}
+          hint={s.idDocumentHintFamily}
+          error={fieldError("idDocument")}
+          onPicked={() => markBlurred("idDocument")}
+        />
+      )}
+    </div>
+  );
+}
+
+/** Dépôt de la pièce d'identité (obligatoire à l'inscription, au pair et famille). */
+function IdDocumentField({
+  file,
+  setFile,
+  hint,
+  error,
+  onPicked,
+}: {
+  file: File | null;
+  setFile: (file: File | null) => void;
+  hint: string;
+  error: string | null;
+  onPicked: () => void;
+}) {
+  const { t } = useI18n();
+  const s = t.signup;
+
+  return (
+    <div>
+      <p className="block text-sm font-semibold text-gray-700 mb-1">
+        {s.idDocument} <RequiredMark />
+      </p>
+      {file ? (
+        <div
+          className={`flex items-center gap-3 border rounded-xl px-4 py-3 ${
+            error ? "border-red-300" : "border-gray-200"
+          }`}
+        >
+          <FileText className="w-5 h-5 text-[#E87722] shrink-0" />
+          <span className="text-sm text-gray-700 truncate flex-1">{file.name}</span>
+          <button
+            type="button"
+            onClick={() => setFile(null)}
+            className="p-1 text-gray-400 hover:text-red-500 rounded-lg"
+            aria-label={s.idDocumentRemove}
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
+      ) : (
+        <label
+          className={`flex items-center justify-center gap-2 border-2 border-dashed rounded-xl px-4 py-5 cursor-pointer text-sm transition-colors focus-within:ring-2 focus-within:ring-[#E87722] ${
+            error
+              ? "border-red-300 text-red-500"
+              : "border-[#E87722] text-gray-500 hover:bg-[#FFF3E0] hover:text-[#E87722]"
+          }`}
+        >
+          <Upload className="w-4 h-4" />
+          {s.idDocumentChoose}
+          <input
+            type="file"
+            accept={ID_DOCUMENT_ACCEPT}
+            className="sr-only"
+            aria-required
+            onChange={(ev) => {
+              setFile(ev.target.files?.[0] ?? null);
+              onPicked();
+              ev.target.value = "";
+            }}
+          />
+        </label>
+      )}
+      {error ? (
+        <p className="text-xs text-red-500 mt-1">{error}</p>
+      ) : (
+        <p className="text-xs text-gray-400 mt-1">{hint}</p>
       )}
     </div>
   );

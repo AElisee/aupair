@@ -13,7 +13,7 @@ const badRequest = (error: string) => NextResponse.json({ error }, { status: 400
 
 /**
  * Inscription par le formulaire `/inscription` (multipart/form-data : champs texte, `languages`
- * en JSON, pièce d'identité `idDocument` obligatoire pour une famille). C'est le **seul** moyen
+ * en JSON, pièce d'identité `idDocument` obligatoire). C'est le **seul** moyen
  * de créer un compte au pair ou famille : la connexion Google/Facebook n'en crée plus (cf. auth.ts).
  */
 export async function POST(request: Request) {
@@ -47,15 +47,13 @@ export async function POST(request: Request) {
   if (!result.ok) return badRequest(result.error);
   const data = result.data;
 
-  // Pièce d'identité de la famille : vérifiée (type, taille, contenu) avant de créer le compte.
-  let idDocument: File | null = null;
-  if (data.role === "famille") {
-    const file = form.get("idDocument");
-    if (!(file instanceof File) || file.size === 0) return badRequest("Une pièce d'identité est obligatoire.");
-    const fileError = await validateIdDocumentServer(file);
-    if (fileError) return badRequest(fileError);
-    idDocument = file;
+  // Pièce d'identité (au pair et famille) : vérifiée (type, taille, contenu) avant de créer le compte.
+  const idDocument = form.get("idDocument");
+  if (!(idDocument instanceof File) || idDocument.size === 0) {
+    return badRequest("Une pièce d'identité est obligatoire.");
   }
+  const fileError = await validateIdDocumentServer(idDocument);
+  if (fileError) return badRequest(fileError);
 
   let existing;
   try {
@@ -111,25 +109,25 @@ export async function POST(request: Request) {
   }
 
   // Pièce d'identité envoyée une fois le compte créé (dossier = id utilisateur).
-  // En cas d'échec, le compte est supprimé pour que la famille puisse recommencer l'inscription.
-  if (idDocument) {
-    const urls = await uploadIdDocuments(userId, [idDocument]).catch((err) => {
-      console.error("[register] ID document upload error:", err);
-      return null;
-    });
-    const saved =
-      urls &&
-      (await prisma.familyProfile
-        .update({ where: { userId }, data: { idDocumentUrls: urls } })
-        .then(() => true)
-        .catch((err) => {
-          console.error("[register] Prisma error:", err);
-          return false;
-        }));
-    if (!saved) {
-      await prisma.user.delete({ where: { id: userId } }).catch(() => {});
-      return NextResponse.json({ error: "Échec de l'envoi du document." }, { status: 500 });
+  // En cas d'échec, le compte est supprimé pour que l'utilisateur puisse recommencer l'inscription.
+  const idDocumentUrls = await uploadIdDocuments(userId, [idDocument]).catch((err) => {
+    console.error("[register] ID document upload error:", err);
+    return null;
+  });
+  let saved = false;
+  if (idDocumentUrls) {
+    try {
+      const update = { where: { userId }, data: { idDocumentUrls } };
+      if (data.role === "au-pair") await prisma.auPairProfile.update(update);
+      else await prisma.familyProfile.update(update);
+      saved = true;
+    } catch (err) {
+      console.error("[register] Prisma error:", err);
     }
+  }
+  if (!saved) {
+    await prisma.user.delete({ where: { id: userId } }).catch(() => {});
+    return NextResponse.json({ error: "Échec de l'envoi du document." }, { status: 500 });
   }
 
   // Attendu avant la réponse : avec after(), la fonction Vercel s'arrêtait avant l'envoi.

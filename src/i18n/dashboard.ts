@@ -609,8 +609,8 @@ export const dashboard = {
     },
     noDocs: { fr: "Aucun document envoyé", en: "No document uploaded" },
     idHint: {
-      fr: "Carte d'identité, passeport ou titre de séjour (recto et verso). JPG, PNG ou PDF, max 10 Mo par fichier, 4 documents maximum. Ces documents ne sont visibles que par notre équipe.",
-      en: "ID card, passport or residence permit (front and back). JPG, PNG or PDF, max 10 MB per file, up to 4 documents. Only our team can see these documents.",
+      fr: "Carte d'identité, passeport ou titre de séjour (recto et verso). JPG, PNG ou PDF, max 4 Mo par fichier, 4 documents maximum. Ces documents ne sont visibles que par notre équipe.",
+      en: "ID card, passport or residence permit (front and back). JPG, PNG or PDF, max 4 MB per file, up to 4 documents. Only our team can see these documents.",
     },
     documentN: { fr: (n: number) => `Document ${n}`, en: (n: number) => `Document ${n}` },
     addDocuments: { fr: "Ajouter des documents", en: "Add documents" },

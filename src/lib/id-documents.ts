@@ -1,19 +1,29 @@
-/** Pièces d'identité (au pairs : profil, familles : inscription) — constantes utilisables côté client. */
+/** Pièces d'identité (inscription au pair et famille, profil au pair) — constantes utilisables côté client. */
 
-export const ID_DOCUMENT_TYPES: Record<string, { ext: string; maxSize: number }> = {
-  "image/jpeg": { ext: "jpg", maxSize: 5 * 1024 * 1024 },
-  "image/png": { ext: "png", maxSize: 5 * 1024 * 1024 },
-  "application/pdf": { ext: "pdf", maxSize: 10 * 1024 * 1024 },
+/** Types acceptés → extension du fichier enregistré. */
+export const ID_DOCUMENT_TYPES: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "application/pdf": "pdf",
 };
+
+/** Vercel refuse les requêtes de plus de 4,5 Mo : un seul fichier par requête, 4 Mo maximum. */
+export const ID_DOCUMENT_MAX_MB = 4;
 
 export const ID_DOCUMENT_ACCEPT = Object.keys(ID_DOCUMENT_TYPES).join(",");
 
 /** Message d'erreur (français, traduit côté client par `tError`) si le fichier est refusé, sinon `null`. */
 export function validateIdDocument(file: { type: string; size: number }): string | null {
-  const typeInfo = ID_DOCUMENT_TYPES[file.type];
-  if (!typeInfo) return "Format invalide. Utilisez un JPG, PNG ou PDF.";
-  if (file.size > typeInfo.maxSize) {
-    return `Le fichier dépasse la taille maximale autorisée (${Math.round(typeInfo.maxSize / 1024 / 1024)} Mo).`;
+  if (!ID_DOCUMENT_TYPES[file.type]) return "Format invalide. Utilisez un JPG, PNG ou PDF.";
+  if (file.size > ID_DOCUMENT_MAX_MB * 1024 * 1024) {
+    return `Le fichier dépasse la taille maximale autorisée (${ID_DOCUMENT_MAX_MB} Mo).`;
   }
   return null;
+}
+
+/** Nombre maximum de pièces sur un profil au pair. */
+export const MAX_ID_DOCUMENTS = 4;
+
+export function tooManyIdDocumentsError(): string {
+  return `Vous ne pouvez pas envoyer plus de ${MAX_ID_DOCUMENTS} documents au total.`;
 }

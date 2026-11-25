@@ -6,6 +6,7 @@ import Image from "next/image";
 import { signOut, useSession } from "next-auth/react";
 import { CheckCircle, Home, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { RequiredMark } from "@/components/ui/required-mark";
 import {
   appendProfileFields,
   AuPairProfileFields,
@@ -52,7 +53,8 @@ export default function CompleteSignupPage() {
   const [role, setRole] = useState<SignupRole | null>(null);
   const [names, setNames] = useState({ firstName: "", lastName: "" });
   const [form, setForm] = useState<ProfileForm>(EMPTY_PROFILE_FORM);
-  const [hasIdDocument, setHasIdDocument] = useState(false);
+  // Rôle dont le profil existant a déjà une pièce d'identité (en changer oblige à en déposer une)
+  const [idDocumentRole, setIdDocumentRole] = useState<SignupRole | null>(null);
   const [idDocument, setIdDocument] = useState<File | null>(null);
   const [touched, setTouched] = useState(false);
   const [blurred, setBlurred] = useState<Record<string, boolean>>({});
@@ -88,7 +90,7 @@ export default function CompleteSignupPage() {
           city: data.city ?? "",
           numberOfKids: data.numberOfKids ?? "",
         });
-        setHasIdDocument(!!data.hasIdDocument);
+        setIdDocumentRole(data.hasIdDocument ? (data.role ?? null) : null);
         setLoadState("ready");
       })
       .catch(() => !cancelled && setLoadState("error"));
@@ -99,7 +101,7 @@ export default function CompleteSignupPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const withIdDocument = role === "famille" && !hasIdDocument;
+  const withIdDocument = role !== idDocumentRole;
   const e = s.errors;
   const errors: Record<string, string> = {};
   const firstName = names.firstName.trim();
@@ -124,6 +126,9 @@ export default function CompleteSignupPage() {
     onChange: (patch: Partial<ProfileForm>) => setForm((f) => ({ ...f, ...patch })),
     fieldError,
     markBlurred,
+    idDocument,
+    setIdDocument,
+    withIdDocument,
   };
 
   const handleSubmit = async () => {
@@ -201,7 +206,9 @@ export default function CompleteSignupPage() {
               </div>
 
               <section>
-                <p className="block text-sm font-semibold text-gray-700 mb-2">{c.roleTitle}</p>
+                <p className="block text-sm font-semibold text-gray-700 mb-2">
+                  {c.roleTitle} <RequiredMark />
+                </p>
                 <div className="grid sm:grid-cols-2 gap-3">
                   {roleCards.map(({ value, icon: Icon, title, desc }) => (
                     <button
@@ -228,7 +235,7 @@ export default function CompleteSignupPage() {
                   {(["firstName", "lastName"] as const).map((field) => (
                     <div key={field}>
                       <label htmlFor={field} className="block text-sm font-semibold text-gray-700 mb-1">
-                        {s[field]}
+                        {s[field]} <RequiredMark />
                       </label>
                       <input
                         id={field}
@@ -237,6 +244,7 @@ export default function CompleteSignupPage() {
                         value={names[field]}
                         onChange={(ev) => setNames((n) => ({ ...n, [field]: ev.target.value }))}
                         onBlur={() => markBlurred(field)}
+                        aria-required
                         aria-invalid={!!fieldError(field)}
                         className={fieldInputClass(!!fieldError(field))}
                       />
@@ -254,12 +262,7 @@ export default function CompleteSignupPage() {
                   {role === "au-pair" ? (
                     <AuPairProfileFields {...fieldsProps} />
                   ) : (
-                    <FamilyProfileFields
-                      {...fieldsProps}
-                      idDocument={idDocument}
-                      setIdDocument={setIdDocument}
-                      withIdDocument={withIdDocument}
-                    />
+                    <FamilyProfileFields {...fieldsProps} />
                   )}
                 </section>
               )}

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin";
 import { calculateAge } from "@/lib/utils";
+import { idDocumentLinks } from "@/lib/id-documents.server";
 import { AU_PAIR_COMPLETION_FIELDS, FAMILY_COMPLETION_FIELDS, getProfileCompletion } from "@/lib/profile-completion";
 
 export async function GET(
@@ -78,7 +79,7 @@ export async function GET(
       phoneWhatsapp1: profile.phoneWhatsapp1,
       phoneWhatsapp2: profile.phoneWhatsapp2,
       profilePhotoUrl: profile.profilePhotoUrl,
-      idDocumentUrls: profile.idDocumentUrls,
+      idDocumentUrls: idDocumentLinks(profile.idDocumentUrls),
       isAvailable: profile.isAvailable,
     });
   }
@@ -124,7 +125,7 @@ export async function GET(
       mealsProvided: profile.mealsProvided,
       description: profile.description,
       familyPhotoUrl: profile.familyPhotoUrl,
-      idDocumentUrls: profile.idDocumentUrls,
+      idDocumentUrls: idDocumentLinks(profile.idDocumentUrls),
       phoneWhatsapp: profile.phoneWhatsapp,
       preferredGender: profile.preferredGender,
       preferredAgeMin: profile.preferredAgeMin,

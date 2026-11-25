@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { supabaseAdmin } from "@/lib/supabase";
-import { ID_DOCUMENT_BUCKET as BUCKET, uploadIdDocuments, validateIdDocumentServer } from "@/lib/id-documents.server";
-
-const MAX_DOCUMENTS = 4;
+import { idDocumentLinks, removeIdDocument, uploadIdDocuments, validateIdDocumentServer } from "@/lib/id-documents.server";
+import { MAX_ID_DOCUMENTS, tooManyIdDocumentsError } from "@/lib/id-documents";
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -33,11 +31,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Profil introuvable." }, { status: 404 });
   }
 
-  if (profile.idDocumentUrls.length + files.length > MAX_DOCUMENTS) {
-    return NextResponse.json(
-      { error: `Vous ne pouvez pas envoyer plus de ${MAX_DOCUMENTS} documents au total.` },
-      { status: 400 }
-    );
+  if (profile.idDocumentUrls.length + files.length > MAX_ID_DOCUMENTS) {
+    return NextResponse.json({ error: tooManyIdDocumentsError() }, { status: 400 });
   }
 
   for (const file of files) {
@@ -47,19 +42,22 @@ export async function POST(request: Request) {
     }
   }
 
-  const newUrls = await uploadIdDocuments(session.user.id, files);
-  if (!newUrls) {
+  const newPaths = await uploadIdDocuments(session.user.id, files).catch((err) => {
+    console.error("[id-documents] Upload error:", err);
+    return null;
+  });
+  if (!newPaths) {
     return NextResponse.json({ error: "Échec de l'envoi du document." }, { status: 500 });
   }
 
-  const idDocumentUrls = [...profile.idDocumentUrls, ...newUrls];
+  const idDocumentUrls = [...profile.idDocumentUrls, ...newPaths];
 
   await prisma.auPairProfile.update({
     where: { userId: session.user.id },
     data: { idDocumentUrls },
   });
 
-  return NextResponse.json({ idDocumentUrls });
+  return NextResponse.json({ idDocumentUrls: idDocumentLinks(idDocumentUrls) });
 }
 
 export async function DELETE(request: Request) {
@@ -93,21 +91,20 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Profil introuvable." }, { status: 404 });
   }
 
-  if (!profile.idDocumentUrls.includes(body.url)) {
+  // `url` est le lien donné au client (`idDocumentLinks`)
+  const index = idDocumentLinks(profile.idDocumentUrls).indexOf(body.url);
+  if (index === -1) {
     return NextResponse.json({ error: "Document introuvable." }, { status: 404 });
   }
 
-  const idDocumentUrls = profile.idDocumentUrls.filter((url) => url !== body.url);
+  const idDocumentUrls = profile.idDocumentUrls.filter((_, i) => i !== index);
 
   await prisma.auPairProfile.update({
     where: { userId: session.user.id },
     data: { idDocumentUrls },
   });
 
-  const path = body.url.split(`${BUCKET}/`)[1];
-  if (path) {
-    await supabaseAdmin.storage.from(BUCKET).remove([path]);
-  }
+  await removeIdDocument(profile.idDocumentUrls[index]);
 
-  return NextResponse.json({ idDocumentUrls });
+  return NextResponse.json({ idDocumentUrls: idDocumentLinks(idDocumentUrls) });
 }

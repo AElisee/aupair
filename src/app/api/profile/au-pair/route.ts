@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getCountriesByType, splitPhoneNumber } from "@/lib/countries";
 import { formatPhoneDigits } from "@/lib/phone";
+import { idDocumentLinks } from "@/lib/id-documents.server";
 
 function formatChildcareYears(years: number | null): string {
   if (years === null) return "";
@@ -39,7 +40,7 @@ export async function GET() {
     status: profile.status,
     isAvailable: profile.isAvailable,
     profilePhotoUrl: profile.profilePhotoUrl ?? "",
-    idDocumentUrls: profile.idDocumentUrls,
+    idDocumentUrls: idDocumentLinks(profile.idDocumentUrls),
     firstName: profile.firstName,
     lastName: profile.lastName,
     dateOfBirth: profile.dateOfBirth.toISOString().slice(0, 10),

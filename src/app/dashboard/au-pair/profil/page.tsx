@@ -31,6 +31,7 @@ import { useConstants } from "@/hooks/useConstants";
 import { calculateAge } from "@/lib/utils";
 import { useI18n } from "@/i18n";
 import { formatPhoneDigits } from "@/lib/phone";
+import { ID_DOCUMENT_ACCEPT, MAX_ID_DOCUMENTS, tooManyIdDocumentsError, validateIdDocument } from "@/lib/id-documents";
 import { SelectField } from "@/components/ui/select-field";
 import { DateField } from "@/components/ui/date-field";
 
@@ -109,7 +110,6 @@ const EMPTY_PROFILE: Profile = {
   phoneNumber2: "",
 };
 
-const MAX_ID_DOCUMENTS = 4;
 const EXPERIENCE_YEARS = ["0", "1", "2", "3", "4", "5+"];
 
 type SectionId = "personal" | "about" | "languages" | "experience" | "availability" | "contact" | "health" | "documents";
@@ -371,25 +371,36 @@ export default function AuPairProfilPage() {
   };
 
   const handleDocChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
 
     setDocError("");
+    const invalid =
+      profile.idDocumentUrls.length + files.length > MAX_ID_DOCUMENTS
+        ? tooManyIdDocumentsError()
+        : files.map(validateIdDocument).find(Boolean);
+    if (invalid) {
+      setDocError(tError(invalid, tp.docUploadError));
+      e.target.value = "";
+      return;
+    }
+
     setUploadingDoc(true);
     try {
-      const formData = new FormData();
-      for (const file of Array.from(files)) {
+      // Un fichier par requête (taille de requête limitée par Vercel)
+      for (const file of files) {
+        const formData = new FormData();
         formData.append("files", file);
-      }
-      const res = await fetch("/api/profile/id-document", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (res.ok) {
+        const res = await fetch("/api/profile/id-document", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setDocError(tError(data.error, tp.docUploadError));
+          break;
+        }
         setProfile((p) => ({ ...p, idDocumentUrls: data.idDocumentUrls }));
-      } else {
-        setDocError(tError(data.error, tp.docUploadError));
       }
     } catch {
       setDocError(tp.docUploadError);
@@ -994,7 +1005,7 @@ export default function AuPairProfilPage() {
                 ref={docInputRef}
                 type="file"
                 multiple
-                accept="image/jpeg,image/png,application/pdf"
+                accept={ID_DOCUMENT_ACCEPT}
                 className="hidden"
                 onChange={handleDocChange}
               />

@@ -39,6 +39,7 @@ const USER_SELECT = {
       ...ONBOARDING_USER_SELECT.auPairProfile.select,
       firstName: true,
       lastName: true,
+      idDocumentUrls: true,
       status: true,
     },
   },
@@ -86,7 +87,8 @@ export async function GET() {
     hostCountry: fam?.country ?? "",
     city: fam?.city ?? "",
     numberOfKids: fam ? String(fam.numberOfKids) : "",
-    hasIdDocument: (fam?.idDocumentUrls.length ?? 0) > 0,
+    // Pièce déjà déposée sur le profil du rôle renvoyé ci-dessus
+    hasIdDocument: ((au ?? fam)?.idDocumentUrls.length ?? 0) > 0,
   });
 }
 
@@ -122,9 +124,9 @@ export async function POST(request: Request) {
 
   const role = fields.role === "au-pair" ? "AU_PAIR" : "FAMILLE";
   const existing = role === "AU_PAIR" ? user.auPairProfile : user.familyProfile;
-  // Pièce d'identité obligatoire pour une famille, sauf si elle en a déjà déposé une.
+  // Pièce d'identité obligatoire (au pair et famille), sauf si le profil existant en a déjà une.
   let idDocument: File | null = null;
-  if (role === "FAMILLE" && !(user.familyProfile?.idDocumentUrls.length ?? 0)) {
+  if (!existing?.idDocumentUrls.length) {
     const file = form.get("idDocument");
     if (!(file instanceof File) || file.size === 0) {
       return NextResponse.json({ error: "Une pièce d'identité est obligatoire." }, { status: 400 });
@@ -137,6 +139,18 @@ export async function POST(request: Request) {
   const fullName = `${names.data.firstName} ${names.data.lastName}`;
   const userId = user.id;
 
+  // Pièce envoyée avant l'écriture du profil : en cas d'échec rien n'est enregistré, la
+  // finalisation reste à faire et le formulaire peut être renvoyé.
+  let idDocumentUrls: string[] | undefined;
+  if (idDocument) {
+    const urls = await uploadIdDocuments(userId, [idDocument]).catch((err) => {
+      console.error("[complete-profile] ID document upload error:", err);
+      return null;
+    });
+    if (!urls) return NextResponse.json({ error: "Échec de l'envoi du document." }, { status: 500 });
+    idDocumentUrls = urls;
+  }
+
   // Sans profil existant du rôle choisi (compte Google/Facebook, ou changement de rôle : un ancien
   // compte Google créé d'office en au pair alors qu'il s'agit d'une famille), le profil est créé en
   // PENDING et l'ancien profil incomplet de l'autre rôle est retiré ; le compte, lui, est conservé.
@@ -145,7 +159,7 @@ export async function POST(request: Request) {
     await prisma.$transaction(async (tx) => {
       await tx.user.update({ where: { id: userId }, data: { role, name: fullName } });
       if (fields.role === "au-pair") {
-        const data = auPairProfileData(names.data, fields);
+        const data = { ...auPairProfileData(names.data, fields), idDocumentUrls };
         if (existing) {
           await tx.auPairProfile.update({ where: { userId }, data });
         } else {
@@ -153,7 +167,7 @@ export async function POST(request: Request) {
           await tx.auPairProfile.create({ data: { userId, status: "PENDING", targetCountries: [], ...data } });
         }
       } else {
-        const data = familyProfileData(fields);
+        const data = { ...familyProfileData(fields), idDocumentUrls };
         if (existing) {
           await tx.familyProfile.update({ where: { userId }, data });
         } else {
@@ -175,28 +189,6 @@ export async function POST(request: Request) {
   } catch (err) {
     console.error("[complete-profile] Prisma error:", err);
     return NextResponse.json({ error: "Erreur lors de la sauvegarde du profil." }, { status: 500 });
-  }
-
-  if (idDocument) {
-    const urls = await uploadIdDocuments(userId, [idDocument]).catch((err) => {
-      console.error("[complete-profile] ID document upload error:", err);
-      return null;
-    });
-    const saved =
-      urls &&
-      (await prisma.familyProfile
-        .update({ where: { userId: userId }, data: { idDocumentUrls: urls } })
-        .then(() => true)
-        .catch((err) => {
-          console.error("[complete-profile] Prisma error:", err);
-          return false;
-        }));
-    if (!saved) {
-      // Sans pièce d'identité, la famille reste à finaliser : on retire le profil créé
-      // (jamais le compte) pour qu'elle puisse renvoyer le formulaire.
-      if (!existing) await prisma.familyProfile.deleteMany({ where: { userId: userId } }).catch(() => {});
-      return NextResponse.json({ error: "Échec de l'envoi du document." }, { status: 500 });
-    }
   }
 
   await sendSignupEmails({

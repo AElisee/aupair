@@ -95,7 +95,7 @@ export function validateNames(form: FormData): Result<Names> {
 
 /**
  * Champs de l'étape « Votre profil au pair » / « Votre famille » selon `role`
- * (la pièce d'identité de la famille est vérifiée à part : `validateIdDocumentServer`).
+ * (la pièce d'identité est vérifiée à part : `validateIdDocumentServer`).
  */
 export async function validateProfileFields(form: FormData): Promise<Result<ProfileFields>> {
   const role = text(form.get("role"));
